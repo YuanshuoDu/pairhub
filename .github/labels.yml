@@ -1,0 +1,31 @@
+# Labels — 用 gh CLI 批量创建
+# 用法：gh label create <name> --color <color> --description <desc> --repo <repo>
+# 类别色规范：
+#   紫色 7057ff  = 模块（backend/frontend/infra/docs/wechat/test）
+#   红色 d73a4a  = 严重（bug/urgent/blocked）
+#   蓝色 0e8a16  = 阶段（week-1/week-2/mvp）
+#   浅蓝 1d76db  = 状态（in-progress/needs-review/needs-decision）
+#   灰色 cfd3d7  = 类型（task/docs）
+
+backend      7057ff  后端相关
+frontend     7057ff  小程序前端
+infra        7057ff  部署/CI/工程
+docs         7057ff  文档
+wechat       7057ff  微信/腾讯生态
+test         7057ff  测试
+
+needs-evidence 006b75  证据不全/待补（reviewer 打回用）
+bug          d73a4a  Bug 报告
+urgent       d73a4a  紧急
+blocked      d73a4a  被阻塞
+
+week-1       0e8a16  Week 1 任务
+week-2       0e8a16  Week 2 任务
+mvp          0e8a16  MVP 必备
+
+in-progress  1d76db  进行中
+needs-review 1d76db  待 review
+needs-decision 1d76db  需要决策（@杜元朔）
+
+task         cfd3d7  任务（非功能）
+enhancement  cfd3d7  增强
