@@ -1,0 +1,65 @@
+================================================================
+EVIDENCE 06 — 与 docs/delivery-standards.md 引用关系
+================================================================
+
+## test-plan-v1.0.md 引用 delivery-standards 的位置
+
+| 位置 | 引用形式 | 章节 |
+|------|----------|------|
+| 顶部 "关联文档" | 相对路径 `../delivery-standards.md` §2.3 | - |
+| §0 文档目的 | - | - |
+| §8 与交付规范的衔接 | 6 行表格映射 | delivery-standards §2.1/2.2/2.3/2.5/5 |
+| §10 引用清单 | 相对路径 | - |
+
+## ci-matrix.md 引用 delivery-standards 的位置
+
+| 位置 | 引用形式 | 章节 |
+|------|----------|------|
+| 顶部 "关联" | 相对路径 `../delivery-standards.md` | - |
+| §4 Slack 通知 | "详见 docs/delivery-standards.md §2.1" | - |
+| §8 引用 | 相对路径 | - |
+
+## performance-baseline.md 引用 delivery-standards 的位置
+
+| 位置 | 引用形式 | 章节 |
+|------|----------|------|
+| 顶部 "关联" | 相对路径 | - |
+| §5.3 必埋点 | 关联日志要求 | delivery-standards §4 进度汇报 |
+
+## security-checklist.md 引用 delivery-standards 的位置
+
+| 位置 | 引用形式 | 章节 |
+|------|----------|------|
+| 顶部 "关联" | 相对路径 | - |
+| §6 第三方依赖审计 | - | - |
+| §10 引用 | 相对路径 | - |
+
+## test-cases 引用 delivery-standards 的位置
+
+| 文件 | 引用位置 |
+|------|----------|
+| auth/login.test.md | §0 "归档规范见 delivery-standards.md §5" |
+| activity/create.test.md | §0 同样引用 |
+| activity/list.test.md | §0 同样引用 |
+| signup/cancel.test.md | §0 同样引用 |
+
+## 截图归档
+
+所有截图按 delivery-standards.md §5 规范归档到：
+  docs/screenshots/issue-7/
+
+## 验证
+
+$ grep -l "delivery-standards" docs/test/**/*.md docs/test/*.md
+docs/test/test-plan-v1.0.md
+docs/test/ci-matrix.md
+docs/test/performance-baseline.md
+docs/test/security-checklist.md
+docs/test/test-cases/auth/login.test.md
+docs/test/test-cases/activity/create.test.md
+docs/test/test-cases/activity/list.test.md
+docs/test/test-cases/signup/cancel.test.md
+
+共 8 个文件引用 docs/delivery-standards.md，引用关系完整。
+
+================================================================
