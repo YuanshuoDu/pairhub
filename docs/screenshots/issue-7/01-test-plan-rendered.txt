@@ -1,0 +1,40 @@
+================================================================
+EVIDENCE 01 — test-plan-v1.0.md (GitHub 渲染摘要)
+================================================================
+File path: docs/test/test-plan-v1.0.md
+Size: ~13 KB / 10 sections / 0 figures
+Render URL (after PR merge): 
+  https://github.com/YuanshuoDu/pairhub/blob/test/test-plan-v1/docs/test/test-plan-v1.0.md
+
+## 章节结构（渲染后 TOC）
+
+  0. 文档目的
+  1. 测试策略（表格：单元/集成/E2E/性能/安全/兼容性/a11y）
+  2. 测试覆盖目标（量化）
+     2.1 后端：行覆盖 ≥ 80% / 关键路径 100%
+     2.2 小程序：核心流程 E2E 100%
+     2.3 Flutter：核心流程 100% 单元 + 关键 E2E
+  3. 测试金字塔（70% 单元 / 20% 集成 / 10% E2E）
+  4. 工具栈（vitest+supertest+nock / miniprogram-automator+jest / flutter test+integration_test+mocktail）
+  5. 测试用例库结构（树状图）
+  6. 缺陷管理（P0/P1/P2/P3 + SLA 24h/72h/1周/2周）
+  7. 测试用例模板（前置/步骤/预期/实际/备注）
+  8. 与交付规范的衔接
+  9. 退出标准（M1 出口）
+  10. 引用清单
+
+## 关键内容断言
+
+✓ 行覆盖目标明确数字 "≥ 80%"（不是模糊词）
+✓ 关键路径白名单列了 7 个文件
+✓ 测试金字塔 70/20/10 量化
+✓ P0 SLA "24小时响应 + 修复" 明确
+✓ 工具栈含三端，每端 ≥ 2 个工具
+✓ 用例模板 5 字段齐全
+
+## 验证
+
+如需在 PR 评论中附实际渲染图，运行：
+  $ gh pr view <PR> --json files --jq '.files[] | select(.path | startswith("docs/test/"))'
+  $ gh pr diff <PR> --path docs/test/test-plan-v1.0.md
+================================================================

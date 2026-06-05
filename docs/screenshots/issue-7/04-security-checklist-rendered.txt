@@ -1,0 +1,41 @@
+================================================================
+EVIDENCE 04 — security-checklist.md (GitHub 渲染摘要)
+================================================================
+File path: docs/test/security-checklist.md
+Size: ~18 KB / 10 sections
+Render URL:
+  https://github.com/YuanshuoDu/pairhub/blob/test/test-plan-v1/docs/test/security-checklist.md
+
+## 章节结构
+
+  0. 目的
+  1. OWASP Top 10 (2021) 覆盖
+     A01 Broken Access Control  ✓
+     A02 Cryptographic Failures  ✓
+     A03 Injection  ✓
+     A04 Insecure Design  ✓
+     A05 Security Misconfiguration  ✓
+     A06 Vulnerable Components  ✓
+     A07 Authentication Failures  ✓
+     A08 Software/Data Integrity  ✓
+     A09 Logging/Monitoring Failures  ✓
+     A10 SSRF  ✓
+     —— 每条：Check 列表 + 实现方法 + 自动化测试
+  2. 数据加密（传输 HTTPS / 存储 AES-256-GCM / argon2id / KMS）
+  3. 鉴权（access 15min / refresh 7d / 一次性 / 撤销机制）
+  4. 内容安全（微信 API / fail-closed / 灰度）
+  5. GDPR（导出 / 软删→30天硬删 / 审计日志）
+  6. 第三方依赖审计（pnpm audit / Dependabot / 包准入）
+  7. 安全事件响应（S0/S1/S2/S3）
+  8. CI 集成（OWASP ZAP / Trivy / testssl / semgrep）
+  9. M1 出口
+  10. 引用
+
+## 关键断言
+
+✓ OWASP Top 10 全部 10 项覆盖（每项 ≥ 1 check + 实现方法 + 自动化测试）
+✓ JWT 设计：access 15min + refresh 7d + 一次性 + 撤销
+✓ 微信内容安全 fail-closed
+✓ GDPR 导出 + 软删 30 天 + 硬删
+✓ pnpm audit + Dependabot
+================================================================
