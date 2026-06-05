@@ -1,0 +1,143 @@
+.ac {
+  display: flex;
+  background: var(--color-bg-card);
+  border-radius: 16rpx;
+  margin-bottom: 24rpx;
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition: transform 150ms ease;
+}
+
+.ac:active {
+  transform: scale(0.99);
+}
+
+.ac__cover {
+  width: 200rpx;
+  height: 200rpx;
+  background: var(--color-bg);
+  flex-shrink: 0;
+}
+.ac__cover image {
+  width: 100%;
+  height: 100%;
+}
+
+.ac__body {
+  flex: 1;
+  padding: 20rpx 24rpx;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.ac__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12rpx;
+}
+
+.ac__type {
+  display: inline-block;
+  padding: 4rpx 16rpx;
+  border-radius: 999rpx;
+  font-size: 20rpx;
+  color: #fff;
+  background: var(--color-primary);
+}
+.ac__type--study { background: #4f8cff; }
+.ac__type--group_buy { background: #ff8a3d; }
+.ac__type--sport { background: #18bc6c; }
+.ac__type--meal { background: #f5a623; }
+.ac__type--project { background: #9b59b6; }
+.ac__type--other { background: #8a8a8a; }
+
+.ac__signed {
+  font-size: 20rpx;
+  color: var(--color-success);
+  background: #e6f7ee;
+  padding: 4rpx 12rpx;
+  border-radius: 999rpx;
+}
+
+.ac__title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  line-height: 1.4;
+  margin-bottom: 12rpx;
+}
+
+.ac__meta {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+  font-size: 24rpx;
+  color: var(--color-text-secondary);
+}
+
+.ac__meta-item {
+  display: flex;
+  align-items: center;
+}
+
+.ac__meta-icon {
+  margin-right: 8rpx;
+  font-size: 24rpx;
+}
+
+.ac__meta-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.ac__bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12rpx;
+}
+
+.ac__participants {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  margin-right: 16rpx;
+}
+
+.ac__participants-bar {
+  flex: 1;
+  height: 8rpx;
+  background: var(--color-divider);
+  border-radius: 4rpx;
+  overflow: hidden;
+  margin-right: 12rpx;
+}
+
+.ac__participants-fill {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: 4rpx;
+  transition: width 300ms ease;
+}
+
+.ac__participants-text {
+  font-size: 22rpx;
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+.ac__action {
+  padding: 8rpx 24rpx;
+  font-size: 24rpx;
+  color: #fff;
+  background: var(--color-primary);
+  border-radius: 999rpx;
+  font-weight: 500;
+}
+
+.ac__action.is-signed {
+  background: var(--color-text-placeholder);
+}

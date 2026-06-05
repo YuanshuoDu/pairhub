@@ -1,0 +1,8 @@
+{
+  "description": "StudyBuddy 学习搭子 - 私有本地配置（不提交到仓库）",
+  "projectname": "studybuddy-local",
+  "setting": {
+    "compileHotReLoad": true,
+    "urlCheck": false
+  }
+}

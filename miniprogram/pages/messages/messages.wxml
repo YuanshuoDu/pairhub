@@ -1,0 +1,65 @@
+<view class="messages">
+  <!-- 顶部 tab -->
+  <view class="messages__tabs">
+    <view
+      wx:for="{{tabs}}"
+      wx:key="id"
+      class="messages__tab {{activeTab === item.id ? 'is-active' : ''}}"
+      data-id="{{item.id}}"
+      bindtap="onTabChange"
+    >
+      {{item.label}}
+      <view wx:if="{{item.badge}}" class="messages__tab-badge">{{item.badge}}</view>
+    </view>
+  </view>
+
+  <!-- 系统通知 -->
+  <view wx:if="{{activeTab === 'system'}}" class="messages__list">
+    <view wx:for="{{systemList}}" wx:key="id" class="messages__item">
+      <view class="messages__item-icon messages__item-icon--system">📣</view>
+      <view class="messages__item-body">
+        <view class="messages__item-top">
+          <text class="messages__item-title">{{item.title}}</text>
+          <text class="messages__item-time">{{item.timeText}}</text>
+        </view>
+        <view class="messages__item-desc ellipsis-2">{{item.summary}}</view>
+      </view>
+    </view>
+    <empty-state wx:if="{{!systemList.length}}" title="暂无系统通知" icon="🔔" />
+  </view>
+
+  <!-- 活动消息 -->
+  <view wx:elif="{{activeTab === 'activity'}}" class="messages__list">
+    <view wx:for="{{activityList}}" wx:key="id" class="messages__item">
+      <view class="messages__item-icon messages__item-icon--activity">📌</view>
+      <view class="messages__item-body">
+        <view class="messages__item-top">
+          <text class="messages__item-title">{{item.title}}</text>
+          <text class="messages__item-time">{{item.timeText}}</text>
+        </view>
+        <view class="messages__item-desc ellipsis-2">{{item.summary}}</view>
+      </view>
+    </view>
+    <empty-state wx:if="{{!activityList.length}}" title="暂无活动消息" icon="📌" />
+  </view>
+
+  <!-- 私聊 -->
+  <view wx:else class="messages__list">
+    <view wx:for="{{chatList}}" wx:key="id" class="messages__item" bindtap="onChatTap" data-id="{{item.id}}">
+      <view class="messages__item-icon messages__item-icon--chat">
+        <text>{{item.nickname[0]}}</text>
+      </view>
+      <view class="messages__item-body">
+        <view class="messages__item-top">
+          <text class="messages__item-title">{{item.nickname}}</text>
+          <text class="messages__item-time">{{item.timeText}}</text>
+        </view>
+        <view class="messages__item-desc ellipsis">
+          <text>{{item.lastMessage}}</text>
+          <text wx:if="{{item.unread}}" class="messages__item-unread">{{item.unread}}</text>
+        </view>
+      </view>
+    </view>
+    <empty-state wx:if="{{!chatList.length}}" title="暂无私聊消息" desc="去活动页找搭子聊天吧" icon="💬" />
+  </view>
+</view>

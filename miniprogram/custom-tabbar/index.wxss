@@ -1,0 +1,82 @@
+.tabbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
+  display: flex;
+  align-items: stretch;
+  background: var(--color-bg-card, #ffffff);
+  border-top: 1rpx solid var(--color-border, #ebedf0);
+  box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.04);
+  padding-top: 12rpx;
+}
+
+.tabbar__item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8rpx 0 12rpx;
+  transition: transform 120ms ease;
+}
+
+.tabbar__item.is-active {
+  transform: translateY(-2rpx);
+}
+
+.tabbar__item:active {
+  opacity: 0.7;
+}
+
+.tabbar__icon-wrap {
+  position: relative;
+  width: 48rpx;
+  height: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tabbar__icon {
+  width: 48rpx;
+  height: 48rpx;
+}
+
+.tabbar__badge {
+  position: absolute;
+  top: -8rpx;
+  right: -16rpx;
+  min-width: 28rpx;
+  height: 28rpx;
+  padding: 0 8rpx;
+  border-radius: 14rpx;
+  background: var(--color-danger, #e94b4b);
+  color: #fff;
+  font-size: 20rpx;
+  line-height: 28rpx;
+  text-align: center;
+}
+
+.tabbar__dot {
+  position: absolute;
+  top: 0;
+  right: 4rpx;
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 50%;
+  background: var(--color-danger, #e94b4b);
+}
+
+.tabbar__label {
+  font-size: 22rpx;
+  color: var(--color-text-secondary, #8a8a8a);
+  margin-top: 4rpx;
+  line-height: 1.2;
+}
+
+.tabbar__label.is-active {
+  color: var(--color-primary, #4f8cff);
+  font-weight: 500;
+}

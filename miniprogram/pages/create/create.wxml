@@ -1,0 +1,132 @@
+<view class="create">
+  <!-- 步骤指示器 -->
+  <view class="create__steps">
+    <view
+      wx:for="{{steps}}"
+      wx:key="id"
+      class="create__step {{currentStep >= index ? 'is-active' : ''}} {{currentStep === index ? 'is-current' : ''}}"
+    >
+      <view class="create__step-dot">{{index + 1}}</view>
+      <view class="create__step-label">{{item.label}}</view>
+    </view>
+  </view>
+
+  <!-- Step 1: 类型 -->
+  <view wx:if="{{currentStep === 0}}" class="create__panel">
+    <view class="create__title">选择活动类型</view>
+    <view class="create__type-grid">
+      <view
+        wx:for="{{typeOptions}}"
+        wx:key="id"
+        class="create__type-item {{form.type === item.id ? 'is-active' : ''}}"
+        data-id="{{item.id}}"
+        bindtap="onTypeSelect"
+      >
+        <view class="create__type-icon">{{item.icon}}</view>
+        <view class="create__type-label">{{item.label}}</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- Step 2: 信息 -->
+  <view wx:elif="{{currentStep === 1}}" class="create__panel">
+    <view class="create__title">填写活动信息</view>
+    <view class="create__field">
+      <text class="create__field-label">活动标题</text>
+      <input
+        class="create__field-input"
+        placeholder="一句话说清楚你的活动"
+        placeholder-class="create__placeholder"
+        maxlength="50"
+        value="{{form.title}}"
+        bindinput="onTitleInput"
+      />
+    </view>
+    <view class="create__field">
+      <text class="create__field-label">活动详情</text>
+      <textarea
+        class="create__field-textarea"
+        placeholder="详细介绍时间安排、要求、需要携带的物品等"
+        placeholder-class="create__placeholder"
+        maxlength="500"
+        value="{{form.description}}"
+        bindinput="onDescInput"
+      />
+    </view>
+    <view class="create__field">
+      <text class="create__field-label">人数上限</text>
+      <input
+        class="create__field-input"
+        type="number"
+        maxlength="3"
+        value="{{form.maxParticipants}}"
+        bindinput="onMaxInput"
+      />
+    </view>
+  </view>
+
+  <!-- Step 3: 时间地点 -->
+  <view wx:elif="{{currentStep === 2}}" class="create__panel">
+    <view class="create__title">时间地点</view>
+    <view class="create__field" bindtap="onStartAtTap">
+      <text class="create__field-label">开始时间</text>
+      <text class="create__field-value {{form.startAt ? '' : 'is-placeholder'}}">
+        {{form.startAtText || '请选择'}}
+      </text>
+    </view>
+    <view class="create__field" bindtap="onEndAtTap">
+      <text class="create__field-label">结束时间</text>
+      <text class="create__field-value {{form.endAt ? '' : 'is-placeholder'}}">
+        {{form.endAtText || '请选择'}}
+      </text>
+    </view>
+    <view class="create__field" bindtap="onLocationTap">
+      <text class="create__field-label">活动地点</text>
+      <text class="create__field-value {{form.location.name ? '' : 'is-placeholder'}}">
+        {{form.location.name || '请选择地点'}}
+      </text>
+    </view>
+  </view>
+
+  <!-- Step 4: 确认 -->
+  <view wx:elif="{{currentStep === 3}}" class="create__panel">
+    <view class="create__title">确认信息</view>
+    <view class="create__summary">
+      <view class="create__summary-row">
+        <text class="create__summary-label">类型</text>
+        <text class="create__summary-value">{{typeLabel}}</text>
+      </view>
+      <view class="create__summary-row">
+        <text class="create__summary-label">标题</text>
+        <text class="create__summary-value">{{form.title}}</text>
+      </view>
+      <view class="create__summary-row">
+        <text class="create__summary-label">详情</text>
+        <text class="create__summary-value">{{form.description}}</text>
+      </view>
+      <view class="create__summary-row">
+        <text class="create__summary-label">时间</text>
+        <text class="create__summary-value">{{form.startAtText}} ~ {{form.endAtText}}</text>
+      </view>
+      <view class="create__summary-row">
+        <text class="create__summary-label">地点</text>
+        <text class="create__summary-value">{{form.location.name || '未选择'}}</text>
+      </view>
+      <view class="create__summary-row">
+        <text class="create__summary-label">人数</text>
+        <text class="create__summary-value">{{form.maxParticipants}} 人</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 底部操作 -->
+  <view class="create__footer">
+    <view wx:if="{{currentStep > 0}}" class="create__btn create__btn--secondary" bindtap="onPrev">上一步</view>
+    <view
+      class="create__btn create__btn--primary {{canNext ? '' : 'is-disabled'}}"
+      bindtap="onNext"
+    >
+      {{currentStep === steps.length - 1 ? '提交发布' : '下一步'}}
+    </view>
+  </view>
+</view>

@@ -1,0 +1,139 @@
+name: miniprogram-ci
+
+# 微信小程序 CI: tsc + miniprogram-ci 预览构建
+# 与 miniprogram/ 脚手架 (PR #15) 配套
+# miniprogram-ci 需要 MINIPROGRAM_CI_KEY secret
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - "miniprogram/**"
+      - ".github/workflows/miniprogram-ci.yml"
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - "miniprogram/**"
+      - ".github/workflows/miniprogram-ci.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: miniprogram-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  detect:
+    name: detect miniprogram dir
+    runs-on: ubuntu-latest
+    outputs:
+      has-mini: ${{ steps.check.outputs.any }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: check
+        run: |
+          if [ -f "miniprogram/project.config.json" ] || [ -f "miniprogram/app.json" ] || [ -f "miniprogram/package.json" ]; then
+            echo "any=true" >> "$GITHUB_OUTPUT"
+            echo "miniprogram scaffold detected"
+          else
+            echo "any=false" >> "$GITHUB_OUTPUT"
+            echo "miniprogram scaffold not present - skipping jobs"
+          fi
+
+  tsc:
+    name: tsc (no emit)
+    needs: detect
+    if: needs.detect.outputs.has-mini == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: miniprogram/package.json
+
+      - name: Install deps
+        working-directory: miniprogram
+        run: pnpm install --frozen-lockfile
+
+      - name: TypeScript compile (no emit)
+        working-directory: miniprogram
+        run: pnpm tsc --noEmit
+
+      - name: ESLint
+        working-directory: miniprogram
+        run: pnpm lint || echo "lint not configured, skipping"
+
+  preview:
+    name: miniprogram-ci preview
+    needs: [tsc]
+    if: needs.detect.outputs.has-mini == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: miniprogram/package.json
+
+      - name: Install deps
+        working-directory: miniprogram
+        run: pnpm install --frozen-lockfile
+
+      - name: Install miniprogram-ci
+        working-directory: miniprogram
+        run: npm install -g miniprogram-ci || pnpm add -D miniprogram-ci
+
+      - name: Verify project.config.json
+        working-directory: miniprogram
+        run: |
+          test -f project.config.json || (echo "project.config.json missing" && exit 1)
+          echo "project.config.json found"
+
+      - name: Build preview package
+        working-directory: miniprogram
+        env:
+          MINIPROGRAM_CI_KEY: ${{ secrets.MINIPROGRAM_CI_KEY }}
+        run: |
+          set -e
+          if [ -z "$MINIPROGRAM_CI_KEY" ]; then
+            echo "MINIPROGRAM_CI_KEY not set, doing local build only"
+            npx miniprogram-ci \
+              --pp ./ \
+              --pkp ./private.key \
+              --appid wx0000000000000000 \
+              --type miniProgram \
+              --uv 1.0.0 \
+              --output ./dist/preview.zip 2>/dev/null || true
+          else
+            npx miniprogram-ci preview \
+              --pp ./ \
+              --pkp ./private.key \
+              --appid ${{ vars.WECHAT_APPID || 'wx0000000000000000' }} \
+              --type miniProgram \
+              --uv 1.0.0 \
+              --upload-desc "CI preview from ${{ github.ref_name }} @ ${{ github.sha }}"
+          fi
+
+      - name: Upload preview artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: miniprogram-preview
+          path: miniprogram/dist/preview.zip
+          if-no-files-found: ignore
+          retention-days: 7

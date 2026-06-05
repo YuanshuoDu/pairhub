@@ -1,0 +1,168 @@
+name: flutter-ci
+
+# Flutter CI: flutter analyze + flutter test + flutter build apk --debug
+# 与 app/ 脚手架 (PR #14) 配套
+# iOS build 暂不在 CI (macOS runner 成本高 + 依赖 CocoaPods 慢)
+# — iOS 真机/分发需求明确后再加 ios-build job
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - "app/**"
+      - ".github/workflows/flutter-ci.yml"
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - "app/**"
+      - ".github/workflows/flutter-ci.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: flutter-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  detect:
+    name: detect app dir
+    runs-on: ubuntu-latest
+    outputs:
+      has-flutter: ${{ steps.check.outputs.any }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+      - id: check
+        run: |
+          if [ -f "app/pubspec.yaml" ] || [ -f "app/lib/main.dart" ]; then
+            echo "any=true" >> "$GITHUB_OUTPUT"
+            echo "Flutter scaffold detected"
+          else
+            echo "any=false" >> "$GITHUB_OUTPUT"
+            echo "Flutter scaffold not present - skipping jobs"
+          fi
+
+  analyze:
+    name: flutter analyze
+    needs: detect
+    if: needs.detect.outputs.has-flutter == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+          cache: true
+
+      - name: Show Flutter version
+        working-directory: app
+        run: flutter --version
+
+      - name: Pub get
+        working-directory: app
+        run: flutter pub get
+
+      - name: Generate code (freezed, json_serializable, etc.)
+        working-directory: app
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Analyze
+        working-directory: app
+        run: flutter analyze --no-fatal-infos
+
+  test:
+    name: flutter test
+    needs: detect
+    if: needs.detect.outputs.has-flutter == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+          cache: true
+
+      - name: Pub get
+        working-directory: app
+        run: flutter pub get
+
+      - name: Generate code
+        working-directory: app
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Run tests
+        working-directory: app
+        run: flutter test --coverage --reporter=expanded
+
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-coverage
+          path: app/coverage/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  build-apk:
+    name: flutter build apk --debug
+    needs: [analyze, test]
+    if: needs.detect.outputs.has-flutter == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+          cache: true
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Pub get
+        working-directory: app
+        run: flutter pub get
+
+      - name: Generate code
+        working-directory: app
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Build debug APK
+        working-directory: app
+        run: flutter build apk --debug
+
+      - name: Check APK size (<50MB for debug)
+        working-directory: app
+        run: |
+          APK=$(find build/app/outputs/flutter-apk -name "*.apk" | head -1)
+          if [ -z "$APK" ]; then
+            echo "APK not found"
+            exit 1
+          fi
+          SIZE=$(stat -c%s "$APK")
+          LIMIT=$((50 * 1024 * 1024))
+          echo "apk_size_bytes=$SIZE"
+          if [ "$SIZE" -gt "$LIMIT" ]; then
+            echo "APK too large: $SIZE bytes (limit $LIMIT)"
+            exit 1
+          fi
+          echo "APK size OK"
+
+      - name: Upload APK
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-debug-apk
+          path: app/build/app/outputs/flutter-apk/*.apk
+          if-no-files-found: ignore
+          retention-days: 7
