@@ -1,0 +1,145 @@
+// StudyBuddy Prisma schema
+// Spec: docs/spec-v0.2.md §5
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = []
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =====================================================================
+// Users
+// =====================================================================
+
+enum UserStatus {
+  ACTIVE
+  BANNED
+}
+
+model User {
+  id          String     @id @default(cuid())
+  openid      String     @unique
+  unionid     String?    @unique
+  nickname    String
+  avatar      String?
+  school      String?
+  major       String?
+  grade       String?
+  wechatId    String?    @map("wechat_id")
+  phone       String?    @unique
+  bio         String?    @db.VarChar(500)
+  status      UserStatus @default(ACTIVE)
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+
+  activities Activity[] @relation("creator")
+  signups    Signup[]
+
+  @@index([school, grade])
+  @@map("users")
+}
+
+// =====================================================================
+// Activities
+// =====================================================================
+
+enum ActivityType {
+  STUDY
+  SPORTS
+  BOARD_GAME
+  ONLINE_GAME
+  OTHER
+}
+
+enum ActivityStatus {
+  RECRUITING
+  FULL
+  STARTED
+  ENDED
+  CANCELED
+}
+
+enum ContentCheckStatus {
+  PENDING
+  PASS
+  BLOCKED
+}
+
+model Activity {
+  id               String             @id @default(cuid())
+  creatorId        String             @map("creator_id")
+  creator          User               @relation("creator", fields: [creatorId], references: [id])
+  type             ActivityType
+  title            String             @db.VarChar(100)
+  description      String             @db.VarChar(2000)
+  coverUrl         String?            @map("cover_url")
+  locationName     String             @map("location_name")
+  locationAddr     String             @map("location_addr")
+  locationLat      Decimal            @map("location_lat") @db.Decimal(10, 7)
+  locationLng      Decimal            @map("location_lng") @db.Decimal(10, 7)
+  startTime        DateTime           @map("start_time")
+  endTime          DateTime           @map("end_time")
+  maxParticipants  Int                @default(10) @map("max_participants")
+  currentCount     Int                @default(1) @map("current_count")
+  tags             String[]
+  status           ActivityStatus     @default(RECRUITING)
+  contentCheck     ContentCheckStatus @default(PENDING) @map("content_check")
+  createdAt        DateTime           @default(now()) @map("created_at")
+  updatedAt        DateTime           @updatedAt @map("updated_at")
+
+  signups Signup[]
+
+  @@index([status, startTime])
+  @@index([type, status, startTime])
+  @@index([locationLat, locationLng])
+  @@map("activities")
+}
+
+// =====================================================================
+// Signups
+// =====================================================================
+
+enum SignupStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELED
+}
+
+model Signup {
+  id          String       @id @default(cuid())
+  activityId  String       @map("activity_id")
+  userId      String       @map("user_id")
+  status      SignupStatus @default(APPROVED)
+  message     String?      @db.VarChar(200)
+  signedAt    DateTime     @default(now()) @map("signed_at")
+  canceledAt  DateTime?    @map("canceled_at")
+
+  activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id])
+
+  @@unique([activityId, userId])
+  @@index([userId, status])
+  @@map("signups")
+}
+
+// =====================================================================
+// Reviews (M3)
+// =====================================================================
+
+model Review {
+  id          String   @id @default(cuid())
+  activityId  String   @map("activity_id")
+  fromUserId  String   @map("from_user_id")
+  toUserId    String   @map("to_user_id")
+  rating      Int
+  comment     String?  @db.VarChar(500)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@unique([activityId, fromUserId, toUserId])
+  @@map("reviews")
+}
