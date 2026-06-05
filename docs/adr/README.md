@@ -21,7 +21,8 @@
 | [0002](./0002-miniprogram-native.md) | 微信小程序采用微信原生（不混 Taro/Uni-app） | ✅ Accepted | [架构 §2](../architecture-v1.0.md) |
 | [0003](./0003-auth-strategy.md) | 多端登录合并到同一 User（微信 + Apple + Google） | ✅ Accepted | [架构 §5.1](../architecture-v1.0.md) |
 | [0004](./0004-state-machine-for-activity.md) | 活动生命周期用显式状态机 + Cron 扫描驱动 | ✅ Accepted | [架构 §5.4](../architecture-v1.0.md) |
-| [0005](./0005-data-storage-region.md) | 数据存储地域 — 国内腾讯云 / 海外 AWS 双地域 | ✅ Accepted | [架构 §7.4](../architecture-v1.0.md) |
+| [0005](./0005-data-storage-region.md) | 数据存储地域 — AWS only (Frankfurt) | ✅ Accepted | [架构 §7.4](../architecture-v1.0.md) |
+| [0006](./0006-mapbox-for-global.md) | 地图选型 — Mapbox for global（WGS-84） | ✅ Accepted | [架构 §7.1](../architecture-v1.0.md) |
 
 ## ADR 写作规范
 

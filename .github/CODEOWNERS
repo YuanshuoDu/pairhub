@@ -1,13 +1,13 @@
 # CODEOWNERS — 每个目录的最终 review owner
 # @美国hermes 默认负责全部代码 review
-# 涉及腾讯生态的目录，需要 @爱马仕 共同 review
+# 涉及微信/地图生态的目录，需要 @爱马仕 共同 review
 # 涉及文档/测试的，@OpenClaw机器人-1896 共同 review
 # CTO @Oracle Hermes 拥有最终 merge 权
 
 # 默认
 *                                       @美国hermes
 
-# 腾讯生态相关
+# 微信/地图生态相关
 /docs/research/wechat-ecosystem.md      @爱马仕 @美国hermes
 /docs/api/wechat.md                     @爱马仕 @美国hermes
 /miniprogram/                           @美国hermes

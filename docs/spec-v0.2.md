@@ -17,10 +17,10 @@
 | D4 | ORM | **Prisma 5.x** | 类型安全 + 迁移工具链完整 |
 | D5 | 数据库 | **PostgreSQL 16** | JSON 字段、地理空间（PostGIS）原生支持 |
 | D6 | 缓存 | **Redis 7** | 活动列表 / 限流 / Session |
-| D7 | 部署 | **Docker Compose 本地 + 阿里云 / 腾讯云 P1** | @爱马仕 生态就近 |
+| D7 | 部署 | **Docker Compose 本地 + AWS Frankfurt P1** | @爱马仕 生态就近 |
 | D8 | 包管理 | **pnpm 9** | monorepo 友好，节省磁盘 |
 | D9 | 登录 | **微信一键登录（MVP）** + 手机号兜底（P2） | 决策人拍板 |
-| D10 | 地图 | **腾讯地图 API**（@爱马仕 生态优先） | 决策人指定 |
+| D10 | 地图 | **Mapbox API**（@爱马仕 生态优先） | 决策人指定 |
 | D11 | 学生认证 | **MVP 不做**（仅自报学校字段） | 避免审核成本拖慢 MVP |
 | D12 | 支付 | **MVP 不做** | 范围控制 |
 | D13 | 内容审核 | **MVP 接入微信内容安全 API**（异步过滤） | 必接，平台合规 |
@@ -115,7 +115,7 @@ model Activity {
   cover_url       String?
   location_name   String                            // 简短地点名
   location_addr   String                            // 详细地址
-  location_lat    Decimal  @db.Decimal(10, 7)       // 腾讯地图坐标系 (GCJ-02)
+  location_lat    Decimal  @db.Decimal(10, 7)       // Mapbox 坐标系 (WGS-84)
   location_lng    Decimal  @db.Decimal(10, 7)
   start_time      DateTime
   end_time        DateTime
@@ -244,7 +244,7 @@ model Review {
 - **分页**：`?page=1&page_size=20`（最大 100），响应 `{ data: [], pagination: { page, page_size, total, has_more } }`
 - **错误**：RFC 7807 Problem Details，`{ type, title, status, detail, instance, code }`
 - **时间**：所有时间字段 ISO 8601（UTC），前端按本地时区展示
-- **地理**：lat/lng 用 GCJ-02（腾讯地图坐标系），存储 Decimal(10,7)
+- **地理**：lat/lng 用 WGS-84（Mapbox 坐标系，国际标准），存储 Decimal(10,7)
 - **限流**：基于 Redis 滑动窗口，默认 100 req/min/IP，登录接口 10 req/min/IP
 
 ---
@@ -300,7 +300,7 @@ model Review {
 | 微信小程序审核被拒 | 中 | 提前在 `docs/research/wechat-ecosystem.md` 中梳理审核要点 |
 | UGC 出现违规内容 | 高 | **必须**接入微信内容安全 API（异步） |
 | 报名活动人数并发竞争 | 中 | 数据库唯一约束 + Prisma 事务，`current_count` 触发器维护 |
-| 地图坐标偏差 | 低 | 统一 GCJ-02，前端选点 SDK 直出 |
+| 地图坐标偏差 | 低 | 统一 WGS-84（Mapbox），前端选点 SDK 直出 |
 | 腾讯系 AI 角色外网受限 | 高 | @爱马仕 / @OpenClaw机器人-1896 任务以**文档/调研**为主，不涉及代码 push |
 
 ---

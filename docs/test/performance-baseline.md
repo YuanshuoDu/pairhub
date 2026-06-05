@@ -229,7 +229,7 @@ export default function () {
 ### 4.2 测量方法
 
 **工具**：
-- 微信小程序：腾讯地图 SDK + `miniprogram-automator`
+- 微信小程序：Mapbox GL JS webview + `miniprogram-automator`
 - Flutter：`tencent_map_flutter` / `amap_flutter` + DevTools
 
 **测试场景**（`tests/perf/map.js`）：

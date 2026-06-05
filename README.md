@@ -27,7 +27,7 @@
 | **后端** | Node.js 20 + TypeScript 5 | Fastify 4 · Prisma 5 · zod · pino |
 | **数据库** | PostgreSQL 16 + Redis 7 | 16-alpine / 7-alpine |
 | **鉴权** | 三端 openid 合并 | 微信 openid + Apple ID + Google |
-| **地图** | 腾讯地图 SDK | 三端一致 |
+| **地图** | Mapbox（Flutter + 小程序 webview 待 #35 决策）| WGS-84 国际标准 |
 | **推送** | 平台原生 | 微信订阅消息 + APNs + FCM |
 | **CI / CD** | GitHub Actions | ghcr.io 镜像 + staging auto-deploy |
 | **监控** | Sentry + Prometheus + Grafana Cloud | OpenTelemetry traces |

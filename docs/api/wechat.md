@@ -2,7 +2,7 @@
 
 > 配套 [spec-v0.2.md](../spec-v0.2.md)  
 > 维护人：**@爱马仕**（@OpenClaw机器人-1896 协助测试）  
-> 注意：腾讯系 AI 角色外网受限，所有调用与截图需在境内网络环境完成
+> 注意：所有 API 调用都在 AWS 海外 region 完成（无境内网络限制）
 
 ## 1. 微信小程序登录
 
@@ -59,19 +59,37 @@
   - 活动开始提醒：`{{thing1.DATA}}` 活动名 / `{{date2.DATA}}` 时间 / `{{thing3.DATA}}` 地点
   - 报名成功：`{{thing1.DATA}}` 活动名 / `{{phrase2.DATA}}` 报名结果 / `{{date3.DATA}}` 报名时间
 
-## 4. 腾讯地图
+## 4. Mapbox 地图
+
+> 决策 v1.0：主要目标用户是海外留学生，统一使用 Mapbox（WGS-84 坐标系统，国际标准）。
+> 详见 [ADR-0006 Mapbox for global](../adr/0006-mapbox-for-global.md) 和 [Issue #35](https://github.com/YuanshuoDu/studybuddy/issues/35)。
 
 ### 4.1 SDK
 
-- 小程序端：[微信小程序 JavaScript SDK](https://lbs.qq.com/qqmap_wx_jssdk/)
-- 选点组件：使用 `chooseLocation` 让用户从地图上选点
+- Flutter：[mapbox_maps_flutter](https://pub.dev/packages/mapbox_maps_flutter)（iOS / Android）
+- 微信小程序：Mapbox GL JS webview（待 #35 决策）
+- 后端：Mapbox Geocoding / Directions / Isochrone API
 
 ### 4.2 坐标系
 
-- 微信小程序原生 `wx.getLocation` 返回 **WGS-84**
-- 腾讯地图 SDK 返回 **GCJ-02**
-- **统一在数据库存储 GCJ-02**（腾讯坐标系），入库前做转换
-- 转换工具：`coordtransform.js` 或腾讯 `QQMapWX.render` 的 `fromWgs84ToGcj02`
+- **统一存储 WGS-84**（Mapbox 国际标准）
+- `wx.getLocation`（小程序）和 Mapbox SDK（Flutter）**均直接返回 WGS-84**，无需转换
+- 数据库 `location_lat / location_lng` 字段直接存 WGS-84
+- 显示与计算：Mapbox 自带投影，无需额外处理
+
+### 4.3 选点流程
+
+1. 用户点击「选择地点」
+2. 客户端打开 Mapbox 选点 UI（Flutter native / 小程序 webview）
+3. 用户选点 → 拿到 `{lat, lng, place_name}`
+4. 客户端调 `Mapbox Geocoding API` 反向解析 → `{addr, city, country}`
+5. 提交 `POST /api/v1/activities` 时带上完整 location 对象
+
+### 4.4 Key 管理
+
+- 公开 token（URL restricted）：用于前端 SDK
+- Secret token：用于后端 API 调用
+- 存放：GitHub Secrets + AWS Secrets Manager
 
 ### 4.3 地理筛选后端
 
@@ -96,7 +114,7 @@
 ## 7. 待办（@爱马仕）
 
 - [ ] 申请小程序 AppID（@杜元朔 提供主体）
-- [ ] 申请腾讯地图开发者 Key
+- [ ] 申请 Mapbox 账号 + public/secret token
 - [ ] 确认内容安全 API 调用配额
 - [ ] 调研：是否需要 ICP 备案（取决于部署位置）
 - [ ] 调研：海外用户访问备案限制（境外用户可能需 Web H5 fallback）
