@@ -1,0 +1,434 @@
+/**
+ * User module — HTTP integration tests.
+ *
+ * We mock `@/lib/prisma.js` and `@/lib/redis.js` at the module level
+ * (same trick the health tests use) so we never touch a real database.
+ * The mock Prisma is a plain object with vi.fn()s; we configure the
+ * stubs per-test inside `beforeEach`.
+ *
+ * What this test exercises:
+ *   - The full Fastify route stack (preHandler → service → serializer)
+ *   - Auth via `app.authenticate` (401 for missing/bad token, 200 for good)
+ *   - 403 / 404 from the service bubbling up as RFC 7807 bodies
+ *   - Zod validation failures from the route
+ *
+ * What this test does NOT exercise:
+ *   - Real Postgres / Redis (use `pnpm test:integration` against a docker
+ *     stack for that — out of scope for the unit-test pipeline)
+ */
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { FastifyInstance } from 'fastify';
+
+import { buildApp } from '@/lib/app.js';
+
+// ---------------------------------------------------------------------------
+// Mocks — replace prisma + redis BEFORE importing the app builder
+// ---------------------------------------------------------------------------
+
+const mockPrismaState = {
+  user: {
+    findUnique: vi.fn(),
+    update: vi.fn(),
+  },
+  activity: {
+    findMany: vi.fn(),
+    count: vi.fn(),
+  },
+};
+
+vi.mock('@/lib/prisma.js', async () => {
+  const actual = await vi.importActual<typeof import('@/lib/prisma.js')>('@/lib/prisma.js');
+  return {
+    ...actual,
+    prisma: mockPrismaState,
+    pingPrisma: vi.fn().mockResolvedValue(undefined),
+    closePrisma: vi.fn().mockResolvedValue(undefined),
+  };
+});
+
+vi.mock('@/lib/redis.js', async () => {
+  const actual = await vi.importActual<typeof import('@/lib/redis.js')>('@/lib/redis.js');
+  // The @fastify/rate-limit plugin calls redis.defineCommand() during
+  // registration. We provide a stub that mimics the ioredis surface
+  // just enough to get past plugin load + tear-down.
+  const fakeRedis = {
+    ping: vi.fn().mockResolvedValue('PONG'),
+    defineCommand: vi.fn(),
+    quit: vi.fn().mockResolvedValue('OK'),
+    disconnect: vi.fn(),
+    on: vi.fn(),
+    duplicate: vi.fn(),
+  };
+  return {
+    ...actual,
+    redis: fakeRedis,
+    pingRedis: vi.fn().mockResolvedValue(undefined),
+    closeRedis: vi.fn().mockResolvedValue(undefined),
+  };
+});
+
+// ---------------------------------------------------------------------------
+// Test fixtures
+// ---------------------------------------------------------------------------
+
+const SECRET = 'test-secret-that-is-at-least-32-characters-long';
+
+function makeUserRow(overrides: Record<string, unknown> = {}) {
+  return {
+    id: 'usr_alice',
+    openid: 'openid_alice',
+    unionid: null,
+    nickname: 'Alice',
+    avatar: 'https://cdn.example.com/a.png',
+    school: 'MIT',
+    major: 'CS',
+    grade: null,
+    wechatId: null,
+    phone: null,
+    bio: 'hi',
+    status: 'ACTIVE',
+    createdAt: new Date('2026-06-01T00:00:00.000Z'),
+    updatedAt: new Date('2026-06-02T00:00:00.000Z'),
+    ...overrides,
+  };
+}
+
+function makeActivityRow(overrides: Record<string, unknown> = {}) {
+  return {
+    id: 'act_1',
+    creatorId: 'usr_alice',
+    type: 'SPORTS',
+    title: '羽毛球',
+    description: 'desc',
+    coverUrl: null,
+    locationName: 'loc',
+    locationAddr: 'addr',
+    locationLat: 39.9842,
+    locationLng: 116.3074,
+    startTime: new Date('2026-06-10T10:00:00.000Z'),
+    endTime: new Date('2026-06-10T12:00:00.000Z'),
+    maxParticipants: 8,
+    currentCount: 2,
+    tags: [],
+    status: 'RECRUITING',
+    contentCheck: 'PASS',
+    createdAt: new Date('2026-06-01T00:00:00.000Z'),
+    updatedAt: new Date('2026-06-01T00:00:00.000Z'),
+    ...overrides,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Test suite
+// ---------------------------------------------------------------------------
+
+describe('user module — HTTP integration', () => {
+  let app: FastifyInstance;
+  let aliceToken: string;
+  let bobToken: string;
+
+  beforeEach(async () => {
+    process.env['NODE_ENV'] = 'test';
+    process.env['JWT_SECRET'] = SECRET;
+    process.env['DATABASE_URL'] = 'postgresql://x:y@localhost:5432/x';
+    process.env['REDIS_URL'] = 'redis://localhost:6379';
+
+    vi.resetModules();
+    mockPrismaState.user.findUnique.mockReset();
+    mockPrismaState.user.update.mockReset();
+    mockPrismaState.activity.findMany.mockReset();
+    mockPrismaState.activity.count.mockReset();
+
+    // Build a fresh app per test so module state doesn't leak.
+    const mod = await import('@/lib/app.js');
+    app = await mod.buildApp({ silent: true });
+    await app.ready();
+
+    aliceToken = app.jwt.sign({ sub: 'usr_alice' });
+    bobToken = app.jwt.sign({ sub: 'usr_bob' });
+  });
+
+  afterEach(async () => {
+    await app.close();
+  });
+
+  // =====================================================================
+  // GET /api/v1/users/me
+  // =====================================================================
+
+  describe('GET /api/v1/users/me', () => {
+    it('returns 401 with no token', async () => {
+      const res = await app.inject({ method: 'GET', url: '/api/v1/users/me' });
+      expect(res.statusCode).toBe(401);
+    });
+
+    it('returns 401 with a bad token', async () => {
+      const res = await app.inject({
+        method: 'GET',
+        url: '/api/v1/users/me',
+        headers: { authorization: 'Bearer not-a-real-jwt' },
+      });
+      expect(res.statusCode).toBe(401);
+    });
+
+    it('returns the full user DTO on success', async () => {
+      mockPrismaState.user.findUnique.mockResolvedValue(makeUserRow());
+
+      const res = await app.inject({
+        method: 'GET',
+        url: '/api/v1/users/me',
+        headers: { authorization: `Bearer ${aliceToken}` },
+      });
+
+      expect(res.statusCode).toBe(200);
+      const body = res.json();
+      expect(body.data.id).toBe('usr_alice');
+      expect(body.data.bio).toBe('hi');
+      expect(body.data.lastActiveAt).toBe('2026-06-02T00:00:00.000Z');
+    });
+
+    it('returns 404 for unknown user (token sub has no row)', async () => {
+      mockPrismaState.user.findUnique.mockResolvedValue(null);
+
+      const res = await app.inject({
+        method: 'GET',
+        url: '/api/v1/users/me',
+        headers: { authorization: `Bearer ${aliceToken}` },
+      });
+      expect(res.statusCode).toBe(404);
+      expect(res.json().code).toBe('USER_NOT_FOUND');
+    });
+  });
+
+  // =====================================================================
+  // PATCH /api/v1/users/me
+  // =====================================================================
+
+  describe('PATCH /api/v1/users/me', () => {
+    it('returns 401 with no token', async () => {
+      const res = await app.inject({
+        method: 'PATCH',
+        url: '/api/v1/users/me',
+        payload: { nickname: 'X' },
+      });
+      expect(res.statusCode).toBe(401);
+    });
+
+    it('updates fields and returns the new profile', async () => {
+      mockPrismaState.user.update.mockResolvedValue(
+        makeUserRow({ nickname: 'Alice2', bio: 'updated' }),
+      );
+
+      const res = await app.inject({
+        method: 'PATCH',
+        url: '/api/v1/users/me',
+        headers: { authorization: `Bearer ${aliceToken}` },
+        payload: { nickname: 'Alice2', bio: 'updated' },
+      });
+
+      expect(res.statusCode).toBe(200);
+      const body = res.json();
+      expect(body.data.nickname).toBe('Alice2');
+      expect(body.data.bio).toBe('updated');
+    });
+
+    it('rejects an empty body (zod refine)', async () => {
+      const res = await app.inject({
+        method: 'PATCH',
+        url: '/api/v1/users/me',
+        headers: { authorization: `Bearer ${aliceToken}` },
+        payload: {},
+      });
+      expect(res.statusCode).toBe(400);
+      expect(res.json().code).toBe('VALIDATION_ERROR');
+    });
+
+    it('rejects a bio over 500 chars', async () => {
+      const res = await app.inject({
+        method: 'PATCH',
+        url: '/api/v1/users/me',
+        headers: { authorization: `Bearer ${aliceToken}` },
+        payload: { bio: 'a'.repeat(501) },
+      });
+      expect(res.statusCode).toBe(400);
+      expect(res.json().code).toBe('VALIDATION_ERROR');
+    });
+
+    it('rejects a nickname over 50 chars', async () => {
+      const res = await app.inject({
+        method: 'PATCH',
+        url: '/api/v1/users/me',
+        headers: { authorization: `Bearer ${aliceToken}` },
+        payload: { nickname: 'a'.repeat(51) },
+      });
+      expect(res.statusCode).toBe(400);
+    });
+
+    it('forbids updating email/phone (strict schema)', async () => {
+      const res = await app.inject({
+        method: 'PATCH',
+        url: '/api/v1/users/me',
+        headers: { authorization: `Bearer ${aliceToken}` },
+        payload: { email: 'a@b.c' },
+      });
+      expect(res.statusCode).toBe(400);
+    });
+  });
+
+  // =====================================================================
+  // GET /api/v1/users/:id
+  // =====================================================================
+
+  describe('GET /api/v1/users/:id', () => {
+    it('returns 404 for an unknown user', async () => {
+      mockPrismaState.user.findUnique.mockResolvedValue(null);
+      const res = await app.inject({ method: 'GET', url: '/api/v1/users/usr_ghost' });
+      expect(res.statusCode).toBe(404);
+    });
+
+    it('returns public fields for an anonymous viewer (no bio)', async () => {
+      mockPrismaState.user.findUnique.mockResolvedValue(makeUserRow());
+
+      const res = await app.inject({ method: 'GET', url: '/api/v1/users/usr_alice' });
+      expect(res.statusCode).toBe(200);
+      const dto = res.json().data;
+      expect(dto.id).toBe('usr_alice');
+      expect(dto.bio).toBeUndefined();
+      expect(dto.email).toBeUndefined();
+    });
+
+    it('returns public fields when viewed by another user', async () => {
+      mockPrismaState.user.findUnique.mockResolvedValue(makeUserRow());
+
+      const res = await app.inject({
+        method: 'GET',
+        url: '/api/v1/users/usr_alice',
+        headers: { authorization: `Bearer ${bobToken}` },
+      });
+      expect(res.statusCode).toBe(200);
+      const dto = res.json().data;
+      expect(dto.bio).toBeUndefined();
+    });
+
+    it('returns private fields when the user views their own profile', async () => {
+      mockPrismaState.user.findUnique.mockResolvedValue(makeUserRow());
+
+      const res = await app.inject({
+        method: 'GET',
+        url: '/api/v1/users/usr_alice',
+        headers: { authorization: `Bearer ${aliceToken}` },
+      });
+      expect(res.statusCode).toBe(200);
+      const dto = res.json().data;
+      expect(dto.bio).toBe('hi');
+      expect(dto.lastActiveAt).toBeDefined();
+    });
+
+    it('returns 401 for an invalid token (does not silently fall through to public)', async () => {
+      const res = await app.inject({
+        method: 'GET',
+        url: '/api/v1/users/usr_alice',
+        headers: { authorization: 'Bearer broken' },
+      });
+      expect(res.statusCode).toBe(401);
+    });
+
+    it('hides banned users from strangers but lets them see themselves', async () => {
+      mockPrismaState.user.findUnique.mockResolvedValue(makeUserRow({ status: 'BANNED' }));
+
+      const stranger = await app.inject({
+        method: 'GET',
+        url: '/api/v1/users/usr_alice',
+        headers: { authorization: `Bearer ${bobToken}` },
+      });
+      expect(stranger.statusCode).toBe(404);
+
+      const self = await app.inject({
+        method: 'GET',
+        url: '/api/v1/users/usr_alice',
+        headers: { authorization: `Bearer ${aliceToken}` },
+      });
+      expect(self.statusCode).toBe(200);
+    });
+  });
+
+  // =====================================================================
+  // GET /api/v1/users/me/activities
+  // =====================================================================
+
+  describe('GET /api/v1/users/me/activities', () => {
+    it('returns 401 with no token', async () => {
+      const res = await app.inject({ method: 'GET', url: '/api/v1/users/me/activities' });
+      expect(res.statusCode).toBe(401);
+    });
+
+    it('returns the paginated list of created activities', async () => {
+      mockPrismaState.activity.findMany.mockResolvedValue([makeActivityRow()]);
+      mockPrismaState.activity.count.mockResolvedValue(1);
+
+      const res = await app.inject({
+        method: 'GET',
+        url: '/api/v1/users/me/activities?type=created&page=1&pageSize=10',
+        headers: { authorization: `Bearer ${aliceToken}` },
+      });
+
+      expect(res.statusCode).toBe(200);
+      const body = res.json();
+      expect(body.data).toHaveLength(1);
+      expect(body.data[0].relation).toBe('created');
+      expect(body.total).toBe(1);
+      expect(body.page).toBe(1);
+      expect(body.pageSize).toBe(10);
+    });
+
+    it('returns 400 for an unknown type', async () => {
+      const res = await app.inject({
+        method: 'GET',
+        url: '/api/v1/users/me/activities?type=foo',
+        headers: { authorization: `Bearer ${aliceToken}` },
+      });
+      expect(res.statusCode).toBe(400);
+    });
+  });
+
+  // =====================================================================
+  // End-to-end CRUD consistency (mock-based)
+  // =====================================================================
+
+  describe('end-to-end CRUD consistency', () => {
+    it('create -> update -> read returns consistent data', async () => {
+      // 1. Read /me: empty
+      mockPrismaState.user.findUnique.mockResolvedValueOnce(makeUserRow({ nickname: 'Newbie' }));
+      const me1 = await app.inject({
+        method: 'GET',
+        url: '/api/v1/users/me',
+        headers: { authorization: `Bearer ${aliceToken}` },
+      });
+      expect(me1.json().data.nickname).toBe('Newbie');
+
+      // 2. Update /me
+      mockPrismaState.user.update.mockResolvedValueOnce(
+        makeUserRow({ nickname: 'Newbie2', school: 'Stanford' }),
+      );
+      const upd = await app.inject({
+        method: 'PATCH',
+        url: '/api/v1/users/me',
+        headers: { authorization: `Bearer ${aliceToken}` },
+        payload: { nickname: 'Newbie2', school: 'Stanford' },
+      });
+      expect(upd.json().data.nickname).toBe('Newbie2');
+      expect(upd.json().data.school).toBe('Stanford');
+
+      // 3. Read /users/:id (public) reflects the update
+      mockPrismaState.user.findUnique.mockResolvedValueOnce(
+        makeUserRow({ nickname: 'Newbie2', school: 'Stanford' }),
+      );
+      const pub = await app.inject({ method: 'GET', url: '/api/v1/users/usr_alice' });
+      const dto = pub.json().data;
+      expect(dto.nickname).toBe('Newbie2');
+      expect(dto.school).toBe('Stanford');
+      // bio is private and must NOT leak via the public endpoint
+      expect(dto.bio).toBeUndefined();
+    });
+  });
+});

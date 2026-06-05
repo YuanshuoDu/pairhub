@@ -27,6 +27,7 @@ import errorHandlerPlugin from '@/plugins/error-handler.js';
 import rateLimitPlugin from '@/plugins/rate-limit.js';
 
 import { registerHealthModule } from '@/modules/health/index.js';
+import { registerUserModule } from '@/modules/user/index.js';
 
 export interface BuildAppOptions {
   /** Skip route printing (used in tests). */
@@ -65,6 +66,7 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
 
   // Routes
   await registerHealthModule(app);
+  await registerUserModule(app);
 
   // Dev-only: pretty-print registered routes
   if (env.NODE_ENV === 'development' && !options.silent) {
