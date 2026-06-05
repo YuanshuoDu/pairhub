@@ -19,4 +19,7 @@
 
 # 架构决策（需要 CTO 同意）
 /docs/architecture.md                   @Oracle Hermes @美国hermes
+/docs/architecture-v1.0.md              @Oracle Hermes @美国hermes
+/docs/adr/                              @Oracle Hermes @美国hermes
 /docs/spec-*.md                         @Oracle Hermes @美国hermes
+/docs/api/v1.md                         @Oracle Hermes @美国hermes
