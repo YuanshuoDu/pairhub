@@ -17,6 +17,14 @@ export const API_CONFIG = {
   retryDelay: 500,
 };
 
+/**
+ * 业务端点 base URL（仅域名部分，不含 /api/v1 前缀）
+ *
+ * 业务代码（页面、API 客户端）应通过此常量拼接完整端点，而不是硬编码
+ * host，避免在多环境（dev / mock / 生产）切换时需要全文检索替换。
+ */
+export const API_BASE = API_CONFIG.baseUrl;
+
 /** 是否 mock 模式 */
 export const isMockMode = (): boolean => {
   try {

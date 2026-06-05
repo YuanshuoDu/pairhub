@@ -17,7 +17,7 @@ import { userStore } from '../store/user';
 import type { ApiResponse } from '../types/common';
 import { uuid } from '../utils/index';
 
-type Method = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'HEAD';
+type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD';
 
 export interface RequestOptions {
   url: string;
@@ -206,6 +206,8 @@ export const http = {
     request<T>({ ...opts, url, method: 'POST', data }),
   put: <T = unknown>(url: string, data?: unknown, opts: Omit<RequestOptions, 'url' | 'method' | 'data'> = {}) =>
     request<T>({ ...opts, url, method: 'PUT', data }),
+  patch: <T = unknown>(url: string, data?: unknown, opts: Omit<RequestOptions, 'url' | 'method' | 'data'> = {}) =>
+    request<T>({ ...opts, url, method: 'PATCH', data }),
   delete: <T = unknown>(url: string, opts: Omit<RequestOptions, 'url' | 'method'> = {}) =>
     request<T>({ ...opts, url, method: 'DELETE' }),
 };
