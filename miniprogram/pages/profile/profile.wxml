@@ -1,0 +1,66 @@
+<view class="profile">
+  <!-- 头部信息 -->
+  <view class="profile__header">
+    <view class="profile__avatar">{{avatarText}}</view>
+    <view class="profile__info">
+      <view class="profile__name">
+        {{userInfo.nickname || '未登录'}}
+        <text wx:if="{{!userInfo.phoneBound}}" class="profile__tag">未绑定手机</text>
+      </view>
+      <view class="profile__bio">{{userInfo.bio || '这个人很懒，什么都没写～'}}</view>
+    </view>
+    <view class="profile__edit" bindtap="onEditTap">编辑</view>
+  </view>
+
+  <!-- 数据卡片 -->
+  <view class="profile__stats">
+    <view class="profile__stat">
+      <view class="profile__stat-num">{{stats.published}}</view>
+      <view class="profile__stat-label">已发布</view>
+    </view>
+    <view class="profile__stat">
+      <view class="profile__stat-num">{{stats.signedUp}}</view>
+      <view class="profile__stat-label">已报名</view>
+    </view>
+    <view class="profile__stat">
+      <view class="profile__stat-num">{{stats.finished}}</view>
+      <view class="profile__stat-label">已完成</view>
+    </view>
+    <view class="profile__stat">
+      <view class="profile__stat-num">{{stats.friends}}</view>
+      <view class="profile__stat-label">搭子数</view>
+    </view>
+  </view>
+
+  <!-- 入口列表 -->
+  <view class="profile__list">
+    <view class="profile__list-item" bindtap="onMenuTap" data-url="/pages/profile/orders">
+      <text class="profile__list-icon">📋</text>
+      <text class="profile__list-text">我的报名</text>
+      <text class="profile__list-arrow">›</text>
+    </view>
+    <view class="profile__list-item" bindtap="onMenuTap" data-url="/pages/profile/published">
+      <text class="profile__list-icon">📌</text>
+      <text class="profile__list-text">我发布的</text>
+      <text class="profile__list-arrow">›</text>
+    </view>
+    <view class="profile__list-item" bindtap="onMenuTap" data-url="/pages/profile/favorites">
+      <text class="profile__list-icon">⭐</text>
+      <text class="profile__list-text">我的收藏</text>
+      <text class="profile__list-arrow">›</text>
+    </view>
+    <view class="profile__list-item" bindtap="onMenuTap" data-url="/pages/profile/settings">
+      <text class="profile__list-icon">⚙️</text>
+      <text class="profile__list-text">设置</text>
+      <text class="profile__list-arrow">›</text>
+    </view>
+    <view class="profile__list-item" bindtap="onMenuTap" data-url="/pages/profile/about">
+      <text class="profile__list-icon">ℹ️</text>
+      <text class="profile__list-text">关于 Pairhub</text>
+      <text class="profile__list-arrow">›</text>
+    </view>
+  </view>
+
+  <view wx:if="{{userInfo}}" class="profile__logout" bindtap="onLogout">退出登录</view>
+  <view wx:else class="profile__login" bindtap="onLogin">立即登录</view>
+</view>

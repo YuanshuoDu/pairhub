@@ -1,0 +1,10 @@
+<view class="ls">
+  <view wx:for="{{rows}}" wx:key="*this" class="ls__item">
+    <view class="ls__avatar"></view>
+    <view class="ls__body">
+      <view class="ls__line ls__line--1" style="width: {{item.l1}}%;"></view>
+      <view class="ls__line ls__line--2" style="width: {{item.l2}}%;"></view>
+      <view class="ls__line ls__line--3" style="width: {{item.l3}}%;"></view>
+    </view>
+  </view>
+</view>

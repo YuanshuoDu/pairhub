@@ -1,0 +1,132 @@
+.messages {
+  min-height: 100vh;
+  background: var(--color-bg);
+}
+
+.messages__tabs {
+  display: flex;
+  background: var(--color-bg-card);
+  border-bottom: 1rpx solid var(--color-border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.messages__tab {
+  flex: 1;
+  text-align: center;
+  padding: 28rpx 0;
+  font-size: 28rpx;
+  color: var(--color-text-secondary);
+  position: relative;
+}
+
+.messages__tab.is-active {
+  color: var(--color-primary);
+  font-weight: 500;
+}
+
+.messages__tab.is-active::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: 48rpx;
+  height: 4rpx;
+  background: var(--color-primary);
+  border-radius: 2rpx;
+}
+
+.messages__tab-badge {
+  display: inline-block;
+  min-width: 32rpx;
+  height: 32rpx;
+  padding: 0 8rpx;
+  margin-left: 8rpx;
+  background: var(--color-danger);
+  color: #fff;
+  font-size: 20rpx;
+  line-height: 32rpx;
+  text-align: center;
+  border-radius: 16rpx;
+  vertical-align: middle;
+}
+
+.messages__list {
+  padding: 16rpx 32rpx;
+}
+
+.messages__item {
+  display: flex;
+  align-items: center;
+  background: var(--color-bg-card);
+  padding: 24rpx;
+  border-radius: 16rpx;
+  margin-bottom: 16rpx;
+  box-shadow: var(--shadow-sm);
+}
+
+.messages__item-icon {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 16rpx;
+  background: var(--color-primary-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40rpx;
+  margin-right: 24rpx;
+  flex-shrink: 0;
+}
+
+.messages__item-icon--system { background: #fff3e0; }
+.messages__item-icon--activity { background: #e8f5e9; }
+.messages__item-icon--chat {
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 32rpx;
+  font-weight: 600;
+  border-radius: 50%;
+}
+
+.messages__item-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.messages__item-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8rpx;
+}
+
+.messages__item-title {
+  font-size: 30rpx;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.messages__item-time {
+  font-size: 22rpx;
+  color: var(--color-text-placeholder);
+}
+
+.messages__item-desc {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 26rpx;
+  color: var(--color-text-secondary);
+  gap: 16rpx;
+}
+
+.messages__item-unread {
+  background: var(--color-danger);
+  color: #fff;
+  font-size: 22rpx;
+  padding: 2rpx 12rpx;
+  border-radius: 999rpx;
+  flex-shrink: 0;
+}

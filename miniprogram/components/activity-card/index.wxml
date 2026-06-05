@@ -1,0 +1,41 @@
+<view class="ac" bindtap="onTap">
+  <view class="ac__cover" wx:if="{{activity.cover}}">
+    <image src="{{activity.cover}}" mode="aspectFill" />
+  </view>
+
+  <view class="ac__body">
+    <view class="ac__top">
+      <view class="ac__type ac__type--{{activity.type}}">{{typeLabel}}</view>
+      <view wx:if="{{activity.signedUp}}" class="ac__signed">已报名</view>
+    </view>
+
+    <view class="ac__title ellipsis-2">{{activity.title}}</view>
+
+    <view class="ac__meta">
+      <view class="ac__meta-item">
+        <text class="ac__meta-icon">⏰</text>
+        <text class="ac__meta-text">{{timeText}}</text>
+      </view>
+      <view class="ac__meta-item">
+        <text class="ac__meta-icon">📍</text>
+        <text class="ac__meta-text ellipsis">{{activity.location.name}}</text>
+      </view>
+    </view>
+
+    <view class="ac__bottom">
+      <view class="ac__participants">
+        <view class="ac__participants-bar">
+          <view class="ac__participants-fill" style="width: {{progress}}%;"></view>
+        </view>
+        <text class="ac__participants-text">{{activity.currentParticipants}}/{{activity.maxParticipants}}</text>
+      </view>
+
+      <view
+        class="ac__action {{activity.signedUp ? 'is-signed' : ''}}"
+        catchtap="onSignup"
+      >
+        {{activity.signedUp ? '已报名' : '报名'}}
+      </view>
+    </view>
+  </view>
+</view>

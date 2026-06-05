@@ -1,0 +1,21 @@
+<view class="tabbar" style="padding-bottom: {{safeBottom}}px;">
+  <view
+    wx:for="{{list}}"
+    wx:key="pagePath"
+    class="tabbar__item {{selected === index ? 'is-active' : ''}}"
+    data-index="{{index}}"
+    data-path="{{item.pagePath}}"
+    bindtap="onTap"
+  >
+    <view class="tabbar__icon-wrap">
+      <image
+        class="tabbar__icon"
+        src="{{selected === index ? item.selectedIconPath : item.iconPath}}"
+        mode="aspectFit"
+      />
+      <view wx:if="{{item.badge}}" class="tabbar__badge">{{item.badge}}</view>
+      <view wx:elif="{{item.dot}}" class="tabbar__dot"></view>
+    </view>
+    <text class="tabbar__label {{selected === index ? 'is-active' : ''}}">{{item.text}}</text>
+  </view>
+</view>

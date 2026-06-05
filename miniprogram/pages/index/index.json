@@ -1,0 +1,10 @@
+{
+  "navigationBarTitleText": "Pairhub",
+  "navigationBarBackgroundColor": "#ffffff",
+  "enablePullDownRefresh": true,
+  "usingComponents": {
+    "activity-card": "/components/activity-card/index",
+    "empty-state": "/components/empty-state/index",
+    "loading-skeleton": "/components/loading-skeleton/index"
+  }
+}

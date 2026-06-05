@@ -1,0 +1,50 @@
+<view class="index">
+  <!-- 顶部欢迎语 + 搜索 -->
+  <view class="index__header">
+    <view class="index__hello">
+      <view class="index__hello-title">Hi, {{nickname || '同学'}}</view>
+      <view class="index__hello-sub">今天想找什么样的学习搭子？</view>
+    </view>
+    <view class="index__search" bindtap="onSearchTap">
+      <text class="index__search-icon">⌕</text>
+      <text class="index__search-placeholder">搜索活动 / 主题 / 学校</text>
+    </view>
+  </view>
+
+  <!-- 分类标签 -->
+  <scroll-view scroll-x class="index__filters" enable-flex>
+    <view
+      wx:for="{{filters}}"
+      wx:key="id"
+      class="index__filter {{activeFilter === item.id ? 'is-active' : ''}}"
+      data-id="{{item.id}}"
+      bindtap="onFilterChange"
+    >
+      {{item.label}}
+    </view>
+  </scroll-view>
+
+  <!-- 列表 -->
+  <view class="index__list">
+    <loading-skeleton wx:if="{{loading && !list.length}}" count="{{3}}" />
+
+    <view wx:elif="{{!list.length}}" class="index__empty">
+      <empty-state
+        title="还没有活动"
+        desc="下拉刷新看看，或者切换其他分类"
+        icon="📋"
+      />
+    </view>
+
+    <block wx:else>
+      <activity-card
+        wx:for="{{list}}"
+        wx:key="id"
+        activity="{{item}}"
+        bind:tap="onCardTap"
+        bind:signup="onSignupTap"
+      />
+      <view class="index__footer" wx:if="{{!hasMore}}">— 没有更多了 —</view>
+    </block>
+  </view>
+</view>

@@ -1,0 +1,186 @@
+/**
+ * 全局样式 + 主题变量
+ *
+ * 设计原则：
+ * - 颜色 / 间距 / 字号 / 圆角全部 CSS 变量化，方便换肤
+ * - 不写具体业务的样式，全部走 components 或页面 .wxss
+ * - 使用 rpx 适配（iPhone6 750 设计稿）
+ */
+
+page {
+  /* ========== 主题色 ========== */
+  --color-primary: #4f8cff;
+  --color-primary-light: #e8f0ff;
+  --color-primary-dark: #2f6cdb;
+  --color-secondary: #ff8a3d;
+  --color-success: #18bc6c;
+  --color-warning: #f5a623;
+  --color-danger: #e94b4b;
+
+  /* ========== 文字 ========== */
+  --color-text-primary: #1a1a1a;
+  --color-text-regular: #4a4a4a;
+  --color-text-secondary: #8a8a8a;
+  --color-text-placeholder: #c0c0c0;
+  --color-text-inverse: #ffffff;
+
+  /* ========== 背景 ========== */
+  --color-bg: #f5f6fa;
+  --color-bg-card: #ffffff;
+  --color-bg-mask: rgba(0, 0, 0, 0.5);
+
+  /* ========== 边框 ========== */
+  --color-border: #ebedf0;
+  --color-divider: #f0f0f0;
+
+  /* ========== 间距 ========== */
+  --space-xs: 8rpx;
+  --space-sm: 16rpx;
+  --space-md: 24rpx;
+  --space-lg: 32rpx;
+  --space-xl: 48rpx;
+  --space-xxl: 64rpx;
+
+  /* ========== 圆角 ========== */
+  --radius-sm: 8rpx;
+  --radius-md: 16rpx;
+  --radius-lg: 24rpx;
+  --radius-pill: 999rpx;
+
+  /* ========== 字号 ========== */
+  --font-xs: 22rpx;
+  --font-sm: 26rpx;
+  --font-md: 28rpx;
+  --font-lg: 32rpx;
+  --font-xl: 36rpx;
+  --font-xxl: 44rpx;
+
+  /* ========== 阴影 ========== */
+  --shadow-sm: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 8rpx 24rpx rgba(0, 0, 0, 0.1);
+}
+
+/* ========== Reset ========== */
+page,
+page view,
+page text,
+page image,
+page button {
+  box-sizing: border-box;
+}
+
+page {
+  background: var(--color-bg);
+  color: var(--color-text-primary);
+  font-size: var(--font-md);
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif;
+  line-height: 1.5;
+}
+
+view,
+text {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ========== 通用工具类 ========== */
+.flex {
+  display: flex;
+}
+.flex-col {
+  display: flex;
+  flex-direction: column;
+}
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.flex-1 {
+  flex: 1;
+}
+
+.text-primary {
+  color: var(--color-primary);
+}
+.text-secondary {
+  color: var(--color-text-secondary);
+}
+.text-danger {
+  color: var(--color-danger);
+}
+.text-bold {
+  font-weight: 600;
+}
+
+.bg-card {
+  background: var(--color-bg-card);
+  border-radius: var(--radius-md);
+}
+
+.ellipsis {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.ellipsis-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.ellipsis-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ========== Button 重置 ========== */
+button {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+  line-height: 1;
+}
+button::after {
+  border: none;
+}
+
+/* ========== 主题色按钮 ========== */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--space-lg);
+  height: 88rpx;
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
+  border-radius: var(--radius-pill);
+  font-size: var(--font-md);
+  font-weight: 500;
+}
+.btn-primary[disabled],
+.btn-primary.btn-disabled {
+  background: var(--color-text-placeholder);
+  color: var(--color-text-inverse);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--space-lg);
+  height: 88rpx;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  border-radius: var(--radius-pill);
+  font-size: var(--font-md);
+  font-weight: 500;
+}
