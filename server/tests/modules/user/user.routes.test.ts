@@ -18,8 +18,8 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
-
-import { buildApp } from '@/lib/app.js';
+import type * as PrismaModule from '@/lib/prisma.js';
+import type * as RedisModule from '@/lib/redis.js';
 
 // ---------------------------------------------------------------------------
 // Mocks — replace prisma + redis BEFORE importing the app builder
@@ -37,7 +37,7 @@ const mockPrismaState = {
 };
 
 vi.mock('@/lib/prisma.js', async () => {
-  const actual = await vi.importActual<typeof import('@/lib/prisma.js')>('@/lib/prisma.js');
+  const actual = await vi.importActual<typeof PrismaModule>('@/lib/prisma.js');
   return {
     ...actual,
     prisma: mockPrismaState,
@@ -47,13 +47,25 @@ vi.mock('@/lib/prisma.js', async () => {
 });
 
 vi.mock('@/lib/redis.js', async () => {
-  const actual = await vi.importActual<typeof import('@/lib/redis.js')>('@/lib/redis.js');
+  const actual = await vi.importActual<typeof RedisModule>('@/lib/redis.js');
   // The @fastify/rate-limit plugin calls redis.defineCommand() during
-  // registration. We provide a stub that mimics the ioredis surface
-  // just enough to get past plugin load + tear-down.
-  const fakeRedis = {
+  // registration to compile the rate-limit Lua script into a method on
+  // the client. A plain `vi.fn()` for `defineCommand` leaves the
+  // `rateLimit` method undefined, and the RedisStore will throw
+  // `this.redis.rateLimit is not a function` on the first request.
+  //
+  // We register a stub that mimics ioredis.defineCommand by attaching a
+  // vi.fn() to the client with the command name. The Lua script itself
+  // doesn't run in unit tests, so we just need the call to resolve with
+  // a plausible [count, ttl] tuple.
+  const fakeRedis: Record<string, unknown> = {
     ping: vi.fn().mockResolvedValue('PONG'),
-    defineCommand: vi.fn(),
+    defineCommand: vi.fn().mockImplementation(function (
+      this: Record<string, unknown>,
+      name: string,
+    ) {
+      this[name] = vi.fn().mockResolvedValue([1, 60_000]);
+    }),
     quit: vi.fn().mockResolvedValue('OK'),
     disconnect: vi.fn(),
     on: vi.fn(),

@@ -10,6 +10,9 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
 import Fastify, { type FastifyInstance } from 'fastify';
+// fastify-print-routes ships types/index.d.ts but the package.json `exports`
+// field doesn't expose them — TS falls back to `any` for the import.
+// @ts-expect-error -- upstream types exist but are not reachable via `exports`
 import fastifyPrintRoutes from 'fastify-print-routes';
 import cookie from '@fastify/cookie';
 import helmet from '@fastify/helmet';
@@ -27,7 +30,11 @@ import errorHandlerPlugin from '@/plugins/error-handler.js';
 import rateLimitPlugin from '@/plugins/rate-limit.js';
 
 import { registerHealthModule } from '@/modules/health/index.js';
+import { registerAuthModule } from '@/modules/auth/index.js';
 import { registerUserModule } from '@/modules/user/index.js';
+import { registerActivityModule } from '@/modules/activity/index.js';
+import { registerSignupModule } from '@/modules/signup/index.js';
+import { registerReviewModule } from '@/modules/review/index.js';
 
 export interface BuildAppOptions {
   /** Skip route printing (used in tests). */
@@ -66,7 +73,11 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
 
   // Routes
   await registerHealthModule(app);
+  await registerAuthModule(app);
   await registerUserModule(app);
+  await registerActivityModule(app);
+  await registerSignupModule(app);
+  await registerReviewModule(app);
 
   // Dev-only: pretty-print registered routes
   if (env.NODE_ENV === 'development' && !options.silent) {

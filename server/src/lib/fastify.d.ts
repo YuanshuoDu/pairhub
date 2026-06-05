@@ -11,6 +11,7 @@
  *   - `req.userId` — set by `app.authenticate` after JWT verification
  */
 import 'fastify';
+import type { FastifyRequest } from 'fastify';
 import type { PrismaClient } from '@prisma/client';
 import type { Redis } from 'ioredis';
 
@@ -22,7 +23,7 @@ declare module 'fastify' {
      * Fastify preHandler that requires a valid Bearer token.
      * On success populates `req.userId`; on failure throws 401.
      */
-    authenticate: (request: import('fastify').FastifyRequest) => Promise<void>;
+    authenticate: (request: FastifyRequest) => Promise<void>;
   }
 }
 

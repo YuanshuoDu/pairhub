@@ -8,12 +8,14 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
+import type * as PrismaModule from '@/lib/prisma.js';
+import type * as RedisModule from '@/lib/redis.js';
 
 import { buildApp } from '@/lib/app.js';
 
 // Mock the ping helpers so we don't need a live DB / Redis.
 vi.mock('@/lib/prisma.js', async () => {
-  const actual = await vi.importActual<typeof import('@/lib/prisma.js')>('@/lib/prisma.js');
+  const actual = await vi.importActual<typeof PrismaModule>('@/lib/prisma.js');
   return {
     ...actual,
     pingPrisma: vi.fn(),
@@ -22,7 +24,7 @@ vi.mock('@/lib/prisma.js', async () => {
 });
 
 vi.mock('@/lib/redis.js', async () => {
-  const actual = await vi.importActual<typeof import('@/lib/redis.js')>('@/lib/redis.js');
+  const actual = await vi.importActual<typeof RedisModule>('@/lib/redis.js');
   return {
     ...actual,
     pingRedis: vi.fn(),
