@@ -1,0 +1,44 @@
+================================================================
+EVIDENCE 05 — docs/test/test-cases/ 目录树
+================================================================
+
+$ tree docs/test/test-cases/
+docs/test/test-cases/
+├── README.md
+├── _template.md
+├── auth/
+│   └── login.test.md          (5 cases: TC-AUTH-LOGIN-001 ~ 005)
+├── activity/
+│   ├── create.test.md         (5 cases: TC-ACTIVITY-CREATE-001 ~ 005)
+│   └── list.test.md           (5 cases: TC-ACTIVITY-LIST-001 ~ 005)
+└── signup/
+    └── cancel.test.md         (5 cases: TC-SIGNUP-CANCEL-001 ~ 005)
+
+总计：4 个 .test.md，20 个用例（每个文件 5 个）
+用例如约：~50KB markdown
+
+$ tree docs/test/  (顶层)
+docs/test/
+├── test-plan-v1.0.md
+├── ci-matrix.md
+├── performance-baseline.md
+├── security-checklist.md
+└── test-cases/
+    ├── README.md
+    ├── _template.md
+    ├── auth/login.test.md
+    ├── activity/create.test.md
+    ├── activity/list.test.md
+    └── signup/cancel.test.md
+
+$ tree docs/screenshots/issue-7/
+docs/screenshots/issue-7/
+├── README.md
+├── 01-test-plan-rendered.txt
+├── 02-ci-matrix-rendered.txt
+├── 03-perf-baseline-rendered.txt
+├── 04-security-checklist-rendered.txt
+└── 05-test-cases-tree.txt  ← (本文件)
+└── 06-delivery-standards-references.txt
+
+================================================================

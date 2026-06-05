@@ -1,0 +1,61 @@
+name: pairhub_app
+description: Flutter App for Pairhub — iOS + Android client for the Pairhub 留学生搭子活动 platform.
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+  flutter: '>=3.19.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State management
+  flutter_riverpod: ^2.5.1
+
+  # Routing
+  go_router: ^14.2.0
+
+  # Networking
+  dio: ^5.4.3+1
+
+  # Secure storage for tokens (NEVER use shared_preferences for tokens)
+  flutter_secure_storage: ^9.2.2
+
+  # Social auth
+  sign_in_with_apple: ^5.0.0
+  google_sign_in: ^6.2.1
+
+  # Data models
+  freezed_annotation: ^2.4.4
+  json_annotation: ^4.9.0
+
+  # Env / config
+  flutter_dotenv: ^5.1.0
+
+  # Utilities
+  intl: ^0.19.0
+  cupertino_icons: ^1.0.6
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # Lints
+  flutter_lints: ^4.0.0
+
+  # Code generation
+  build_runner: ^2.4.11
+  freezed: ^2.5.7
+  json_serializable: ^6.8.0
+
+  # Tests
+  mocktail: ^1.0.4
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/.env
+  # Generate localized messages, if added later.
+  # generate: true

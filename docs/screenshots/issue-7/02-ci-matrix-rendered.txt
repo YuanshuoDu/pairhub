@@ -1,0 +1,33 @@
+================================================================
+EVIDENCE 02 — ci-matrix.md (GitHub 渲染摘要)
+================================================================
+File path: docs/test/ci-matrix.md
+Size: ~9 KB / 8 sections
+Render URL:
+  https://github.com/YuanshuoDu/pairhub/blob/test/test-plan-v1/docs/test/ci-matrix.md
+
+## 章节结构
+
+  0. 目的
+  1. 触发矩阵（PR / main / tag / 周日定时）—— 4 列 × 5 行
+  2. 各端测试 job 详细定义
+     2.1 后端（9 个 job 表）
+     2.2 小程序（6 个 job 表）
+     2.3 Flutter（7 个 job 表）
+     2.4 Docs（3 个 job 表）
+  3. 失败处理流程（自动重试 1 次 → 卡 PR / 自动建 issue）
+  4. 状态徽章 / 看板
+  5. 各端 CI 工具一览（GitHub Actions / miniprogram-ci）
+  6. 必装 GitHub Secrets（11 个）
+  7. M1 出口标准
+  8. 引用
+
+## 关键断言
+
+✓ PR 触发：lint + unit + build（三端并行）
+✓ main 触发：PR 套件 + integration test
+✓ tag 触发：+ E2E + 性能 + 安全
+✓ 失败重试 1 次（仅 flaky 类）
+✓ 三端 CI 工具明确：GitHub Actions / miniprogram-ci / GitHub Actions
+✓ workflow 片段示例
+================================================================
