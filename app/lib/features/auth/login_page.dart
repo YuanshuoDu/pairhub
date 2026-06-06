@@ -28,7 +28,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     setState(() => _busy = true);
     try {
       await ref.read(authStateProvider.notifier).signInWithApple();
-      if (mounted) context.go(AppRoutes.home);
+      if (mounted) context.go(AppRoutes.activities);
     } on Exception catch (e) {
       if (mounted) _showError(e.toString());
     } finally {
@@ -40,7 +40,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     setState(() => _busy = true);
     try {
       await ref.read(authStateProvider.notifier).signInWithGoogle();
-      if (mounted) context.go(AppRoutes.home);
+      if (mounted) context.go(AppRoutes.activities);
     } on Exception catch (e) {
       if (mounted) _showError(e.toString());
     } finally {
