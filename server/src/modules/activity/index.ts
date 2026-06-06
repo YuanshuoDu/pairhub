@@ -188,7 +188,12 @@ export async function registerActivityModule(app: FastifyInstance): Promise<void
       app.prisma.activity.count({ where }),
     ]);
 
-    const result = { data, total, page: q.page, pageSize: q.pageSize };
+    // `hasMore` lets the client drive "load more" without paging through
+    // every item; the alternative (page * pageSize < total) requires
+    // an extra round-trip or a stale total, so we pre-compute here.
+    // Issue #25.
+    const hasMore = q.page * q.pageSize < total;
+    const result = { data, total, page: q.page, pageSize: q.pageSize, hasMore };
     await writeCache(app.redis as never, cacheKey(q), result);
     return { data: result };
   });

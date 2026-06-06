@@ -60,16 +60,122 @@ final StateNotifierProvider<ActivityListQueryController, ActivityListQuery>
   (Ref ref) => ActivityListQueryController(),
 );
 
-/// First page of activities matching the current filter. We keep it as a
-/// `FutureProvider` for now — pagination ("load more") is intentionally
-/// deferred to a follow-up issue; the miniprogram PR #43 ships the same
-/// first-page-only behaviour for the list.
-final FutureProvider<ActivityListResponse> activityListProvider =
-    FutureProvider<ActivityListResponse>((Ref ref) async {
-  final ActivityListQuery query = ref.watch(activityListQueryProvider);
-  final ActivityApi api = ref.watch(activityApiProvider);
-  return api.list(query);
-});
+/// Paginated activity list state for the screen.
+///
+/// Holds an in-memory list of fetched activities, tracks the next page
+/// to request, and exposes `loadMore` / `refresh` actions. The list
+/// is reset to the first page whenever the [activityListQueryProvider]
+/// changes (filter chip toggled).
+///
+/// Issue #25.
+class ActivityListState {
+  const ActivityListState({
+    this.items = const <Activity>[],
+    this.page = 1,
+    this.pageSize = 20,
+    this.hasMore = true,
+    this.isLoadingMore = false,
+    this.total = 0,
+  });
+
+  final List<Activity> items;
+  final int page;
+  final int pageSize;
+  final bool hasMore;
+  final bool isLoadingMore;
+  final int total;
+
+  ActivityListState copyWith({
+    List<Activity>? items,
+    int? page,
+    int? pageSize,
+    bool? hasMore,
+    bool? isLoadingMore,
+    int? total,
+  }) {
+    return ActivityListState(
+      items: items ?? this.items,
+      page: page ?? this.page,
+      pageSize: pageSize ?? this.pageSize,
+      hasMore: hasMore ?? this.hasMore,
+      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+      total: total ?? this.total,
+    );
+  }
+}
+
+/// Manages the paginated list. Watches the filter query — whenever it
+/// changes, the next `build` resets to page 1. The `loadMore` action
+/// appends to the list and bumps the page counter.
+class ActivityListController
+    extends AutoDisposeFamilyAsyncNotifier<ActivityListState, int> {
+  // int is unused; family is required to invalidate on a logical key.
+  // The screen reads the filter via [activityListQueryProvider], so we
+  // pass `0` as the family key (only one instance at a time).
+
+  ActivityApi get _api => ref.read(activityApiProvider);
+
+  @override
+  Future<ActivityListState> build(int _ignored) async {
+    // Reset to page 1 whenever the filter changes.
+    final ActivityListQuery query = ref.watch(activityListQueryProvider);
+    final ActivityApi api = ref.watch(activityApiProvider);
+    final ActivityListResponse res = await api.list(query.copyWith(page: 1));
+    return ActivityListState(
+      items: res.data,
+      page: 2,
+      pageSize: res.pageSize,
+      hasMore: res.resolveHasMore(),
+      total: res.total,
+    );
+  }
+
+  /// Fetch the next page and append to the list. No-op if already
+  /// loading or if there are no more pages.
+  Future<void> loadMore() async {
+    final ActivityListState current = state.value;
+    if (current == null) return;
+    if (current.isLoadingMore || !current.hasMore) return;
+    state = AsyncValue<ActivityListState>.data(
+      current.copyWith(isLoadingMore: true),
+    );
+    try {
+      final ActivityListQuery query = ref.read(activityListQueryProvider);
+      final ActivityApi api = ref.read(activityApiProvider);
+      final ActivityListResponse res = await api.list(
+        query.copyWith(page: current.page),
+      );
+      state = AsyncValue<ActivityListState>.data(current.copyWith(
+        items: [...current.items, ...res.data],
+        page: current.page + 1,
+        hasMore: res.resolveHasMore(),
+        isLoadingMore: false,
+        total: res.total,
+      ));
+    } catch (e, st) {
+      state = AsyncValue<ActivityListState>.error(e, st)
+          .copyWithPrevious(state);
+      // Re-emit previous data with isLoadingMore=false so the UI can
+      // show a retry footer instead of a hard error.
+      state = AsyncValue<ActivityListState>.data(
+        current.copyWith(isLoadingMore: false),
+      );
+    }
+  }
+
+  /// Pull-to-refresh: reset to page 1.
+  Future<void> refresh() async {
+    ref.invalidateSelf();
+    await future;
+  }
+}
+
+final AutoDisposeAsyncNotifierProviderFamily<ActivityListController,
+        ActivityListState, int> activityListProvider =
+    AsyncNotifierProvider.autoDispose
+        .family<ActivityListController, ActivityListState, int>(
+  ActivityListController.new,
+);
 
 // ---------------------------------------------------------------------------
 // Detail screen
