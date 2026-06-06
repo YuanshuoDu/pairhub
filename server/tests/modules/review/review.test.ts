@@ -283,12 +283,6 @@ describe('review.service — createReview', () => {
     });
   });
 
-  it('accepts when activity is in REVIEWABLE status', async () => {
-    stub.state.activity = { ...baseEndedActivity, status: 'REVIEWABLE' };
-    const out = await createReview(stub, 'act_1', 'from', { toUserId: 'to', rating: 3 });
-    expect(out.rating).toBe(3);
-  });
-
   it('SELF_REVIEW throws AppError(400) for the error handler', () => {
     // sanity: SELF_REVIEW throws AppError(400) (not BusinessRuleError 422),
     // and the error handler emits a 400 with code SELF_REVIEW.

@@ -18,6 +18,7 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
+import type * as FastifyPlugin from 'fastify-plugin';
 import type * as PrismaModule from '@/lib/prisma.js';
 import type * as RedisModule from '@/lib/redis.js';
 
@@ -77,6 +78,23 @@ vi.mock('@/lib/redis.js', async () => {
     pingRedis: vi.fn().mockResolvedValue(undefined),
     closeRedis: vi.fn().mockResolvedValue(undefined),
   };
+});
+
+vi.mock('@fastify/rate-limit', async () => {
+  // Replace the rate-limit plugin with a no-op so the suite doesn't
+  // try to talk to a real Redis. Even with the fake-redis defineCommand
+  // stub above, the plugin's RedisStore hangs the first request when
+  // its `rateLimit` Lua command can't fully resolve in the mock. The
+  // review routes test uses the same trick.
+  const fpModule = await vi.importActual<typeof FastifyPlugin>('fastify-plugin');
+  const noop = fpModule.default(
+    async (app: FastifyInstance) => {
+      // No-op: skip rate-limit entirely in unit tests.
+      void app;
+    },
+    { name: 'rate-limit-plugin-noop' },
+  );
+  return { default: noop };
 });
 
 // ---------------------------------------------------------------------------

@@ -13,10 +13,10 @@
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'data/activity_api.dart';
-import 'data/activity_model.dart';
+import '../data/activity_api.dart';
+import '../data/activity_model.dart';
 
-export 'data/activity_api.dart' show activityApiProvider;
+export '../data/activity_api.dart' show activityApiProvider;
 
 // ---------------------------------------------------------------------------
 // List screen

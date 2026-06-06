@@ -118,6 +118,24 @@ function makeReviewRow(overrides: Record<string, unknown> = {}) {
   };
 }
 
+// Reset only vi.fn-typed leaves — Object.values would otherwise walk
+// into the inner record shape and call mockReset on non-fn values.
+// Hoisted to module scope so individual `it` cases can call it too
+// (e.g. the 2-way rating happy path needs a mid-test reset between
+// the two reviews).
+function resetLeaves(obj: Record<string, unknown>): void {
+  for (const v of Object.values(obj)) {
+    if (v && typeof v === 'object') {
+      const maybeFn = (v as { mockReset?: unknown }).mockReset;
+      if (typeof maybeFn === 'function') {
+        (v as { mockReset: () => void }).mockReset();
+      } else {
+        resetLeaves(v as Record<string, unknown>);
+      }
+    }
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Suite
 // ---------------------------------------------------------------------------
@@ -134,20 +152,6 @@ describe('review module — HTTP integration', () => {
     process.env['REDIS_URL'] = 'redis://localhost:6379';
 
     vi.resetModules();
-    // Reset only vi.fn-typed leaves — Object.values would otherwise walk
-    // into the inner record shape and call mockReset on non-fn values.
-    function resetLeaves(obj: Record<string, unknown>): void {
-      for (const v of Object.values(obj)) {
-        if (v && typeof v === 'object') {
-          const maybeFn = (v as { mockReset?: unknown }).mockReset;
-          if (typeof maybeFn === 'function') {
-            (v as { mockReset: () => void }).mockReset();
-          } else {
-            resetLeaves(v as Record<string, unknown>);
-          }
-        }
-      }
-    }
     resetLeaves(mockPrismaState as unknown as Record<string, unknown>);
 
     const mod = await import('@/lib/app.js');
@@ -360,6 +364,17 @@ describe('review module — HTTP integration', () => {
   // --------------------------------------------------------------------
 
   describe('GET /api/v1/users/:id/reviews', () => {
+    // The list endpoint does a batched `prisma.user.findMany` to hydrate
+    // reviewer display info. Stub it here so the route returns 200
+    // instead of 500'ing on `undefined.map`. The 404 / 400 cases below
+    // short-circuit before findMany is called.
+    beforeEach(() => {
+      mockPrismaState.user.findMany.mockResolvedValue([
+        { id: ALICE.id, nickname: 'Alice', avatar: 'a.png' },
+        { id: BOB.id, nickname: 'Bob', avatar: 'b.png' },
+      ]);
+    });
+
     it('public: no auth required', async () => {
       mockPrismaState.user.findUnique.mockResolvedValue({ id: BOB.id });
       mockPrismaState.review.findMany.mockResolvedValue([makeReviewRow()]);
