@@ -133,7 +133,13 @@ Page<ListData, ListCustom>({
       const res = await activityApi.listActivities(query);
       const items = res.data || [];
       const total = res.total || 0;
-      const nextHasMore = page * PAGE_SIZE < total;
+      // issue #25: prefer the server's `hasMore` flag (avoids needing
+      // total to derive the next page); fall back to local derivation
+      // if the server is on the old contract.
+      const nextHasMore =
+        typeof res.hasMore === 'boolean'
+          ? res.hasMore
+          : page * PAGE_SIZE < total;
       const nextPage = page + 1;
 
       this.setData({

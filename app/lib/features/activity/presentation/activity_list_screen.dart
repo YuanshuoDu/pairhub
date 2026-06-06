@@ -24,14 +24,46 @@ import '../../../shared/widgets/loading_view.dart';
 import '../application/activity_providers.dart';
 import '../data/activity_model.dart';
 
-class ActivityListScreen extends ConsumerWidget {
+class ActivityListScreen extends ConsumerStatefulWidget {
   const ActivityListScreen({super.key});
 
-  static const int _pageSize = 20;
+  @override
+  ConsumerState<ActivityListScreen> createState() =>
+      _ActivityListScreenState();
+}
+
+class _ActivityListScreenState extends ConsumerState<ActivityListScreen> {
+  final ScrollController _scrollController = ScrollController();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final AsyncValue<ActivityListResponse> async = ref.watch(activityListProvider);
+  void initState() {
+    super.initState();
+    // Auto-load more when the user scrolls past 80% of the list.
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    final double max = _scrollController.position.maxScrollExtent;
+    final double cur = _scrollController.position.pixels;
+    if (max <= 0 || cur < max * 0.8) return;
+    final ActivityListState? state =
+        ref.read(activityListProvider(0)).value;
+    if (state == null) return;
+    if (!state.hasMore || state.isLoadingMore) return;
+    ref.read(activityListProvider(0)).notifier).loadMore();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final AsyncValue<ActivityListState> async = ref.watch(activityListProvider(0));
     final ActivityListQuery query = ref.watch(activityListQueryProvider);
 
     return Scaffold(
@@ -56,48 +88,9 @@ class ActivityListScreen extends ConsumerWidget {
           ),
           Expanded(
             child: RefreshIndicator(
-              onRefresh: () async {
-                ref.invalidate(activityListProvider);
-                await ref.read(activityListProvider.future);
-              },
-              child: async.when(
-                loading: () => ListView(
-                  // Always-scrollable list so RefreshIndicator can be pulled
-                  // even before the first request resolves.
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  children: const <Widget>[
-                    SizedBox(height: 120),
-                    LoadingView(label: '加载活动中…'),
-                  ],
-                ),
-                error: (Object e, _) => _ErrorList(
-                  error: e,
-                  onRetry: () => ref.invalidate(activityListProvider),
-                ),
-                data: (ActivityListResponse res) {
-                  if (res.data.isEmpty) {
-                    return ListView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      children: const <Widget>[
-                        SizedBox(height: 80),
-                        EmptyView(
-                          icon: Icons.event_busy_outlined,
-                          title: '暂无活动',
-                          message: '试试切换类型 / 状态，或下拉刷新',
-                        ),
-                      ],
-                    );
-                  }
-                  return ListView.separated(
-                    padding: const EdgeInsets.all(AppSpacing.lg),
-                    itemCount: res.data.length,
-                    separatorBuilder: (_, __) =>
-                        const SizedBox(height: AppSpacing.md),
-                    itemBuilder: (BuildContext context, int i) =>
-                        _ActivityCard(activity: res.data[i]),
-                  );
-                },
-              ),
+              onRefresh: () =>
+                  ref.read(activityListProvider(0)).notifier).refresh(),
+              child: _buildList(context, ref, async, query),
             ),
           ),
         ],
@@ -106,6 +99,120 @@ class ActivityListScreen extends ConsumerWidget {
         onPressed: () => context.go(AppRoutes.create),
         icon: const Icon(Icons.add),
         label: const Text('创建'),
+      ),
+    );
+  }
+
+  Widget _buildList(
+    BuildContext context,
+    WidgetRef ref,
+    AsyncValue<ActivityListState> async,
+    ActivityListQuery query,
+  ) {
+    return async.when(
+      loading: () => ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: const <Widget>[
+          SizedBox(height: 120),
+          LoadingView(label: '加载活动中…'),
+        ],
+      ),
+      error: (Object e, _) => ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: <Widget>[
+          const SizedBox(height: 80),
+          ErrorView(
+            message: e is ApiException ? e.message : e.toString(),
+            onRetry: () => ref.invalidate(activityListProvider(0)),
+          ),
+        ],
+      ),
+      data: (ActivityListState state) {
+        if (state.items.isEmpty) {
+          return ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: const <Widget>[
+              const SizedBox(height: 80),
+              const EmptyView(
+                icon: Icons.event_busy_outlined,
+                title: '暂无活动',
+                message: '试试切换类型 / 状态，或下拉刷新',
+              ),
+            ],
+          );
+        }
+        // Item count = cards + a footer for the load-more indicator
+        // (which doubles as a tap-to-retry on error).
+        return ListView.separated(
+          controller: _scrollController,
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          itemCount: state.items.length + 1,
+          separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.md),
+          itemBuilder: (BuildContext context, int i) {
+            if (i == state.items.length) {
+              return _ListFooter(
+                state: state,
+                onLoadMore: () =>
+                    ref.read(activityListProvider(0).notifier).loadMore(),
+              );
+            }
+            return _ActivityCard(activity: state.items[i]);
+          },
+        );
+      },
+    );
+  }
+}
+
+/// Footer row beneath the card list. Three states:
+///   - hasMore + !isLoadingMore  → "加载更多" tap target
+///   - isLoadingMore             → spinner
+///   - !hasMore                  → "— 没有更多了 —"
+class _ListFooter extends StatelessWidget {
+  const _ListFooter({required this.state, required this.onLoadMore});
+
+  final ActivityListState state;
+  final VoidCallback onLoadMore;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!state.hasMore) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
+        child: Center(
+          child: Text(
+            '— 没有更多了 —',
+            style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+          ),
+        ),
+      );
+    }
+    if (state.isLoadingMore) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
+        child: Center(
+          child: SizedBox(
+            width: 18,
+            height: 18,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+      );
+    }
+    return InkWell(
+      onTap: onLoadMore,
+      child: const Padding(
+        padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
+        child: Center(
+          child: Text(
+            '加载更多 ↓',
+            style: TextStyle(
+              color: Color(0xFF3B82F6),
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
       ),
     );
   }

@@ -174,6 +174,7 @@ class ActivityListResponse {
     required this.total,
     required this.page,
     required this.pageSize,
+    this.hasMore,
   });
 
   final List<Activity> data;
@@ -181,7 +182,21 @@ class ActivityListResponse {
   final int page;
   final int pageSize;
 
-  bool get hasMore => page * pageSize < total;
+  /// Server-provided `hasMore` flag (issue #25). When the server is on
+  /// the new contract this is the source of truth; when it's missing
+  /// (old contract) we derive from `page * pageSize < total` as a
+  /// safe fallback.
+  final bool? hasMore;
+
+  bool get hasMoreDerived => page * pageSize < total;
+
+  /// Resolves `hasMore` using the server flag if present, otherwise the
+  /// derived fallback. Callers should use this instead of accessing
+  /// [hasMore] directly.
+  bool resolveHasMore() {
+    if (hasMore != null) return hasMore!;
+    return hasMoreDerived;
+  }
 
   factory ActivityListResponse.fromJson(Map<String, dynamic> json) {
     final List<dynamic> raw = (json['data'] as List<dynamic>?) ?? const <dynamic>[];
@@ -193,6 +208,7 @@ class ActivityListResponse {
       total: (json['total'] as num?)?.toInt() ?? 0,
       page: (json['page'] as num?)?.toInt() ?? 1,
       pageSize: (json['pageSize'] as num?)?.toInt() ?? 20,
+      hasMore: json['hasMore'] is bool ? json['hasMore'] as bool : null,
     );
   }
 }
