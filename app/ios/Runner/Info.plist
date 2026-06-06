@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Runner/Info.plist is the Pairhub iOS app metadata.
+
+  Generated against the Flutter 3.24 iOS scaffold. Every key Xcode injects
+  at build time is preserved (CFBundle* with $(VAR) placeholders).
+
+  USAGE STRINGS
+  =============
+  Apple requires these for the App Store review; "ITMS-90683: Missing
+  Info.plist key" is the rejection reason when they are missing.
+
+  * NSLocationWhenInUseUsageDescription: required for the Mapbox "show
+    activities near me" feature (issue #35).
+  * NSPhotoLibraryUsageDescription: required for the "upload cover image"
+    flow when creating an activity.
+  * NSCameraUsageDescription: required if the user picks "Take Photo"
+    instead of "Choose from Library" in the cover-image flow.
+  * NSPhotoLibraryAddUsageDescription: required for saving shared images
+    back to the camera roll (not yet wired, added for forward-compat).
+  * NSAppTransportSecurity: deliberately NOT set to allow arbitrary loads.
+    All production API calls must be HTTPS.
+
+  ADD A NEW USAGE STRING?
+  =======================
+  1. Add the <key> with a human-readable <string> (in the user's language)
+     explaining WHY you need the permission.
+  2. Run `cd ios && pod install` and rebuild; no native code change.
+  3. Re-upload to TestFlight / App Store.
+
+  Note: this header uses "=" rules and "*" bullets (not em-dashes or
+  double-dashes) to keep the XML comment parser happy (em-dashes and
+  double-dashes are not allowed inside XML comments per the W3C spec).
+-->
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>$(DEVELOPMENT_LANGUAGE)</string>
+
+	<!-- Marketing / display name shown on the home screen. Keep to 12 chars or fewer. -->
+	<key>CFBundleDisplayName</key>
+	<string>Pairhub</string>
+
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+
+	<!--
+	  Bundle identifier. The default is com.pairhub.app to match
+	  ExportOptions.plist and the Fastfile. If your Apple Developer team
+	  owns a different reverse-DNS prefix, change this in THREE places
+	  and keep them in sync:
+	    1. THIS FILE (or via Xcode => Signing & Capabilities => Bundle Identifier)
+	    2. app/ios/ExportOptions.plist => bundleID
+	    3. app/ios/fastlane/Fastfile => bundleID
+	-->
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+
+	<!--
+	  CFBundleName = the .app file name. Should match the package name in
+	  pubspec.yaml (currently "pairhub_app").
+	-->
+	<key>CFBundleName</key>
+	<string>pairhub_app</string>
+
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+
+	<!-- Pulled from pubspec.yaml `version: MAJOR.MINOR.PATCH+BUILD`. -->
+	<key>CFBundleShortVersionString</key>
+	<string>$(FLUTTER_BUILD_NAME)</string>
+
+	<key>CFBundleSignature</key>
+	<string>????</string>
+
+	<!-- Build number; must be incremented for every TestFlight upload. -->
+	<key>CFBundleVersion</key>
+	<string>$(FLUTTER_BUILD_NUMBER)</string>
+
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+
+	<key>UILaunchStoryboardName</key>
+	<string>LaunchScreen</string>
+
+	<key>UIMainStoryboardFile</key>
+	<string>Main</string>
+
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
+
+	<key>UIApplicationSupportsIndirectInputEvents</key>
+	<true/>
+
+	<!-- ============================================================ -->
+	<!--  Pairhub-specific keys                                    -->
+	<!-- ============================================================ -->
+
+	<!--
+	  Location: required for the Mapbox "show activities near me" feature.
+	  The string is what the user sees in the iOS permission dialog,
+	  so write it in the user's language and explain WHY.
+	-->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Pairhub uses your location to show activities and study buddies near you, and to help others see how far away an activity is.</string>
+
+	<!--
+	  Photo library: required so users can pick a cover image for an
+	  activity they create. The string is shown once, the first time the
+	  app reads from the library.
+	-->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Pairhub needs access to your photo library so you can choose a cover image for the activities you create.</string>
+
+	<!--
+	  Photo library (write): required for saving shared images back to
+	  the camera roll. NOT YET WIRED in code; added for forward-compat
+	  so we do not have to ship a new build just to enable this later.
+	-->
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Pairhub can save cover images and shared activity photos back to your photo library.</string>
+
+	<!--
+	  Camera: required if the user picks "Take Photo" instead of
+	  "Choose from Library" in the cover-image flow. Forward-compat.
+	-->
+	<key>NSCameraUsageDescription</key>
+	<string>Pairhub uses the camera so you can take a fresh cover photo for the activities you create.</string>
+
+	<!--
+	  Microphone: required by some image-picker / camera plugins even when
+	  the app does not record audio. Forward-compat.
+	-->
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Pairhub does not record audio. This permission may be requested by the camera plugin and can be safely denied.</string>
+
+	<!--
+	  App Transport Security. Pairhub production API is HTTPS-only.
+	  Do NOT add `NSAllowsArbitraryLoads` here; that would weaken
+	  security and Apple may reject the build.
+	  For local dev / staging exceptions, use
+	  `NSAllowsLocalNetworking` inside an #if DEBUG Swift block instead.
+	-->
+</dict>
+</plist>

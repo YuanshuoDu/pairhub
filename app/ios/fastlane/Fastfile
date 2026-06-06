@@ -1,0 +1,119 @@
+# Fastfile — Pairhub iOS TestFlight upload
+#
+# Secondary / CI-driven upload path. The PRIMARY upload path is the
+# Xcode → Organizer → Distribute App flow described in app/ios/README.md §4.
+#
+# USAGE
+# -----
+#   1. `bundle install` (requires a Gemfile — see notes below)
+#   2. `export APPLE_TEAM_ID="ABCDE12345"`   (10-char team id)
+#   3. `fastlane ios beta`
+#
+# In CI, also set:
+#   - APPLE_TEAM_ID
+#   - APP_STORE_CONNECT_API_KEY_PATH   (path to a .p8 API key)
+#   - APP_STORE_CONNECT_KEY_ID         (key id, e.g. "AB123CD4EF")
+#   - APP_STORE_CONNECT_ISSUER_ID      (issuer uuid)
+#
+# GEMFILE
+# -------
+# A minimal Gemfile that pairs with this Fastfile:
+#
+#   source "https://rubygems.org"
+#   gem "fastlane", "~> 2.220"
+#
+# Run `bundle init` in app/ios/ if you don't already have one.
+
+default_platform(:ios)
+
+# Disable Fastlane's analytics + the `fastlane new` interactive prompts
+# when run in CI.
+ENV["FASTLANE_SKIP_UPDATE_CHECK"] = "1"
+ENV["FASTLANE_HIDE_PLUGINS_TABLE"] = "1"
+ENV["FASTLANE_DISABLE_COLORS"] = "1" if ENV["CI"]
+
+platform :ios do
+  # ------------------------------------------------------------------
+  # Configuration shared across lanes
+  # ------------------------------------------------------------------
+  PROJECT   = "Runner.xcworkspace"
+  SCHEME    = "Runner"
+  CONFIG    = "Release"
+  BUNDLE_ID = "com.pairhub.app"
+  EXPORT_OPTS = {
+    method: "app-store",
+    teamID: ENV["APPLE_TEAM_ID"],
+    bundleID: BUNDLE_ID
+  }.freeze
+
+  # ------------------------------------------------------------------
+  # :beta — build a release IPA and upload to TestFlight
+  # ------------------------------------------------------------------
+  desc "Build a release IPA and upload to TestFlight"
+  lane :beta do
+    # Sanity-check the env so the build fails fast with a clear error
+    # instead of mid-archive.
+    UI.user_error!("APPLE_TEAM_ID is required") if ENV["APPLE_TEAM_ID"].to_s.empty?
+
+    # Optional: bump the build number before archive.
+    # Uncomment + wire into CI when you want every CI run to produce a
+    # fresh build number (avoids the "duplicate CFBundleVersion" rejection).
+    #
+    # increment_build_number_in_xcodeproj(
+    #   xcodeproj: "Runner.xcodeproj"
+    # )
+
+    build_app(
+      workspace: PROJECT,
+      scheme: SCHEME,
+      configuration: CONFIG,
+      export_options: EXPORT_OPTS,
+      # Don't fail the lane if codesign re-uses cached profile.
+      skip_codesigning: false,
+      # Don't clean derived data every run — speeds up CI.
+      clean: false,
+      output_directory: "./build",
+      output_name: "pairhub_app.ipa"
+    )
+
+    # Upload to TestFlight. `skip_waiting_for_build_processing: true` returns
+    # control immediately; flip to false (the default) if you want to wait
+    # for the build to finish processing before the lane ends.
+    upload_to_testflight(
+      skip_waiting_for_build_processing: true,
+      apple_id: "REPLACE_WITH_APP_STORE_CONNECT_APP_ID", # numeric id, e.g. 1234567890
+      # Optional: distribute to an internal TestFlight group on upload.
+      # group: "Core Team"
+    )
+  end
+
+  # ------------------------------------------------------------------
+  # :verify — sanity check without uploading
+  # ------------------------------------------------------------------
+  desc "Build the release IPA but do NOT upload (CI smoke test)"
+  lane :verify do
+    UI.user_error!("APPLE_TEAM_ID is required") if ENV["APPLE_TEAM_ID"].to_s.empty?
+
+    build_app(
+      workspace: PROJECT,
+      scheme: SCHEME,
+      configuration: CONFIG,
+      export_options: EXPORT_OPTS,
+      skip_package_pkg: true,    # don't even build the .pkg
+      skip_package_ipa: false,   # we DO want the .ipa
+      output_directory: "./build",
+      output_name: "pairhub_app.ipa"
+    )
+
+    UI.success("Build OK — .ipa at ./build/pairhub_app.ipa")
+  end
+
+  # ------------------------------------------------------------------
+  # Error handler — upload the build artifacts on failure so we can
+  # inspect them after the fact.
+  # ------------------------------------------------------------------
+  error do |lane, exception, options|
+    UI.error("Lane #{lane} failed: #{exception.message}")
+    # `slack` / `upload_to_testflight` / etc. can go here.
+  end
+end

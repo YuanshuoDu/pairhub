@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  ExportOptions.plist is used by `flutter build ios` and
+  `xcodebuild -exportArchive` (pass via -exportOptionsPlist).
+
+  BEFORE USING, REPLACE THE FOLLOWING TWO PLACEHOLDERS:
+    * teamID:  your 10-character Apple Developer Team ID
+               (Xcode => Settings => Accounts => select your team => copy the
+                10-char ID, or open the Apple Developer membership page)
+    * bundleID: must match Runner.xcodeproj => PRODUCT_BUNDLE_IDENTIFIER
+                and the App ID you created in App Store Connect.
+
+  Common mistakes:
+    * teamID and bundleID must BOTH be set, or `flutter build ios` will fail
+      with "No signing certificate 'iOS Distribution' found" or
+      "Provisioning profile 'X' doesn't include signing certificate 'Y'".
+    * method "app-store" is REQUIRED for TestFlight / App Store upload.
+      Use "ad-hoc" for internal-only TestFlight (no App Store review), or
+      "development" for local device runs (no TestFlight at all).
+
+  Note: this header uses "*" bullets (not em-dashes) to keep the
+  XML comment parser happy (em-dashes and double-dashes are not
+  allowed inside XML comments per the W3C spec).
+-->
+<plist version="1.0">
+<dict>
+	<key>method</key>
+	<string>app-store</string>
+
+	<!-- 10-character Apple Team ID. REQUIRED. -->
+	<key>teamID</key>
+	<string>REPLACE_WITH_10_CHAR_APPLE_TEAM_ID</string>
+
+	<!-- Bundle identifier matching the App ID in App Store Connect. REQUIRED. -->
+	<key>bundleID</key>
+	<string>com.pairhub.app</string>
+
+	<!-- Upload symbol files so App Store Connect can symbolicate crash logs. -->
+	<key>uploadSymbols</key>
+	<true/>
+
+	<!-- Bitcode is deprecated by Apple since Xcode 14; always false now. -->
+	<key>uploadBitcode</key>
+	<false/>
+
+	<!--
+	  "manual" = use the certs / profiles you have in Keychain Access.
+	  "automatic" = Xcode auto-resolves them from your Apple Developer account.
+	  For Fastlane-driven CI, prefer "manual" and pass the cert + profile paths via env.
+	-->
+	<key>signingStyle</key>
+	<string>manual</string>
+
+	<!--
+	  distributionMethod is an alias of method kept for older Xcode compatibility.
+	  Xcode 14+ reads `method`, so this is optional. Uncomment if you hit
+	  "missing distributionMethod" errors on older toolchains.
+	-->
+	<!-- <key>distributionMethod</key> -->
+	<!-- <string>app-store</string> -->
+
+	<!--
+	  destination = "export" means produce an .ipa on disk (the default for
+	  `flutter build ipa`). Use "upload" to push directly to App Store Connect
+	  in the same step (requires additional auth; see `xcodebuild -exportArchive` docs).
+	-->
+	<key>destination</key>
+	<string>export</string>
+
+	<!--
+	  Strip Swift symbols in the shipped binary (smaller IPA). Set to false
+	  if you ship a Swift package that needs symbolication in production.
+	-->
+	<key>stripSwiftSymbols</key>
+	<true/>
+
+	<!--
+	  iCloud-container-environment is only required if the app uses iCloud
+	  or CloudKit. Pairhub does not (yet); leave this commented out.
+	-->
+	<!-- <key>iCloudContainerEnvironment</key> -->
+	<!-- <string>Production</string> -->
+
+	<!--
+	  thinning = "thin" strips architectures not used by the target device.
+	  For App Store Connect uploads, leave at default; App Store Connect will
+	  re-package for all devices automatically.
+	-->
+	<key>thinning</key>
+	<string>&lt;none&gt;</string>
+
+	<!--
+	  embedOnDemandResourcesAssetPacksInBundle = false is the standard.
+	  Flutter does not use ODR; leave default.
+	-->
+	<key>embedOnDemandResourcesAssetPacksInBundle</key>
+	<true/>
+</dict>
+</plist>

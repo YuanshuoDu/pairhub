@@ -4,6 +4,9 @@ name: flutter-ci
 # 与 app/ 脚手架 (PR #14) 配套
 # iOS build 暂不在 CI (macOS runner 成本高 + 依赖 CocoaPods 慢)
 # — iOS 真机/分发需求明确后再加 ios-build job
+# 现状: ios-build job 已加入, 但只跑 `flutter pub get` 校验 iOS 插件
+# 解析正常, 不打 IPA (无签名证书 + 无 Apple Developer 凭据).
+# 触发方式: workflow_dispatch (手动) — 不在 push / PR 默认跑.
 
 on:
   push:
@@ -166,3 +169,76 @@ jobs:
           path: app/build/app/outputs/flutter-apk/*.apk
           if-no-files-found: ignore
           retention-days: 7
+
+  # ==================================================================
+  # iOS smoke check — ONLY runs `flutter pub get` on macOS, no build.
+  # Verifies the iOS plugin manifest resolves cleanly after a pubspec
+  # change. The actual `flutter build ios --release` is deferred until
+  # we have signing certs + an Apple Developer account wired into
+  # GitHub Actions secrets (see app/ios/README.md §1).
+  # ==================================================================
+  ios-build:
+    name: flutter pub get (iOS smoke)
+    needs: detect
+    # Only run when:
+    #   (a) the Flutter scaffold is present, AND
+    #   (b) the workflow was triggered manually (workflow_dispatch).
+    # macos-latest is too expensive to run on every push, and we
+    # don't have signing certs in CI yet anyway, so this job is a
+    # manual smoke check, not part of the default PR gate.
+    if: |
+      needs.detect.outputs.has-flutter == 'true' &&
+      github.event_name == 'workflow_dispatch'
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+          cache: true
+
+      - name: Show Flutter version
+        working-directory: app
+        run: flutter --version
+
+      - name: Verify iOS plugin manifest resolves
+        working-directory: app
+        # `flutter pub get` is the lightest possible iOS-aware step.
+        # It re-reads pubspec.yaml, resolves the iOS plugin manifest
+        # (.flutter-plugins-dependencies), and fails fast if any
+        # iOS-specific dependency is missing or version-incompatible.
+        # We deliberately do NOT run `pod install` or `flutter build ios`
+        # here — those need signing + a release target, which is a
+        # separate, future workflow (see app/ios/README.md §6).
+        run: |
+          set -euo pipefail
+          flutter pub get
+          echo "==== iOS plugin manifest ===="
+          if [ -f .flutter-plugins-dependencies ]; then
+            # iOS section is a JSON object; pretty-print if jq is available.
+            if command -v jq >/dev/null 2>&1; then
+              jq '.ios' .flutter-plugins-dependencies || true
+            else
+              cat .flutter-plugins-dependencies
+            fi
+          else
+            echo "::warning::.flutter-plugins-dependencies not generated"
+            exit 1
+          fi
+          echo "==== iOS folder present? ===="
+          if [ -d ios ]; then
+            echo "ios/ present — ${PWD}/ios"
+            ls -la ios | head -20
+          else
+            echo "::warning::ios/ directory not present — run 'flutter create --platforms=ios .' to scaffold it"
+          fi
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "### iOS smoke check" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Result: ${{ job.status }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Workflow: ${{ github.workflow }} #${{ github.run_number }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- See app/ios/README.md for the full build + upload playbook." >> "$GITHUB_STEP_SUMMARY"
