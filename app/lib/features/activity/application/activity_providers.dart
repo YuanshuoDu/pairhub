@@ -13,10 +13,10 @@
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'data/activity_api.dart';
-import 'data/activity_model.dart';
+import '../data/activity_api.dart';
+import '../data/activity_model.dart';
 
-export 'data/activity_api.dart' show activityApiProvider;
+export '../data/activity_api.dart' show activityApiProvider;
 
 // ---------------------------------------------------------------------------
 // List screen
@@ -133,7 +133,7 @@ class ActivityListController
   /// Fetch the next page and append to the list. No-op if already
   /// loading or if there are no more pages.
   Future<void> loadMore() async {
-    final ActivityListState current = state.value;
+    final ActivityListState? current = state.value;
     if (current == null) return;
     if (current.isLoadingMore || !current.hasMore) return;
     state = AsyncValue<ActivityListState>.data(
@@ -203,7 +203,7 @@ class ActivityDetailController
   /// updated: currentCount bumps, isJoined → true, and the status flips to
   /// FULL if the server reports `isFull`.
   Future<Activity> signup() async {
-    final Activity current = state.value;
+    final Activity? current = state.value;
     if (current == null) {
       throw StateError('signup() called before detail was loaded');
     }
@@ -221,7 +221,7 @@ class ActivityDetailController
   /// currentCount drops, isJoined → false, and the status re-opens to
   /// RECRUITING if the server reports `reopened`.
   Future<Activity> cancelSignup() async {
-    final Activity current = state.value;
+    final Activity? current = state.value;
     if (current == null) {
       throw StateError('cancelSignup() called before detail was loaded');
     }
@@ -244,7 +244,7 @@ class ActivityDetailController
   /// Cancel the activity (creator only). The detail is refreshed so the
   /// local copy reflects the new CANCELED status.
   Future<Activity> cancelActivity() async {
-    final Activity current = state.value;
+    final Activity? current = state.value;
     if (current == null) {
       throw StateError('cancelActivity() called before detail was loaded');
     }

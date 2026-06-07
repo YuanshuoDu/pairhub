@@ -58,7 +58,7 @@ class _ActivityListScreenState extends ConsumerState<ActivityListScreen> {
         ref.read(activityListProvider(0)).value;
     if (state == null) return;
     if (!state.hasMore || state.isLoadingMore) return;
-    ref.read(activityListProvider(0)).notifier).loadMore();
+    ref.read(activityListProvider(0).notifier).loadMore();
   }
 
   @override
@@ -89,7 +89,7 @@ class _ActivityListScreenState extends ConsumerState<ActivityListScreen> {
           Expanded(
             child: RefreshIndicator(
               onRefresh: () =>
-                  ref.read(activityListProvider(0)).notifier).refresh(),
+                  ref.read(activityListProvider(0).notifier).refresh(),
               child: _buildList(context, ref, async, query),
             ),
           ),

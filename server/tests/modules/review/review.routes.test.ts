@@ -118,6 +118,17 @@ function makeReviewRow(overrides: Record<string, unknown> = {}) {
   };
 }
 
+// Reset every vi.fn() in the mock state — both the `vi.fn()` leaves
+// (which are functions, not objects) and any nested mock objects. The
+// previous custom helper only matched `typeof v === 'object'` and
+// silently skipped the actual vi.fn() leaves, causing test pollution
+// between cases. `vi.resetAllMocks` is the documented Vitest helper
+// for this and clears both call history and any per-test
+// mockResolvedValue / mockImplementation set up in the previous it().
+function resetMocks(): void {
+  vi.resetAllMocks();
+}
+
 // ---------------------------------------------------------------------------
 // Suite
 // ---------------------------------------------------------------------------
@@ -134,21 +145,14 @@ describe('review module — HTTP integration', () => {
     process.env['REDIS_URL'] = 'redis://localhost:6379';
 
     vi.resetModules();
-    // Reset only vi.fn-typed leaves — Object.values would otherwise walk
-    // into the inner record shape and call mockReset on non-fn values.
-    function resetLeaves(obj: Record<string, unknown>): void {
-      for (const v of Object.values(obj)) {
-        if (v && typeof v === 'object') {
-          const maybeFn = (v as { mockReset?: unknown }).mockReset;
-          if (typeof maybeFn === 'function') {
-            (v as { mockReset: () => void }).mockReset();
-          } else {
-            resetLeaves(v as Record<string, unknown>);
-          }
-        }
-      }
-    }
-    resetLeaves(mockPrismaState as unknown as Record<string, unknown>);
+    resetMocks();
+    // vi.resetAllMocks wiped the $transaction mock implementation that
+    // the vi.mock factory installed. Re-apply it here so the review
+    // service's prisma.$transaction(cb) call still routes the callback
+    // back through the mock prisma state.
+    mockPrismaState.$transaction.mockImplementation(
+      async (cb: (tx: typeof mockPrismaState) => unknown) => cb(mockPrismaState),
+    );
 
     const mod = await import('@/lib/app.js');
     app = await mod.buildApp({ silent: true });
@@ -234,8 +238,12 @@ describe('review module — HTTP integration', () => {
       expect(r1.statusCode).toBe(201);
 
       // ---- bob → alice ----
-      // Reset, then return bob→alice row.
-      resetLeaves(mockPrismaState as unknown as Record<string, unknown>);
+      // Reset, then return bob→alice row. Re-apply $transaction since
+      // resetMocks() wipes its mock implementation along with the rest.
+      resetMocks();
+      mockPrismaState.$transaction.mockImplementation(
+        async (cb: (tx: typeof mockPrismaState) => unknown) => cb(mockPrismaState),
+      );
       mockPrismaState.activity.findUnique.mockResolvedValue(ENDED_ACTIVITY);
       mockPrismaState.signup.findUnique.mockImplementation(async (args: { where: { activityId_userId: { userId: string } } }) => {
         // bob is not the creator, but has an APPROVED signup; alice is the creator
@@ -244,7 +252,18 @@ describe('review module — HTTP integration', () => {
       });
       mockPrismaState.review.findUnique.mockResolvedValue(null);
       mockPrismaState.review.create.mockResolvedValue(
-        makeReviewRow({ id: 'rv_2', fromUserId: BOB.id, toUserId: ALICE.id, fromUser: BOB }),
+        makeReviewRow({
+          id: 'rv_2',
+          fromUserId: BOB.id,
+          toUserId: ALICE.id,
+          fromUser: BOB,
+          // createReview returns created.rating/created.comment from the
+          // row, not from the request input. Mirror the bob → alice
+          // payload here so the route's 201 body matches what the
+          // caller sent.
+          rating: 4,
+          comment: 'good organizer',
+        }),
       );
       mockPrismaState.user.findUniqueOrThrow.mockResolvedValue(BOB);
 
@@ -360,6 +379,17 @@ describe('review module — HTTP integration', () => {
   // --------------------------------------------------------------------
 
   describe('GET /api/v1/users/:id/reviews', () => {
+    // The list endpoint does a batched `prisma.user.findMany` to hydrate
+    // reviewer display info. Stub it here so the route returns 200
+    // instead of 500'ing on `undefined.map`. The 404 / 400 cases below
+    // short-circuit before findMany is called.
+    beforeEach(() => {
+      mockPrismaState.user.findMany.mockResolvedValue([
+        { id: ALICE.id, nickname: 'Alice', avatar: 'a.png' },
+        { id: BOB.id, nickname: 'Bob', avatar: 'b.png' },
+      ]);
+    });
+
     it('public: no auth required', async () => {
       mockPrismaState.user.findUnique.mockResolvedValue({ id: BOB.id });
       mockPrismaState.review.findMany.mockResolvedValue([makeReviewRow()]);
@@ -374,10 +404,31 @@ describe('review module — HTTP integration', () => {
 
     it('returns paginated list newest-first with fromUser projected to {id, nickname, avatar}', async () => {
       const items = [
-        makeReviewRow({ id: 'rv_2', createdAt: new Date('2026-06-02'), fromUser: BOB }),
-        makeReviewRow({ id: 'rv_1', createdAt: new Date('2026-06-01'), fromUser: ALICE }),
+        makeReviewRow({
+          id: 'rv_2',
+          createdAt: new Date('2026-06-02'),
+          fromUserId: BOB.id,
+          toUserId: ALICE.id,
+          fromUser: BOB,
+        }),
+        makeReviewRow({
+          id: 'rv_1',
+          createdAt: new Date('2026-06-01'),
+          fromUserId: ALICE.id,
+          toUserId: BOB.id,
+          fromUser: ALICE,
+        }),
       ];
       mockPrismaState.user.findUnique.mockResolvedValue({ id: BOB.id });
+      // listUserReviews does a batched `prisma.user.findMany` to hydrate
+      // reviewer display info. Re-stub in the test body too — the
+      // outer beforeEach's vi.resetAllMocks() can wipe the nested
+      // describe's beforeEach when vi.resetModules() re-imports the
+      // app between tests.
+      mockPrismaState.user.findMany.mockResolvedValue([
+        { id: ALICE.id, nickname: 'Alice', avatar: 'a.png' },
+        { id: BOB.id, nickname: 'Bob', avatar: 'b.png' },
+      ]);
       mockPrismaState.review.findMany.mockResolvedValue(items);
       mockPrismaState.review.count.mockResolvedValue(2);
 

@@ -118,33 +118,55 @@ jobs:
     needs: [analyze, test]
     if: needs.detect.outputs.has-flutter == 'true'
     runs-on: ubuntu-latest
+    # The Android scaffold (app/android/) is not yet committed. M3 W1 will
+    # add it via `flutter create -t app --platforms=android .`. Until then
+    # we skip the apk build step so the rest of the suite can stay green.
+    # Once android/ is added, drop this conditional.
     steps:
       - uses: actions/checkout@v4
 
+      - name: Check Android scaffold
+        id: has-android
+        working-directory: app
+        run: |
+          if [ -d "android" ] && [ -f "android/build.gradle" ] || [ -f "android/build.gradle.kts" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+            echo "android/ scaffold present"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "android/ scaffold missing - skipping build-apk (M3 W1 work)"
+          fi
+
       - uses: subosito/flutter-action@v2
+        if: steps.has-android.outputs.present == 'true'
         with:
           flutter-version: '3.24.0'
           channel: 'stable'
           cache: true
 
       - uses: actions/setup-java@v4
+        if: steps.has-android.outputs.present == 'true'
         with:
           distribution: 'temurin'
           java-version: '17'
 
       - name: Pub get
+        if: steps.has-android.outputs.present == 'true'
         working-directory: app
         run: flutter pub get
 
       - name: Generate code
+        if: steps.has-android.outputs.present == 'true'
         working-directory: app
         run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Build debug APK
+        if: steps.has-android.outputs.present == 'true'
         working-directory: app
         run: flutter build apk --debug
 
       - name: Check APK size (<50MB for debug)
+        if: steps.has-android.outputs.present == 'true'
         working-directory: app
         run: |
           APK=$(find build/app/outputs/flutter-apk -name "*.apk" | head -1)
@@ -162,13 +184,21 @@ jobs:
           echo "APK size OK"
 
       - name: Upload APK
-        if: always()
+        if: always() && steps.has-android.outputs.present == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: flutter-debug-apk
           path: app/build/app/outputs/flutter-apk/*.apk
           if-no-files-found: ignore
           retention-days: 7
+
+      - name: Skip notice
+        if: steps.has-android.outputs.present != 'true'
+        run: |
+          echo "### build-apk skipped" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Reason: app/android/ scaffold not committed" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Tracking: M3 W1 Android scaffold task" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Action: re-enable the build step once android/ is in place" >> "$GITHUB_STEP_SUMMARY"
 
   # ==================================================================
   # iOS smoke check — ONLY runs `flutter pub get` on macOS, no build.

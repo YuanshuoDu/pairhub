@@ -60,13 +60,17 @@ export type MyActivitiesQuery = z.infer<typeof myActivitiesQuerySchema>;
 // Path schemas
 // =====================================================================
 
-/** cuid-shaped id; cheap sanity check before hitting the DB. */
+/** User id format: `usr_<nanoid>` (also used by the signup endpoint).
+ * The schema also accepts bare alphanumerics for forward-compat with
+ * any future id scheme. The underscore is required because the
+ * nanoid-style id from prisma includes it; rejecting underscores
+ * would 400 every legitimate user id. */
 export const userIdParamSchema = z.object({
   id: z
     .string()
     .min(1)
     .max(64)
-    .regex(/^[a-z0-9]+$/i, '用户 ID 格式不合法'),
+    .regex(/^[a-z0-9_]+$/i, '用户 ID 格式不合法'),
 });
 
 export type UserIdParam = z.infer<typeof userIdParamSchema>;

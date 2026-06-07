@@ -324,7 +324,7 @@ class UpdateActivityPayload {
 
   final String? title;
   final String? description;
-  final Object? coverUrl = null; // null = explicit null (clear); absent = leave alone
+  final Object? coverUrl; // null = explicit null (clear); absent = leave alone
   final String? startTime;
   final String? endTime;
   final int? maxParticipants;

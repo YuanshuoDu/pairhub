@@ -44,7 +44,7 @@ export interface ReviewListResult {
  * Create a review from `fromUserId` to `toUserId` for `activityId`.
  *
  * Pre-conditions (all enforced here, not in the route):
- *   1. Activity exists and is in ENDED || REVIEWABLE status
+ *   1. Activity exists and is in ENDED status
  *   2. fromUserId is a participant (creator OR approved signup)
  *   3. toUserId is a participant
  *   4. toUserId !== fromUserId (no self-review)
@@ -54,7 +54,7 @@ export interface ReviewListResult {
  *   - 400 SELF_REVIEW
  *   - 403 FORBIDDEN (not a participant, either side)
  *   - 404 ACTIVITY_NOT_FOUND
- *   - 409 ACTIVITY_NOT_REVIEWABLE (status != ENDED/REVIEWABLE)
+ *   - 409 ACTIVITY_NOT_REVIEWABLE (status != ENDED)
  *   - 409 REVIEW_ALREADY_EXISTS
  *
  * Returns the serialized review including the fromUser relation so the
@@ -74,7 +74,7 @@ export async function createReview(
   }
 
   return prisma.$transaction(async (tx) => {
-    // 1. Activity must exist and be ENDED || REVIEWABLE
+    // 1. Activity must exist and be ENDED
     const activity = await tx.activity.findUnique({
       where: { id: activityId },
       select: { id: true, creatorId: true, status: true },
@@ -82,7 +82,7 @@ export async function createReview(
     if (!activity) {
       throw new NotFoundError('ACTIVITY_NOT_FOUND', '活动不存在');
     }
-    if (activity.status !== 'ENDED' && activity.status !== 'REVIEWABLE') {
+    if (activity.status !== 'ENDED') {
       throw new ConflictError('ACTIVITY_NOT_REVIEWABLE', '活动未结束，暂不能评价');
     }
 

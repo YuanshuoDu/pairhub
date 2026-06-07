@@ -41,7 +41,7 @@ class ActivityApi {
       '/api/v1/activities',
       queryParameters: query.toQueryMap(),
     );
-    return _unwrap<List<dynamic>>(res, (dynamic payload) {
+    return _unwrap<ActivityListResponse>(res, (dynamic payload) {
       final Map<String, dynamic> map = payload is Map<String, dynamic>
           ? payload
           : <String, dynamic>{'data': payload};
@@ -52,7 +52,7 @@ class ActivityApi {
   /// GET /api/v1/activities/:id
   Future<Activity> getActivity(String id) async {
     final Response<dynamic> res = await _dio.get<dynamic>('/api/v1/activities/$id');
-    return _unwrap<dynamic>(res, (dynamic payload) {
+    return _unwrap<Activity>(res, (dynamic payload) {
       final Map<String, dynamic> map = payload is Map<String, dynamic>
           ? payload
           : <String, dynamic>{};
@@ -66,7 +66,7 @@ class ActivityApi {
       '/api/v1/activities',
       data: payload.toJson(),
     );
-    return _unwrap<dynamic>(res, (dynamic payload) {
+    return _unwrap<Activity>(res, (dynamic payload) {
       final Map<String, dynamic> map = payload is Map<String, dynamic>
           ? payload
           : <String, dynamic>{};
@@ -80,7 +80,7 @@ class ActivityApi {
       '/api/v1/activities/$id',
       data: payload.toJson(),
     );
-    return _unwrap<dynamic>(res, (dynamic payload) {
+    return _unwrap<Activity>(res, (dynamic payload) {
       final Map<String, dynamic> map = payload is Map<String, dynamic>
           ? payload
           : <String, dynamic>{};
@@ -91,7 +91,7 @@ class ActivityApi {
   /// DELETE /api/v1/activities/:id  (soft cancel)
   Future<CancelActivityResult> cancel(String id) async {
     final Response<dynamic> res = await _dio.delete<dynamic>('/api/v1/activities/$id');
-    return _unwrap<dynamic>(
+    return _unwrap<CancelActivityResult>(
       res,
       (dynamic payload) => CancelActivityResult.fromJson(
         payload is Map<String, dynamic> ? payload : const <String, dynamic>{},
@@ -102,7 +102,7 @@ class ActivityApi {
   /// POST /api/v1/activities/:id/signup
   Future<SignupResult> signup(String id) async {
     final Response<dynamic> res = await _dio.post<dynamic>('/api/v1/activities/$id/signup');
-    return _unwrap<dynamic>(
+    return _unwrap<SignupResult>(
       res,
       (dynamic payload) => SignupResult.fromJson(
         payload is Map<String, dynamic> ? payload : const <String, dynamic>{},
@@ -113,7 +113,7 @@ class ActivityApi {
   /// DELETE /api/v1/activities/:id/signup
   Future<CancelSignupResult> cancelSignup(String id) async {
     final Response<dynamic> res = await _dio.delete<dynamic>('/api/v1/activities/$id/signup');
-    return _unwrap<dynamic>(
+    return _unwrap<CancelSignupResult>(
       res,
       (dynamic payload) => CancelSignupResult.fromJson(
         payload is Map<String, dynamic> ? payload : const <String, dynamic>{},
@@ -135,7 +135,7 @@ class ActivityApi {
       '/api/v1/activities/$id/participants',
       queryParameters: <String, dynamic>{'page': page, 'pageSize': pageSize},
     );
-    return _unwrap<List<dynamic>>(res, (dynamic payload) {
+    return _unwrap<List<ParticipantSummary>>(res, (dynamic payload) {
       final List<dynamic> raw = payload is List<dynamic>
           ? payload
           : (payload is Map<String, dynamic> && payload['data'] is List<dynamic>
