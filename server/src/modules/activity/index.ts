@@ -24,6 +24,8 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 
 import { ForbiddenError, NotFoundError, UnauthorizedError, ValidationError } from '@/lib/errors.js';
+import { checkFields } from '@/lib/content-safety.js';
+import { env } from '@/lib/env.js';
 
 // ---------------------------------------------------------------------------
 // Schemas
@@ -201,7 +203,16 @@ export async function registerActivityModule(app: FastifyInstance): Promise<void
   /**
    * POST /api/v1/activities — create
    */
-  app.post('/api/v1/activities', { preHandler: [app.authenticate] }, async (req) => {
+  app.post(
+    '/api/v1/activities',
+    {
+      preHandler: [app.authenticate],
+      // Per-endpoint tighter limit on top of the global 100/min/IP bucket.
+      // Issue #26 — activity creation is a write path with potential for
+      // spam / abuse.
+      config: { rateLimit: { max: env.RATE_LIMIT_CREATE_ACTIVITY_MAX, timeWindow: '1 minute' } },
+    },
+    async (req) => {
     const userId = req.userId;
     if (!userId) throw new UnauthorizedError();
 
@@ -210,6 +221,18 @@ export async function registerActivityModule(app: FastifyInstance): Promise<void
       throw new ValidationError({ issues: parsed.error.flatten() });
     }
     const v = parsed.data;
+
+    // 微信内容安全 — screen title + description before they land in DB.
+    // Skipped if WECHAT_MP_APPID is empty (dev / CI). Issue #26.
+    const safety = await checkFields([
+      ['title', v.title],
+      ['description', v.description],
+    ]);
+    if (!safety.pass) {
+      throw new ValidationError({
+        issues: [{ code: 'content_rejected', path: [safety.field], message: safety.result.reason ?? '内容未通过安全审核' }],
+      });
+    }
 
     const created = await app.prisma.activity.create({
       data: {
@@ -232,7 +255,8 @@ export async function registerActivityModule(app: FastifyInstance): Promise<void
     });
 
     return { data: created };
-  });
+    },
+  );
 
   /**
    * GET /api/v1/activities/:id — detail (+ isJoined for the caller)
@@ -267,7 +291,14 @@ export async function registerActivityModule(app: FastifyInstance): Promise<void
   /**
    * PATCH /api/v1/activities/:id — update (creator only)
    */
-  app.patch('/api/v1/activities/:id', { preHandler: [app.authenticate] }, async (req) => {
+  app.patch(
+    '/api/v1/activities/:id',
+    {
+      preHandler: [app.authenticate],
+      // Same tighter cap as create. Issue #26.
+      config: { rateLimit: { max: env.RATE_LIMIT_CREATE_ACTIVITY_MAX, timeWindow: '1 minute' } },
+    },
+    async (req) => {
     const userId = req.userId;
     if (!userId) throw new UnauthorizedError();
 
@@ -278,6 +309,18 @@ export async function registerActivityModule(app: FastifyInstance): Promise<void
     const body = patchBodySchema.safeParse(req.body);
     if (!body.success) {
       throw new ValidationError({ issues: body.error.flatten() });
+    }
+
+    // Screen any user-editable text fields that are present in the patch.
+    // Only check fields the caller actually sent (sparse PATCH semantics).
+    const safety = await checkFields([
+      ['title', body.data.title],
+      ['description', body.data.description],
+    ]);
+    if (!safety.pass) {
+      throw new ValidationError({
+        issues: [{ code: 'content_rejected', path: [safety.field], message: safety.result.reason ?? '内容未通过安全审核' }],
+      });
     }
 
     const existing = await app.prisma.activity.findUnique({
@@ -317,7 +360,8 @@ export async function registerActivityModule(app: FastifyInstance): Promise<void
     });
 
     return { data: updated };
-  });
+    },
+  );
 
   /**
    * DELETE /api/v1/activities/:id — soft delete (creator only)

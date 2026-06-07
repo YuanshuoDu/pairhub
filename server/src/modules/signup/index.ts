@@ -29,6 +29,7 @@ import {
   UnauthorizedError,
   ValidationError,
 } from '@/lib/errors.js';
+import { env } from '@/lib/env.js';
 
 const idParamSchema = z.object({
   id: z.string().min(1).max(64).regex(/^[a-z0-9]+$/i, 'id 格式不合法'),
@@ -45,7 +46,13 @@ export async function registerSignupModule(app: FastifyInstance): Promise<void> 
    */
   app.post(
     '/api/v1/activities/:id/signup',
-    { preHandler: [app.authenticate] },
+    {
+      preHandler: [app.authenticate],
+      // Per-endpoint tighter cap on top of the global 100/min/IP bucket.
+      // Issue #26 — signup is a hot write path; without this a single
+      // IP can churn signups / cancellations to grief specific activities.
+      config: { rateLimit: { max: env.RATE_LIMIT_SIGNUP_MAX, timeWindow: '1 minute' } },
+    },
     async (req) => {
       const userId = req.userId;
       if (!userId) throw new UnauthorizedError();

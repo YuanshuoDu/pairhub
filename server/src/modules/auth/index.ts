@@ -211,7 +211,15 @@ export async function registerAuthModule(app: FastifyInstance): Promise<void> {
    * Minimal "trust-the-client" implementation. Real provider verification lands
    * in M2-W6 (issue #26: 限流防刷 + 微信内容安全 API 接入).
    */
-  app.post('/api/v1/auth/social-login', async (req) => {
+  app.post(
+    '/api/v1/auth/social-login',
+    {
+      // Per-endpoint tighter limit on top of the global 100/min/IP bucket.
+      // Login is the primary abuse surface (credential stuffing, fake account
+      // creation); we cap it at RATE_LIMIT_LOGIN_MAX/min/IP. Issue #26.
+      config: { rateLimit: { max: env.RATE_LIMIT_LOGIN_MAX, timeWindow: '1 minute' } },
+    },
+    async (req) => {
     const parsed = socialLoginBodySchema.safeParse(req.body);
     if (!parsed.success) {
       throw new ValidationError({ issues: parsed.error.flatten() });
@@ -278,12 +286,18 @@ export async function registerAuthModule(app: FastifyInstance): Promise<void> {
         },
       } satisfies AuthSuccessDTO,
     };
-  });
+    },
+  );
 
   /**
    * POST /api/v1/auth/refresh
    */
-  app.post('/api/v1/auth/refresh', async (req) => {
+  app.post(
+    '/api/v1/auth/refresh',
+    {
+      config: { rateLimit: { max: env.RATE_LIMIT_LOGIN_MAX, timeWindow: '1 minute' } },
+    },
+    async (req) => {
     const parsed = refreshBodySchema.safeParse(req.body);
     if (!parsed.success) {
       throw new ValidationError({ issues: parsed.error.flatten() });

@@ -15,6 +15,11 @@ export default defineConfig({
     environment: 'node',
     include: ['tests/**/*.test.ts', 'src/**/*.test.ts'],
     exclude: ['node_modules', 'dist', 'coverage'],
+    // Run before any test file is loaded. Sets the env vars
+    // (DATABASE_URL / REDIS_URL / JWT_SECRET) that env.ts requires
+    // at import time, so individual test files don't need to repeat
+    // the boilerplate. Issue #26 unblock.
+    setupFiles: ['tests/setup.ts'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],

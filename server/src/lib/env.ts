@@ -35,6 +35,21 @@ const envSchema = z.object({
   CORS_ORIGIN: z.string().default('*'),
   RATE_LIMIT_MAX: z.coerce.number().int().min(1).max(10_000).default(100),
   RATE_LIMIT_LOGIN_MAX: z.coerce.number().int().min(1).max(1_000).default(10),
+  // Per-route rate limits (issue #26). Tighter than the global
+  // because these endpoints are write paths and abuse vectors.
+  RATE_LIMIT_SIGNUP_MAX: z.coerce.number().int().min(1).max(1_000).default(20),
+  RATE_LIMIT_CREATE_ACTIVITY_MAX: z.coerce.number().int().min(1).max(1_000).default(10),
+  RATE_LIMIT_REVIEW_MAX: z.coerce.number().int().min(1).max(1_000).default(10),
+  // 微信内容安全 API (issue #26). Used to screen user-generated text
+  // (activity title/description, review comment) before it lands in
+  // our DB. Empty values disable the integration (the helper short-
+  // circuits to "passes" in that case — useful for dev + CI).
+  WECHAT_MP_APPID: z.string().default(''),
+  WECHAT_MP_SECRET: z.string().default(''),
+  WECHAT_MSG_SEC_CHECK_URL: z
+    .string()
+    .url()
+    .default('https://api.weixin.qq.com/wxa/msg_sec_check'),
 });
 
 const parsed = envSchema.safeParse(process.env);
