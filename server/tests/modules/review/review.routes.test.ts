@@ -118,22 +118,15 @@ function makeReviewRow(overrides: Record<string, unknown> = {}) {
   };
 }
 
-// Reset only vi.fn-typed leaves — Object.values would otherwise walk
-// into the inner record shape and call mockReset on non-fn values.
-// Hoisted to module scope so individual `it` cases can call it too
-// (e.g. the 2-way rating happy path needs a mid-test reset between
-// the two reviews).
-function resetLeaves(obj: Record<string, unknown>): void {
-  for (const v of Object.values(obj)) {
-    if (v && typeof v === 'object') {
-      const maybeFn = (v as { mockReset?: unknown }).mockReset;
-      if (typeof maybeFn === 'function') {
-        (v as { mockReset: () => void }).mockReset();
-      } else {
-        resetLeaves(v as Record<string, unknown>);
-      }
-    }
-  }
+// Reset every vi.fn() in the mock state — both the `vi.fn()` leaves
+// (which are functions, not objects) and any nested mock objects. The
+// previous custom helper only matched `typeof v === 'object'` and
+// silently skipped the actual vi.fn() leaves, causing test pollution
+// between cases. `vi.resetAllMocks` is the documented Vitest helper
+// for this and clears both call history and any per-test
+// mockResolvedValue / mockImplementation set up in the previous it().
+function resetMocks(): void {
+  vi.resetAllMocks();
 }
 
 // ---------------------------------------------------------------------------
@@ -152,7 +145,7 @@ describe('review module — HTTP integration', () => {
     process.env['REDIS_URL'] = 'redis://localhost:6379';
 
     vi.resetModules();
-    resetLeaves(mockPrismaState as unknown as Record<string, unknown>);
+    resetMocks();
 
     const mod = await import('@/lib/app.js');
     app = await mod.buildApp({ silent: true });
@@ -239,7 +232,7 @@ describe('review module — HTTP integration', () => {
 
       // ---- bob → alice ----
       // Reset, then return bob→alice row.
-      resetLeaves(mockPrismaState as unknown as Record<string, unknown>);
+      resetMocks();
       mockPrismaState.activity.findUnique.mockResolvedValue(ENDED_ACTIVITY);
       mockPrismaState.signup.findUnique.mockImplementation(async (args: { where: { activityId_userId: { userId: string } } }) => {
         // bob is not the creator, but has an APPROVED signup; alice is the creator

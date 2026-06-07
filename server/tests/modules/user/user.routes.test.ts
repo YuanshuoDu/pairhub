@@ -164,10 +164,10 @@ describe('user module — HTTP integration', () => {
     process.env['REDIS_URL'] = 'redis://localhost:6379';
 
     vi.resetModules();
-    mockPrismaState.user.findUnique.mockReset();
-    mockPrismaState.user.update.mockReset();
-    mockPrismaState.activity.findMany.mockReset();
-    mockPrismaState.activity.count.mockReset();
+    // Wipe every vi.fn() in the mock state — covers anything added in
+    // later it() bodies, not just the four we knew about when the test
+    // was first written. See the matching note in review.routes.test.ts.
+    vi.resetAllMocks();
 
     // Build a fresh app per test so module state doesn't leak.
     const mod = await import('@/lib/app.js');
