@@ -20,6 +20,7 @@ import '../../features/activity/presentation/activity_detail_screen.dart';
 import '../../features/activity/presentation/activity_list_screen.dart';
 import '../../features/activity/create_activity_page.dart';
 import '../../features/auth/login_page.dart';
+import '../../features/map/presentation/map_screen.dart';
 import '../../features/profile/profile_page.dart';
 import '../auth/auth_state.dart';
 
@@ -35,6 +36,7 @@ abstract final class AppRoutes {
   static const String activity = '/activities/:id';
   static const String create = '/create';
   static const String profile = '/profile';
+  static const String map = '/map';
 
   /// Build a deep-link path to a specific activity's detail screen.
   static String activityPath(String id) => '/activities/$id';
@@ -96,6 +98,11 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
         path: AppRoutes.profile,
         name: 'profile',
         builder: (BuildContext context, GoRouterState state) => const ProfilePage(),
+      ),
+      GoRoute(
+        path: AppRoutes.map,
+        name: 'map',
+        builder: (BuildContext context, GoRouterState state) => const MapScreen(),
       ),
     ],
   );

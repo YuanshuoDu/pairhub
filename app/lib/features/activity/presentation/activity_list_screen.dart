@@ -71,6 +71,11 @@ class _ActivityListScreenState extends ConsumerState<ActivityListScreen> {
         title: const Text('StudyBuddy'),
         actions: <Widget>[
           IconButton(
+            icon: const Icon(Icons.map_outlined),
+            tooltip: '附近地图',
+            onPressed: () => context.push(AppRoutes.map),
+          ),
+          IconButton(
             icon: const Icon(Icons.person_outline),
             tooltip: '我的',
             onPressed: () => context.go(AppRoutes.profile),

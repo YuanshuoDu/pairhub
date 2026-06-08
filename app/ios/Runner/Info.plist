@@ -160,5 +160,19 @@
 	  For local dev / staging exceptions, use
 	  `NSAllowsLocalNetworking` inside an #if DEBUG Swift block instead.
 	-->
+
+	<!--
+	  Mapbox public access token (issue #35). The real token is injected
+	  at build time via Xcode build settings or a .xcconfig file that's
+	  .gitignore'd. The placeholder string here is a build failure on
+	  Mapbox's side, not a runtime crash.
+	  Override in Xcode: Runner => Build Settings => User-Defined =>
+	  MAPBOX_ACCESS_TOKEN, then add:
+	    MGLMapboxAccessToken = $(MAPBOX_ACCESS_TOKEN)
+	  Or set the value in ios/Runner.xcconfig (gitignored) and reference
+	  it from the build settings.
+	-->
+	<key>MGLMapboxAccessToken</key>
+	<string>pk.PLACEHOLDER_REPLACE_AT_BUILD_TIME</string>
 </dict>
 </plist>
