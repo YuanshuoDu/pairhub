@@ -272,7 +272,7 @@ typedef NearbyKey = ({double lat, double lng, int radiusKm, String? type});
 /// One-shot fetch of activities within `radiusKm` of (lat, lng), sorted
 /// by `distanceKm` ascending. Re-fires whenever the user changes the
 /// radius slider or the type chip. Pull-to-refresh = `ref.invalidate`.
-final FutureProviderFamily<ActivityListState, NearbyKey>
+final AutoDisposeFutureProviderFamily<ActivityListState, NearbyKey>
     nearbyActivitiesProvider =
     FutureProvider.autoDispose.family<ActivityListState, NearbyKey>(
   (Ref ref, NearbyKey key) async {
