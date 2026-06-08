@@ -1,0 +1,295 @@
+/**
+ * Admin 入口页样式（issue #32 前端 / docs/design/admin-glass.md）
+ *
+ * 关键：所有面板都是玻璃（glass-card 组件渲染），本文件只负责：
+ *   - 页面底色 + mesh 背景层叠
+ *   - 内容排版
+ *   - 局部 UI（spinner、SQL 块、按钮、step 列表）
+ */
+
+.gate {
+  position: relative;
+  min-height: 100vh;
+  background: var(--admin-page-bg, #0B1020);
+  color: var(--admin-text-primary);
+  padding: 64rpx 36rpx 96rpx;
+  overflow: hidden;
+}
+
+/* ============================================================
+ * Mesh 4-blob background
+ * brief §2：4 个绝对定位 view + filter: blur + mix-blend-mode
+ * ============================================================ */
+.mesh {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.mesh__blob {
+  position: absolute;
+  width: 480rpx;
+  height: 480rpx;
+  border-radius: 50%;
+  filter: blur(var(--mesh-blur, 100rpx));
+  mix-blend-mode: screen;
+  opacity: 0.85;
+  animation: mesh-drift 60s linear infinite;
+  will-change: transform;
+}
+/* 暗色模式用 screen；浅色模式页面不进 gate（dark 默认） */
+.mesh__blob--1 {
+  left: -120rpx; top: -120rpx;
+  background: radial-gradient(circle, var(--mesh-1) 0%, transparent 70%);
+  animation-delay: 0s;
+}
+.mesh__blob--2 {
+  right: -160rpx; top: 240rpx;
+  background: radial-gradient(circle, var(--mesh-2) 0%, transparent 70%);
+  animation-delay: -15s;
+}
+.mesh__blob--3 {
+  left: 25%; bottom: -200rpx;
+  background: radial-gradient(circle, var(--mesh-3) 0%, transparent 70%);
+  animation-delay: -30s;
+}
+.mesh__blob--4 {
+  right: 20%; bottom: 80rpx;
+  background: radial-gradient(circle, var(--mesh-4) 0%, transparent 70%);
+  animation-delay: -45s;
+}
+@keyframes mesh-drift {
+  0%   { transform: translate(0, 0) scale(1); }
+  25%  { transform: translate(40rpx, -30rpx) scale(1.05); }
+  50%  { transform: translate(-30rpx, 40rpx) scale(0.95); }
+  75%  { transform: translate(20rpx, 20rpx) scale(1.03); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+.reduce-motion .mesh__blob {
+  animation: none;
+}
+
+/* ============================================================
+ * Content 层
+ * ============================================================ */
+.gate__content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 32rpx;
+  max-width: 720rpx;
+  margin: 0 auto;
+}
+
+.gate__hero {
+  padding: 32rpx 8rpx 16rpx;
+}
+.gate__eyebrow {
+  font-size: 24rpx;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--admin-text-tertiary);
+  margin-bottom: 8rpx;
+}
+.gate__title {
+  font-size: 64rpx;
+  font-weight: 600;
+  line-height: 1.15;
+  color: var(--admin-text-primary);
+  letter-spacing: -0.02em;
+  margin-bottom: 12rpx;
+}
+.gate__sub {
+  font-size: 28rpx;
+  color: var(--admin-text-secondary);
+  line-height: 1.5;
+}
+
+/* ---------- row ---------- */
+.gate__row {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+}
+.gate__icon {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36rpx;
+  font-weight: 600;
+  flex-shrink: 0;
+  color: #fff;
+}
+.gate__icon--ok {
+  background: var(--color-success);
+  box-shadow: 0 0 24rpx rgba(34, 197, 94, 0.45);
+}
+.gate__icon--warn {
+  background: var(--color-warning);
+  box-shadow: 0 0 24rpx rgba(245, 158, 11, 0.45);
+}
+.gate__row-text {
+  flex: 1;
+  min-width: 0;
+}
+.gate__row-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: var(--admin-text-primary);
+  margin-bottom: 4rpx;
+}
+.gate__row-sub {
+  font-size: 24rpx;
+  color: var(--admin-text-secondary);
+  line-height: 1.5;
+}
+
+/* spinner */
+.gate__spinner {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  border: 4rpx solid rgba(255, 255, 255, 0.18);
+  border-top-color: var(--color-primary);
+  animation: spin 900ms linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.reduce-motion .gate__spinner {
+  animation: none;
+  border-top-color: var(--color-primary);
+  opacity: 0.85;
+}
+
+/* ---------- step ---------- */
+.gate__step {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+.gate__step-num {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-primary), #60A5FA);
+  color: #fff;
+  font-size: 26rpx;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 0 16rpx rgba(59, 130, 246, 0.4);
+}
+.gate__step-text {
+  flex: 1;
+  min-width: 0;
+}
+.gate__step-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--admin-text-primary);
+  margin-bottom: 2rpx;
+}
+.gate__step-sub {
+  font-size: 22rpx;
+  color: var(--admin-text-secondary);
+  line-height: 1.5;
+}
+.gate__step-cta {
+  font-size: 24rpx;
+  color: var(--color-primary);
+  font-weight: 500;
+  padding: 8rpx 20rpx;
+  border-radius: var(--glass-radius-pill);
+  background: rgba(59, 130, 246, 0.12);
+  flex-shrink: 0;
+}
+
+/* ---------- SQL block ---------- */
+.gate__sql {
+  margin: 24rpx 0 16rpx;
+  padding: 24rpx 28rpx;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1rpx solid rgba(255, 255, 255, 0.10);
+  border-radius: var(--glass-radius, 20rpx);
+  font-family: 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 22rpx;
+  line-height: 1.6;
+  color: #E2E8F0;
+  white-space: pre-wrap;
+  word-break: break-all;
+  position: relative;
+}
+.gate__sql-text {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.gate__sql-actions {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 8rpx;
+}
+
+.gate__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 12rpx;
+  height: 88rpx;
+  padding: 0 32rpx;
+  border-radius: var(--glass-radius-pill);
+  font-size: 28rpx;
+  font-weight: 500;
+  border: var(--glass-border);
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(var(--glass-blur-sm));
+  backdrop-filter: blur(var(--glass-blur-sm));
+  transition: transform var(--motion-duration-fast, 120ms) ease-in-out;
+}
+.gate__btn--primary {
+  background: linear-gradient(135deg, var(--color-primary), #60A5FA);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 4rpx 16rpx rgba(59, 130, 246, 0.4);
+}
+.gate__btn--pressed,
+.gate__btn:active {
+  transform: scale(0.98);
+}
+.gate__btn-icon {
+  font-size: 28rpx;
+  line-height: 1;
+}
+.gate__btn-label {
+  font-size: inherit;
+}
+
+.gate__hint {
+  margin-top: 16rpx;
+  font-size: 22rpx;
+  color: var(--admin-text-tertiary);
+  line-height: 1.5;
+}
+
+/* ---------- page-enter 动效（brief §7） ---------- */
+.page-enter {
+  animation: page-enter 320ms ease-out both;
+}
+@keyframes page-enter {
+  0%   { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.reduce-motion .page-enter {
+  animation: none;
+}

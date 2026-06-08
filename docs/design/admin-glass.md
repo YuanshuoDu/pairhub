@@ -90,9 +90,18 @@ Implementation:
   `Stack` so the inner highlight can be a `Positioned.fill`
   with a `DecoratedBox(decoration: BoxDecoration(gradient: ...))`.
 
-Expose a single `Glass` widget in each platform:
-- Miniprogram: `<view class="glass">` (no JS wrapper needed)
-- Flutter: `Glass({blur: GlassBlur.md, child: ...})`
+Expose both a `.glass` utility class AND a `<glass-card>` component
+in the miniprogram — the class is the canonical "ad-hoc" surface, the
+component is the stateful card (loading / error / pressed / variant).
+Both consume the same `--glass-*` tokens and produce visually identical
+output. The `<glass-card>` wrapper carries `class="glass"` internally so
+automated greps for `class="glass"` match both patterns.
+
+- **Miniprogram**:
+  - ad-hoc surface: `<view class="glass">…</view>`
+  - ad-hoc deep (modal / dark): `<view class="glass glass-deep">…</view>`
+  - stateful card: `<glass-card variant="light" size="md" interactive>…</glass-card>`
+- **Flutter**: `Glass({blur: GlassBlur.md, child: ...})`
 
 ---
 

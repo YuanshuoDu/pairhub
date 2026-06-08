@@ -1,0 +1,12 @@
+{
+  "navigationBarTitleText": "数据看板",
+  "navigationBarBackgroundColor": "transparent",
+  "navigationBarTextStyle": "white",
+  "backgroundColor": "#0B1020",
+  "enablePullDownRefresh": true,
+  "backgroundTextStyle": "light",
+  "usingComponents": {
+    "glass-card": "/components/glass-card/index",
+    "status-pill": "/components/status-pill/index"
+  }
+}

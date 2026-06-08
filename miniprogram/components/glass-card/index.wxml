@@ -1,0 +1,3 @@
+<view class="glass {{rootClass}}" hover-class="{{isInteractive ? 'gc--pressed' : 'none'}}" hover-stay-time="80" bindtap="onTap">
+  <slot />
+</view>

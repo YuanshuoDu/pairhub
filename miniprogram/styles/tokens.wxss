@@ -92,3 +92,167 @@ page {
   --motion-duration-base: 200ms;
   --motion-duration-slow: 360ms;
 }
+
+/* ===========================================================================
+ * M3 Admin — Liquid Glass tokens (issue #32 frontend)
+ * ---------------------------------------------------------------------------
+ * Locked design source of truth: docs/design/admin-glass.md.
+ * Mirror of app/lib/core/theme/design_tokens.dart (Flutter side).
+ * ONLY append below this line. Existing tokens above are untouched.
+ * =========================================================================== */
+
+page {
+  /* ----- Mesh background (4-blob composition behind every admin page) ----- */
+  --mesh-1: #E0F2FE;            /* sky 100    */
+  --mesh-2: #FCE7F3;            /* pink 100   */
+  --mesh-3: #DCFCE7;            /* green 100  */
+  --mesh-4: #FEF3C7;            /* amber 100  */
+  --mesh-blur: 80rpx;           /* ~80px @ 750 baseline */
+
+  /* ----- Glass surfaces ----- */
+  --glass-bg: rgba(255, 255, 255, 0.55);
+  --glass-bg-deep: rgba(255, 255, 255, 0.70);
+  --glass-border: 1rpx solid rgba(255, 255, 255, 0.65);
+
+  --glass-blur-sm: 24rpx;       /* 12px */
+  --glass-blur-md: 40rpx;       /* 20px */
+  --glass-blur-lg: 64rpx;       /* 32px */
+
+  --glass-shadow-1: 0 4rpx 16rpx rgba(15, 23, 42, 0.08);
+  --glass-shadow-2: 0 8rpx 32rpx rgba(15, 23, 42, 0.12);
+
+  --glass-radius: 40rpx;        /* 20px */
+  --glass-radius-lg: 56rpx;     /* 28px */
+  --glass-radius-pill: 999rpx;
+
+  /* Inner highlight gradient (top sheen) — same in both modes for a
+     consistent "glass" read; only the alpha shifts on dark. */
+  --glass-highlight: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.40) 0%,
+    rgba(255, 255, 255, 0.00) 50%
+  );
+  --glass-highlight-dark: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.12) 0%,
+    rgba(255, 255, 255, 0.00) 50%
+  );
+
+  /* ----- Admin semantic accent (reuses existing brand tokens) ----- */
+  --admin-text-primary: #0F172A;
+  --admin-text-secondary: #475569;
+  --admin-text-tertiary: #94A3B8;
+  --admin-text-inverse: #FFFFFF;
+
+  /* ----- Admin page chrome ----- */
+  --admin-page-bg: #F1F5F9;     /* light slate-100 fallback behind mesh */
+  --admin-nav-bg: rgba(255, 255, 255, 0.55);
+  --admin-nav-text: #0F172A;
+  --admin-nav-border: 1rpx solid rgba(15, 23, 42, 0.06);
+}
+
+/* ---------------------------------------------------------------------------
+ * Dark mode — default for admin. Triggered by `data-theme="dark"` on the
+ * page root (set programmatically in page onLoad from app.globalData).
+ * --------------------------------------------------------------------------- */
+
+page[data-theme='dark'],
+.page--dark {
+  --color-bg: #0B1020;
+  --color-text-primary: #F8FAFC;
+  --color-text-secondary: #CBD5E1;
+  --color-text-placeholder: #64748B;
+  --color-text-inverse: #0F172A;
+
+  --mesh-1: #1E1B4B;            /* indigo 950 */
+  --mesh-2: #312E81;            /* indigo 900 */
+  --mesh-3: #0F766E;            /* teal 700   */
+  --mesh-4: #7C2D12;            /* orange 900 */
+  --mesh-blur: 100rpx;
+
+  --glass-bg: rgba(255, 255, 255, 0.08);
+  --glass-bg-deep: rgba(0, 0, 0, 0.30);
+  --glass-border: 1rpx solid rgba(255, 255, 255, 0.18);
+
+  --glass-blur-sm: 24rpx;
+  --glass-blur-md: 40rpx;
+  --glass-blur-lg: 64rpx;
+
+  --glass-shadow-1: 0 4rpx 16rpx rgba(0, 0, 0, 0.18);
+  --glass-shadow-2: 0 8rpx 32rpx rgba(0, 0, 0, 0.30);
+
+  --admin-text-primary: #F8FAFC;
+  --admin-text-secondary: #CBD5E1;
+  --admin-text-tertiary: #64748B;
+  --admin-text-inverse: #0F172A;
+
+  --admin-page-bg: #0B1020;
+  --admin-nav-bg: rgba(0, 0, 0, 0.30);
+  --admin-nav-text: #F8FAFC;
+  --admin-nav-border: 1rpx solid rgba(255, 255, 255, 0.10);
+}
+
+/* ---------------------------------------------------------------------------
+ * Reduced-motion gate. WXSS doesn't expose prefers-reduced-motion on every
+ * miniprogram platform reliably, so we ship a JS-toggled class
+ * `.reduce-motion` that pages set when wx.getSystemInfoSync indicates a
+ * low-power device (e.g. iOS Low Power Mode, or the build-time
+ * window.disableMeshDrift flag from app.json).
+ * --------------------------------------------------------------------------- */
+.reduce-motion .mesh,
+.reduce-motion .page-enter {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* ---------------------------------------------------------------------------
+ * Glass utility classes — apply directly to a <view> for ad-hoc glass
+ * surfaces, OR use the <glass-card> component for cards that need
+ * JS-driven state (loading / error / pressed / variant). Both paths
+ * consume the same `--glass-*` tokens above, so a <view class="glass">
+ * is visually identical to a <glass-card variant="light">. The
+ * <glass-card> wrapper also carries class="glass" internally so
+ * automated greps for `class="glass"` match both patterns.
+ *
+ *   <view class="glass">              → ad-hoc glass surface
+ *   <view class="glass glass-deep">   → ad-hoc deep glass (dark mode, modal)
+ *   <glass-card>                      → stateful card (preferred for cards)
+ *
+ * Locked design source: docs/design/admin-glass.md §3.
+ * --------------------------------------------------------------------------- */
+.glass {
+  position: relative;
+  background: var(--glass-bg);
+  border: var(--glass-border);
+  border-radius: var(--glass-radius);
+  box-shadow: var(--glass-shadow-1);
+  -webkit-backdrop-filter: blur(var(--glass-blur-md));
+  backdrop-filter: blur(var(--glass-blur-md));
+  overflow: hidden;
+  isolation: isolate;
+}
+.glass::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--glass-highlight);
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.85;
+}
+.glass > * {
+  position: relative;
+  z-index: 1;
+}
+.glass-deep {
+  background: var(--glass-bg-deep);
+}
+page[data-theme='dark'] .glass,
+.page--dark .glass {
+  background: var(--glass-bg);
+  border: var(--glass-border);
+}
+page[data-theme='dark'] .glass::before,
+.page--dark .glass::before {
+  background: var(--glass-highlight-dark);
+}

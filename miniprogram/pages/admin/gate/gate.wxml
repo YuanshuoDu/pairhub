@@ -1,0 +1,128 @@
+<!--
+  Admin 入口页（issue #32 前端 / docs/design/admin-glass.md §6.1）
+
+  视觉分层（从底到顶）：
+    1. .gate  容器（暗色页面底）
+    2. .mesh  4-blob 网格渐变（4 个绝对定位 view + blur + mix-blend-mode）
+    3. .gate__content
+    4. 玻璃面板：标题 / 当前角色 / 状态 / SQL hint / 操作按钮
+-->
+
+<view class="gate page--dark {{reduceMotion ? 'reduce-motion' : ''}}" data-theme="{{theme}}">
+
+  <!-- 4-blob mesh background（brief §2） -->
+  <view class="mesh" aria-hidden="true">
+    <view class="mesh__blob mesh__blob--1"></view>
+    <view class="mesh__blob mesh__blob--2"></view>
+    <view class="mesh__blob mesh__blob--3"></view>
+    <view class="mesh__blob mesh__blob--4"></view>
+  </view>
+
+  <view class="gate__content page-enter">
+
+    <!-- ===== 顶部：标题 / 副标题 ===== -->
+    <view class="gate__hero">
+      <view class="gate__eyebrow">StudyBuddy · Admin</view>
+      <view class="gate__title">管理员控制台</view>
+      <view class="gate__sub">审核活动 · 维护用户 · 看板监控</view>
+    </view>
+
+    <!-- ===== 检测中 ===== -->
+    <glass-card wx:if="{{checking}}" tone="light" radius="lg" padding="lg">
+      <view class="gate__row">
+        <view class="gate__spinner" aria-hidden="true"></view>
+        <view class="gate__row-text">
+          <view class="gate__row-title">正在校验身份</view>
+          <view class="gate__row-sub">调取 /api/v1/users/me 验证 role</view>
+        </view>
+      </view>
+    </glass-card>
+
+    <!-- ===== 已识别为 ADMIN（跳转中） ===== -->
+    <glass-card wx:elif="{{role === 'ADMIN' && !errorMsg}}" tone="light" radius="lg" padding="lg">
+      <view class="gate__row">
+        <view class="gate__icon gate__icon--ok" aria-hidden="true">✓</view>
+        <view class="gate__row-text">
+          <view class="gate__row-title">检测到管理员身份</view>
+          <view class="gate__row-sub">{{nickname}} · 正在进入数据看板…</view>
+        </view>
+      </view>
+    </glass-card>
+
+    <!-- ===== 非管理员 / 未登录 / 探测失败 ===== -->
+    <block wx:elif="{{resolved && role !== 'ADMIN'}}">
+
+      <glass-card tone="light" radius="lg" padding="lg">
+        <view class="gate__row">
+          <view class="gate__icon gate__icon--warn" aria-hidden="true">!</view>
+          <view class="gate__row-text">
+            <view class="gate__row-title">需要管理员授权</view>
+            <view class="gate__row-sub">
+              {{errorMsg ? errorMsg : '当前账号 (' + (nickname || '匿名') + ') 的 role = USER'}}
+            </view>
+          </view>
+        </view>
+      </glass-card>
+
+      <!-- 步骤 1：登录 / 重新探测 -->
+      <glass-card tone="light" radius="md" padding="md" tappable="{{true}}" bind:tap="onRefresh">
+        <view class="gate__step">
+          <view class="gate__step-num">1</view>
+          <view class="gate__step-text">
+            <view class="gate__step-title">重新探测身份</view>
+            <view class="gate__step-sub">如果是最近才被授予的 admin，重新探测一次</view>
+          </view>
+          <view class="gate__step-cta">刷新</view>
+        </view>
+      </glass-card>
+
+      <!-- 步骤 2：复制 SQL -->
+      <glass-card tone="light" radius="md" padding="md">
+        <view class="gate__step">
+          <view class="gate__step-num">2</view>
+          <view class="gate__step-text">
+            <view class="gate__step-title">在数据库中提升该用户为 ADMIN</view>
+            <view class="gate__step-sub">在 ops 工具执行下方 SQL（一行搞定）</view>
+          </view>
+        </view>
+
+        <view class="gate__sql">
+          <text class="gate__sql-text" user-select="true">{{sqlHint}}</text>
+        </view>
+
+        <view class="gate__sql-actions">
+          <view
+            class="gate__btn gate__btn--primary"
+            hover-class="gate__btn--pressed"
+            bindtap="onCopySql"
+            role="button"
+            aria-label="复制 SQL 到剪贴板"
+          >
+            <text class="gate__btn-icon" aria-hidden="true">⧉</text>
+            <text class="gate__btn-label">
+              {{copyState === 'copied' ? '已复制' : (copyState === 'failed' ? '复制失败' : '复制 SQL')}}
+            </text>
+          </view>
+        </view>
+
+        <view class="gate__hint">
+          见 docs/admin/playbook.md §1 — grant admin SQL one-liner
+        </view>
+      </glass-card>
+
+      <!-- 步骤 3：登出 / 回到首页 -->
+      <glass-card tone="deep" radius="md" padding="md" tappable="{{true}}" bind:tap="onExit">
+        <view class="gate__step">
+          <view class="gate__step-num">3</view>
+          <view class="gate__step-text">
+            <view class="gate__step-title">回到首页</view>
+            <view class="gate__step-sub">如果是误入，可以从这里退出</view>
+          </view>
+          <view class="gate__step-cta">返回</view>
+        </view>
+      </glass-card>
+
+    </block>
+
+  </view>
+</view>
