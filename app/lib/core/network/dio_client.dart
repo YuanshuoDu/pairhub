@@ -145,8 +145,13 @@ class _TokenRefreshInterceptor extends Interceptor {
     if (refresh == null || refresh.isEmpty) return null;
     // Use a fresh Dio (no interceptors) to avoid recursion.
     final Dio raw = Dio(BaseOptions(baseUrl: dio.options.baseUrl));
+    // PR #51 hotfix: path is `/api/v1/auth/refresh` to match the
+    // Fastify backend module (server/src/modules/auth/index.ts:295).
+    // The bare `/auth/refresh` shipped in PR #44 (Flutter activities,
+    // issue #23) missed the `/api/v1` prefix and would 404 on every
+    // token refresh — silently logging the user out after 15 min.
     final Response<dynamic> res = await raw.post<dynamic>(
-      '/auth/refresh',
+      '/api/v1/auth/refresh',
       data: <String, dynamic>{'refreshToken': refresh},
     );
     final dynamic data = res.data;
