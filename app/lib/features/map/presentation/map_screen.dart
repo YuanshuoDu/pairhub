@@ -120,7 +120,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             geometry: mb.LatLng(a.locationLat, a.locationLng),
             iconImage: 'marker-15', // default Mapbox sprite; we don't ship a custom one yet
             textField: a.title,
-            textOffset: const mb.Offset(0, 1.2),
             textSize: 12,
           ),
         );
