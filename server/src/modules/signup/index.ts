@@ -21,6 +21,7 @@
  */
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import type { SignupStatus } from '@prisma/client';
 
 import {
   ConflictError,
