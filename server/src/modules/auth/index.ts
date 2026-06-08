@@ -91,6 +91,8 @@ export interface AuthSuccessDTO {
 
 interface AccessTokenPayload {
   sub: string;
+  role: 'USER' | 'ADMIN';
+  status: 'ACTIVE' | 'BANNED';
   iat: number;
   exp: number;
   type: 'access';
@@ -104,10 +106,16 @@ interface RefreshTokenPayload {
   type: 'refresh';
 }
 
-function signAccessToken(userId: string): string {
+function signAccessToken(
+  userId: string,
+  role: 'USER' | 'ADMIN',
+  status: 'ACTIVE' | 'BANNED',
+): string {
   const now = Math.floor(Date.now() / 1000);
   const payload: AccessTokenPayload = {
     sub: userId,
+    role,
+    status,
     iat: now,
     exp: now + 15 * 60, // 15 minutes
     type: 'access',
@@ -277,7 +285,7 @@ export async function registerAuthModule(app: FastifyInstance): Promise<void> {
     }
 
     // Issue tokens.
-    const accessToken = signAccessToken(user.id);
+    const accessToken = signAccessToken(user.id, user.role, user.status);
     const jti = crypto.randomUUID();
     const refreshToken = signRefreshToken(user.id, jti);
     await storeRefreshToken(app.redis as never, jti, user.id);
@@ -328,9 +336,19 @@ export async function registerAuthModule(app: FastifyInstance): Promise<void> {
 
     // Rotate the jti.
     const newJti = crypto.randomUUID();
-    const newAccess = signAccessToken(userId);
-    const newRefresh = signRefreshToken(userId, newJti);
-    await storeRefreshToken(app.redis as never, newJti, userId);
+    // Re-fetch the user so the refreshed access token carries the
+    // current role / status (issue #32: a user's role may have been
+    // promoted/demoted since the original login).
+    const refreshed = await app.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, role: true, status: true },
+    });
+    if (!refreshed) {
+      throw new UnauthorizedError('用户不存在');
+    }
+    const newAccess = signAccessToken(refreshed.id, refreshed.role, refreshed.status);
+    const newRefresh = signRefreshToken(refreshed.id, newJti);
+    await storeRefreshToken(app.redis as never, newJti, refreshed.id);
 
     return { data: { accessToken: newAccess, refreshToken: newRefresh } };
   });

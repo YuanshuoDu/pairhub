@@ -36,6 +36,7 @@ import { registerActivityModule } from '@/modules/activity/index.js';
 import { registerSignupModule } from '@/modules/signup/index.js';
 import { registerReviewModule } from '@/modules/review/index.js';
 import { registerPushModule } from '@/modules/push/push.routes.js';
+import { registerAdminModule } from '@/modules/admin/index.js';
 
 export interface BuildAppOptions {
   /** Skip route printing (used in tests). */
@@ -80,6 +81,7 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
   await registerSignupModule(app);
   await registerReviewModule(app);
   await registerPushModule(app);
+  await registerAdminModule(app);
 
   // Dev-only: pretty-print registered routes
   if (env.NODE_ENV === 'development' && !options.silent) {

@@ -41,11 +41,13 @@ const activityTypeSchema = z.enum([
 ]);
 
 const activityStatusSchema = z.enum([
+  'PENDING_REVIEW',
   'RECRUITING',
   'FULL',
   'STARTED',
   'ENDED',
   'CANCELED',
+  'REJECTED',
 ]);
 
 export const listQuerySchema = z
@@ -122,14 +124,27 @@ export const patchBodySchema = z
  * enum. Declared explicitly because `(typeof activityStatusSchema)['_def']['values']`
  * infers to `readonly [string, ...string[]]` and loses the literal union.
  */
-type Status = 'RECRUITING' | 'FULL' | 'STARTED' | 'ENDED' | 'CANCELED';
+type Status =
+  | 'PENDING_REVIEW'
+  | 'RECRUITING'
+  | 'FULL'
+  | 'STARTED'
+  | 'ENDED'
+  | 'CANCELED'
+  | 'REJECTED';
 
 const TRANSITIONS: Record<Status, readonly Status[]> = {
+  // Issue #32: a freshly created activity lands in PENDING_REVIEW and
+  // can only become visible to the public list once an admin (or the
+  // M3-W12 auto-screen) moves it to RECRUITING. REJECTED is terminal
+  // (creator can re-submit which creates a new row).
+  PENDING_REVIEW: ['RECRUITING', 'REJECTED', 'CANCELED'],
   RECRUITING: ['FULL', 'STARTED', 'CANCELED'],
   FULL: ['STARTED', 'CANCELED'],
   STARTED: ['ENDED', 'CANCELED'],
   ENDED: [],
   CANCELED: [],
+  REJECTED: [],
 };
 
 export function canTransition(from: Status, to: Status): boolean {
@@ -237,12 +252,15 @@ export async function registerActivityModule(app: FastifyInstance): Promise<void
       // numeric type out of the box on PG.
       //
       // Filters type / status / city are pushed into the SQL so the
-      // distance sort is correct under the filter. status='CANCELED'
-      // is excluded by default (matches non-geo branch semantics).
+      // distance sort is correct under the filter. status='CANCELED' /
+      // 'PENDING_REVIEW' / 'REJECTED' are excluded by default (matches
+      // non-geo branch semantics). Issue #32: pending + rejected rows
+      // are visible only to the admin review queue, never the public
+      // list.
       const typeFilter = q.type ? Prisma.sql`AND type = ${q.type}::"ActivityType"` : Prisma.empty;
       const statusFilter = q.status
         ? Prisma.sql`AND status = ${q.status}::"ActivityStatus"`
-        : Prisma.sql`AND status <> 'CANCELED'::"ActivityStatus"`;
+        : Prisma.sql`AND status NOT IN ('CANCELED','PENDING_REVIEW','REJECTED')::"ActivityStatus"`;
       const cityFilter = q.city
         ? Prisma.sql`AND location_name ILIKE ${'%' + q.city + '%'}`
         : Prisma.empty;
@@ -324,7 +342,12 @@ export async function registerActivityModule(app: FastifyInstance): Promise<void
     if (q.type) where['type'] = q.type;
     if (q.status) where['status'] = q.status;
     if (q.city) where['locationName'] = { contains: q.city };
-    where['status'] = where['status'] ?? { not: 'CANCELED' };
+    // Issue #32: pending + rejected rows are admin-only, never the
+    // public list. The non-geo branch uses `notIn` because Prisma
+    // doesn't have a `not` against an enum list.
+    where['status'] =
+      where['status'] ??
+      { notIn: ['CANCELED', 'PENDING_REVIEW', 'REJECTED'] };
 
     const [data, total] = await Promise.all([
       app.prisma.activity.findMany({
@@ -396,7 +419,7 @@ export async function registerActivityModule(app: FastifyInstance): Promise<void
         maxParticipants: v.maxParticipants,
         currentCount: 1, // creator is the first participant
         tags: v.tags ?? [],
-        status: 'RECRUITING',
+        status: 'PENDING_REVIEW',
       },
     });
 
