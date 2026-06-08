@@ -1,0 +1,104 @@
+# =====================================================================
+# StudyBuddy local stack — docker-compose.yml
+#
+# Brings up Postgres 16 + Redis 7 + the StudyBuddy server, all on
+# `studybuddy-net`. Use for:
+#
+#   - Local end-to-end development (point miniprogram + Flutter
+#     at http://localhost:3000).
+#   - The L3 e2e test (scripts/e2e.sh walks the full chain with
+#     curl + jq).
+#   - Reproducing production-like behaviour on a workstation
+#     (migrations run on first boot, content-safety falls back to
+#     disabled mode when no WECHAT_MP_APPID is set).
+#
+# Quick start:
+#   docker compose up -d          # detached
+#   docker compose logs -f server # tail
+#   docker compose down -v        # stop + wipe volumes
+#
+# Production / staging uses ECS / Fargate with RDS + ElastiCache;
+# this file is for dev + e2e only.
+# =====================================================================
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: studybuddy
+      POSTGRES_PASSWORD: studybuddy
+      POSTGRES_DB: studybuddy
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U studybuddy"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - studybuddy-net
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    # 128 MB max heap is plenty for a single-server dev stack.
+    command: ["redis-server", "--maxmemory", "128mb", "--maxmemory-policy", "allkeys-lru"]
+    volumes:
+      - redisdata:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - studybuddy-net
+
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOST: 0.0.0.0
+      LOG_LEVEL: info
+      DATABASE_URL: postgresql://studybuddy:studybuddy@postgres:5432/studybuddy?schema=public
+      REDIS_URL: redis://redis:6379/0
+      # 48 bytes > 32 (the schema's min). In real deploys this comes
+      # from secrets manager; for local e2e a static value is fine.
+      JWT_SECRET: "dev-only-jwt-secret-do-not-use-in-prod-aaaaaaaaaaaaa"
+      CORS_ORIGIN: "*"
+      # Empty WECHAT_MP_APPID → content-safety helper short-circuits
+      # to "passes" (dev mode). See server/src/lib/content-safety.ts.
+      WECHAT_MP_APPID: ""
+      WECHAT_MP_SECRET: ""
+      WECHAT_MSG_SEC_CHECK_URL: https://api.weixin.qq.com/wxa/msg_sec_check
+    ports:
+      - "3000:3000"
+    healthcheck:
+      # /health is the liveness probe (no DB), /ready is readiness (DB+Redis).
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - studybuddy-net
+
+volumes:
+  pgdata:
+  redisdata:
+
+networks:
+  studybuddy-net:
+    driver: bridge
