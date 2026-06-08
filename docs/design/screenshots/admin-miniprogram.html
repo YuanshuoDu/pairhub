@@ -1,0 +1,1016 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=1280, initial-scale=1" />
+<title>StudyBuddy Admin — Liquid Glass (miniprogram, issue #32)</title>
+<style>
+  /* ============================================================
+   * Design tokens (mirror of miniprogram/styles/tokens.wxss)
+   * ============================================================ */
+  :root {
+    /* ----- mesh (light) ----- */
+    --mesh-1: #E0F2FE; --mesh-2: #FCE7F3; --mesh-3: #DCFCE7; --mesh-4: #FEF3C7;
+    --mesh-blur: 80px;
+    /* ----- glass (light) ----- */
+    --glass-bg: rgba(255, 255, 255, 0.55);
+    --glass-bg-deep: rgba(255, 255, 255, 0.70);
+    --glass-border: 1px solid rgba(255, 255, 255, 0.65);
+    --glass-blur-md: 20px;
+    --glass-radius: 20px;
+    --glass-radius-lg: 28px;
+    --glass-radius-pill: 999px;
+    --glass-shadow-1: 0 4px 16px rgba(15, 23, 42, 0.08);
+    --glass-shadow-2: 0 8px 32px rgba(15, 23, 42, 0.12);
+    --glass-highlight: linear-gradient(180deg, rgba(255,255,255,0.40), rgba(255,255,255,0));
+
+    --color-text-primary: #0F172A;
+    --color-text-secondary: #475569;
+    --color-text-tertiary: #94A3B8;
+    --color-primary: #3B82F6;
+    --color-success: #22C55E;
+    --color-warning: #F59E0B;
+    --color-error: #EF4444;
+
+    --page-bg: #F1F5F9;
+  }
+
+  .stage--dark {
+    /* ----- mesh (dark — default) ----- */
+    --mesh-1: #1E1B4B; --mesh-2: #312E81; --mesh-3: #0F766E; --mesh-4: #7C2D12;
+    --mesh-blur: 100px;
+    /* ----- glass (dark) ----- */
+    --glass-bg: rgba(255, 255, 255, 0.08);
+    --glass-bg-deep: rgba(0, 0, 0, 0.30);
+    --glass-border: 1px solid rgba(255, 255, 255, 0.18);
+    --glass-shadow-1: 0 4px 16px rgba(0, 0, 0, 0.18);
+    --glass-shadow-2: 0 8px 32px rgba(0, 0, 0, 0.30);
+    --glass-highlight: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0));
+
+    --color-text-primary: #F8FAFC;
+    --color-text-secondary: #CBD5E1;
+    --color-text-tertiary: #64748B;
+    --page-bg: #0B1020;
+  }
+
+  /* ============================================================
+   * Layout
+   * ============================================================ */
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display',
+                 'PingFang SC', 'Helvetica Neue', sans-serif;
+    background: #0F172A;
+    color: #F8FAFC;
+    padding: 48px 24px;
+    min-height: 100vh;
+  }
+  .page-header {
+    text-align: center;
+    max-width: 1100px;
+    margin: 0 auto 48px;
+  }
+  .page-header h1 {
+    font-size: 32px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin: 0 0 8px;
+  }
+  .page-header p {
+    font-size: 15px;
+    color: #94A3B8;
+    margin: 0;
+    line-height: 1.6;
+  }
+  .page-header code {
+    font-family: 'SF Mono', Menlo, Consolas, monospace;
+    font-size: 13px;
+    color: #60A5FA;
+    background: rgba(59, 130, 246, 0.10);
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .stage {
+    border-radius: 32px;
+    padding: 40px 32px;
+    background: var(--page-bg);
+    color: var(--color-text-primary);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 32px 80px rgba(0, 0, 0, 0.4);
+    min-height: 1480px;
+  }
+  .stage-label {
+    position: absolute;
+    top: 20px; right: 24px;
+    z-index: 10;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    border: var(--glass-border);
+    color: var(--color-text-secondary);
+  }
+
+  /* ============================================================
+   * Mesh background — 4-blob composition
+   * ============================================================ */
+  .mesh {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .mesh__blob {
+    position: absolute;
+    width: 520px; height: 520px;
+    border-radius: 50%;
+    filter: blur(var(--mesh-blur));
+    opacity: 0.85;
+    animation: drift 60s linear infinite;
+    will-change: transform;
+  }
+  .stage--dark .mesh__blob { mix-blend-mode: screen; }
+  .stage--light .mesh__blob { mix-blend-mode: multiply; opacity: 0.7; }
+
+  .mesh__blob--1 { left: -80px; top: -120px; background: radial-gradient(circle, var(--mesh-1) 0%, transparent 70%); }
+  .mesh__blob--2 { right: -120px; top: 200px; background: radial-gradient(circle, var(--mesh-2) 0%, transparent 70%); animation-delay: -15s; }
+  .mesh__blob--3 { left: 30%; bottom: -160px; background: radial-gradient(circle, var(--mesh-3) 0%, transparent 70%); animation-delay: -30s; }
+  .mesh__blob--4 { right: 15%; bottom: 80px; background: radial-gradient(circle, var(--mesh-4) 0%, transparent 70%); animation-delay: -45s; }
+
+  @keyframes drift {
+    0%   { transform: translate(0, 0) scale(1); }
+    50%  { transform: translate(40px, -30px) scale(1.05); }
+    100% { transform: translate(0, 0) scale(1); }
+  }
+
+  /* ============================================================
+   * Phone shell
+   * ============================================================ */
+  .phone {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 340px;
+    margin: 0 auto;
+    border-radius: 40px;
+    background: var(--page-bg);
+    overflow: hidden;
+    box-shadow: var(--glass-shadow-2);
+    min-height: 1320px;
+  }
+  .phone__bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 20px 8px;
+    font-size: 13px; font-weight: 600;
+    color: var(--color-text-primary);
+  }
+  .phone__bar-icons { display: flex; gap: 6px; align-items: center; opacity: 0.7; }
+  .phone__nav {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 20px 12px;
+    font-size: 14px; font-weight: 600;
+    color: var(--color-text-primary);
+  }
+  .phone__nav-back {
+    width: 28px; height: 28px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+    background: var(--glass-bg);
+    border: var(--glass-border);
+    font-size: 16px;
+  }
+  .phone__body {
+    padding: 0 16px 96px;
+    display: flex; flex-direction: column;
+    gap: 16px;
+  }
+
+  /* ============================================================
+   * Glass card (the core primitive)
+   * ============================================================ */
+  .glass {
+    position: relative;
+    background: var(--glass-bg);
+    border: var(--glass-border);
+    border-radius: var(--glass-radius);
+    box-shadow: var(--glass-shadow-1);
+    -webkit-backdrop-filter: blur(var(--glass-blur-md));
+    backdrop-filter: blur(var(--glass-blur-md));
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .glass::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: var(--glass-highlight);
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.85;
+  }
+  .glass > * { position: relative; z-index: 1; }
+  .glass--lg { border-radius: var(--glass-radius-lg); }
+  .glass--pad-md { padding: 16px 18px; }
+  .glass--pad-lg { padding: 22px 22px; }
+  .glass--pad-sm { padding: 10px 14px; }
+  .glass--deep { background: var(--glass-bg-deep); }
+
+  /* ============================================================
+   * Hero
+   * ============================================================ */
+  .hero { padding: 8px 4px 4px; }
+  .hero__eyebrow {
+    font-size: 11px; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--color-text-tertiary);
+    margin-bottom: 4px;
+  }
+  .hero__title {
+    font-size: 28px; font-weight: 600; line-height: 1.15;
+    letter-spacing: -0.02em;
+    color: var(--color-text-primary);
+    margin-bottom: 6px;
+  }
+  .hero__sub {
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+  }
+
+  /* ============================================================
+   * Row (avatar + body)
+   * ============================================================ */
+  .row { display: flex; align-items: center; gap: 12px; }
+  .row__avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3B82F6, #60A5FA);
+    color: #fff; font-size: 16px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .row__body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .row__name { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 500; color: var(--color-text-primary); }
+  .row__sub  { font-size: 11px; color: var(--color-text-secondary); }
+
+  /* ============================================================
+   * Status pill
+   * ============================================================ */
+  .pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    border: var(--glass-border);
+    font-size: 10px; font-weight: 500;
+    color: var(--color-text-primary);
+    line-height: 1.2;
+  }
+  .pill__dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0 0 4px currentColor;
+  }
+  .pill--pending   { color: var(--color-warning); }
+  .pill--active    { color: var(--color-success); }
+  .pill--banned    { color: var(--color-error); }
+  .pill--rejected  { color: var(--color-error); }
+  .pill--recruiting{ color: var(--color-primary); }
+  .pill--neutral   { color: var(--color-text-secondary); }
+
+  /* ============================================================
+   * Type chip (活动类型)
+   * ============================================================ */
+  .type-chip {
+    display: inline-flex; align-items: center;
+    height: 18px; padding: 0 8px;
+    border-radius: 999px;
+    font-size: 10px; font-weight: 500;
+    color: #fff;
+  }
+  .type-chip--STUDY       { background: #3B82F6; }
+  .type-chip--SPORTS      { background: #22C55E; }
+  .type-chip--BOARD_GAME  { background: #A855F7; }
+  .type-chip--ONLINE_GAME { background: #EF4444; }
+  .type-chip--OTHER       { background: #64748B; }
+
+  /* ============================================================
+   * Filter chips
+   * ============================================================ */
+  .filter-row {
+    display: flex; gap: 8px; flex-wrap: nowrap;
+    padding: 4px 0; overflow: hidden;
+  }
+  .filter-chip {
+    display: inline-flex; align-items: center;
+    height: 32px; padding: 0 14px;
+    border-radius: 999px;
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    border: var(--glass-border);
+    font-size: 12px; font-weight: 500;
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+  }
+  .filter-chip.is-active {
+    color: #fff;
+    background: linear-gradient(135deg, #3B82F6, #60A5FA);
+    border-color: transparent;
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
+  }
+
+  /* ============================================================
+   * Search input (glass)
+   * ============================================================ */
+  .search {
+    display: flex; align-items: center; gap: 8px;
+    padding: 4px 6px;
+  }
+  .search__icon { color: var(--color-text-tertiary); font-size: 16px; }
+  .search__input {
+    flex: 1; font-size: 14px;
+    color: var(--color-text-primary);
+    background: transparent; border: none; outline: none;
+  }
+  .search__placeholder { color: var(--color-text-tertiary); }
+
+  /* ============================================================
+   * Activity card row
+   * ============================================================ */
+  .act-card__top {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 6px;
+  }
+  .act-card__title {
+    font-size: 14px; font-weight: 600; line-height: 1.4;
+    color: var(--color-text-primary);
+    margin-bottom: 6px;
+  }
+  .act-card__meta {
+    display: flex; flex-direction: column; gap: 2px;
+    font-size: 11px; color: var(--color-text-secondary);
+  }
+  .act-card__actions {
+    display: flex; gap: 8px; margin-top: 10px;
+  }
+
+  /* ============================================================
+   * Buttons
+   * ============================================================ */
+  .btn {
+    flex: 1;
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: 4px;
+    height: 40px;
+    border-radius: 999px;
+    font-size: 13px; font-weight: 500;
+    border: var(--glass-border);
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+  }
+  .btn--primary {
+    background: linear-gradient(135deg, var(--color-success), #16A34A);
+    color: #fff; border-color: transparent;
+    box-shadow: 0 4px 16px rgba(34, 197, 94, 0.4);
+  }
+  .btn--ghost {
+    color: var(--color-error);
+    background: rgba(239, 68, 68, 0.10);
+    border-color: rgba(239, 68, 68, 0.30);
+  }
+  .btn--glass-primary {
+    color: #fff; border: none;
+    background: linear-gradient(135deg, var(--color-primary), #60A5FA);
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
+  }
+
+  /* ============================================================
+   * Metric grid (dashboard)
+   * ============================================================ */
+  .metric-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  }
+  .metric__icon {
+    width: 28px; height: 28px;
+    border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 600;
+    color: #fff;
+    margin-bottom: 2px;
+  }
+  .metric__icon--users      { background: linear-gradient(135deg, #6366F1, #8B5CF6); }
+  .metric__icon--activities { background: linear-gradient(135deg, #0EA5E9, #38BDF8); }
+  .metric__icon--signups    { background: linear-gradient(135deg, #10B981, #34D399); }
+  .metric__icon--push       { background: linear-gradient(135deg, #F59E0B, #FBBF24); }
+
+  .metric__label {
+    font-size: 10px; color: var(--color-text-secondary);
+    text-transform: uppercase; letter-spacing: 0.04em; font-weight: 500;
+  }
+  .metric__value {
+    font-size: 28px; font-weight: 600; line-height: 1.1;
+    letter-spacing: -0.02em; color: var(--color-text-primary);
+  }
+  .metric__sub {
+    display: flex; flex-direction: column; gap: 1px; margin-top: 4px;
+    font-size: 10px; color: var(--color-text-tertiary);
+  }
+  .metric__sub-num { font-weight: 600; }
+  .metric__sub-num--accent  { color: var(--color-primary); }
+  .metric__sub-num--success { color: var(--color-success); }
+  .metric__sub-num--warn    { color: var(--color-warning); }
+  .metric__sub-num--danger  { color: var(--color-error); }
+
+  /* ============================================================
+   * SLA banner
+   * ============================================================ */
+  .sla { display: flex; align-items: center; gap: 10px; }
+  .sla__icon {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--color-error), #DC2626);
+    color: #fff; font-size: 16px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 16px rgba(239, 68, 68, 0.5);
+    flex-shrink: 0;
+  }
+  .sla__title { font-size: 13px; font-weight: 600; color: var(--color-error); }
+  .sla__sub   { font-size: 11px; color: var(--color-text-secondary); line-height: 1.5; }
+
+  /* ============================================================
+   * SQL block
+   * ============================================================ */
+  .sql {
+    margin: 12px 0 8px;
+    padding: 12px 14px;
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    border-radius: 12px;
+    font-family: 'SF Mono', Menlo, Consolas, monospace;
+    font-size: 11px; line-height: 1.6;
+    color: #E2E8F0;
+    white-space: pre-wrap;
+  }
+  .stage--light .sql {
+    background: rgba(15, 23, 42, 0.06);
+    color: #0F172A;
+    border-color: rgba(15, 23, 42, 0.10);
+  }
+
+  /* ============================================================
+   * Long card rows
+   * ============================================================ */
+  .long-row { display: flex; align-items: center; gap: 12px; }
+  .long-row__icon {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: linear-gradient(135deg, #8B5CF6, #EC4899);
+    color: #fff; font-size: 14px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .long-row__body  { flex: 1; min-width: 0; }
+  .long-row__title { font-size: 13px; font-weight: 500; color: var(--color-text-primary); }
+  .long-row__sub   { font-size: 11px; color: var(--color-text-secondary); }
+  .long-row__value { font-size: 20px; font-weight: 600; color: var(--color-text-primary); }
+
+  /* ============================================================
+   * Quick entry row
+   * ============================================================ */
+  .quick { display: flex; align-items: center; gap: 10px; }
+  .quick__icon {
+    width: 32px; height: 32px; border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 600; color: #fff;
+    flex-shrink: 0;
+  }
+  .quick__icon--activities { background: linear-gradient(135deg, var(--color-primary), #60A5FA); }
+  .quick__icon--users      { background: linear-gradient(135deg, #6366F1, #8B5CF6); }
+  .quick__title { font-size: 13px; font-weight: 500; color: var(--color-text-primary); }
+  .quick__sub   { font-size: 10px; color: var(--color-text-secondary); }
+
+  /* ============================================================
+   * Footer
+   * ============================================================ */
+  .footer {
+    max-width: 1100px;
+    margin: 64px auto 0;
+    text-align: center;
+    font-size: 12px;
+    color: #64748B;
+    line-height: 1.6;
+  }
+  .footer a { color: #60A5FA; text-decoration: none; }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>StudyBuddy Admin — Liquid Glass (Miniprogram)</h1>
+  <p>
+    Visual spec for issue #32 frontend. Same token names as
+    <code>miniprogram/styles/tokens.wxss</code> and Flutter's
+    <code>design_tokens.dart</code>. Open this file in any browser to preview.
+  </p>
+  <p style="margin-top: 16px;">
+    <strong style="color:#F8FAFC">Brief:</strong> <code>docs/design/admin-glass.md</code> &nbsp;·&nbsp;
+    <strong style="color:#F8FAFC">Server contract:</strong> <code>server/src/modules/admin/index.ts</code> (PR #62)
+  </p>
+</div>
+
+<div class="grid">
+
+  <!-- =====================================================
+       DARK MODE (default) — left
+       ===================================================== -->
+  <div class="stage stage--dark">
+    <span class="stage-label">Dark · default</span>
+    <div class="mesh">
+      <div class="mesh__blob mesh__blob--1"></div>
+      <div class="mesh__blob mesh__blob--2"></div>
+      <div class="mesh__blob mesh__blob--3"></div>
+      <div class="mesh__blob mesh__blob--4"></div>
+    </div>
+
+    <div class="phone">
+      <div class="phone__bar">
+        <span>9:41</span>
+        <span class="phone__bar-icons">●●● ⌬ ▮</span>
+      </div>
+      <div class="phone__nav">
+        <div class="phone__nav-back">‹</div>
+        <span>管理员控制台</span>
+      </div>
+      <div class="phone__body">
+
+        <!-- ====== Gate page (admin role) ====== -->
+        <div class="hero">
+          <div class="hero__eyebrow">StudyBuddy · Admin</div>
+          <div class="hero__title">管理员控制台</div>
+          <div class="hero__sub">审核活动 · 维护用户 · 看板监控</div>
+        </div>
+
+        <div class="glass glass--lg glass--pad-lg">
+          <div class="row">
+            <div class="row__avatar" style="background: linear-gradient(135deg, #22C55E, #16A34A);">✓</div>
+            <div class="row__body">
+              <div class="row__name">检测到管理员身份</div>
+              <div class="row__sub">陈一然 · 正在进入数据看板…</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass glass--pad-md">
+          <div class="row">
+            <div class="row__avatar" style="background: linear-gradient(135deg, #F59E0B, #FBBF24);">!</div>
+            <div class="row__body">
+              <div class="row__name">需要管理员授权</div>
+              <div class="row__sub">当前账号（陈一然）的 role = USER</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass glass--pad-md">
+          <div class="row">
+            <div style="width: 24px; height: 24px; border-radius: 50%; background: linear-gradient(135deg, var(--color-primary), #60A5FA); color: #fff; font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">1</div>
+            <div class="row__body">
+              <div class="row__name">在数据库中提升该用户为 ADMIN</div>
+              <div class="row__sub">在 ops 工具执行下方 SQL（一行搞定）</div>
+            </div>
+          </div>
+          <div class="sql">-- One-time: grant admin to an existing user (replace id).
+UPDATE users
+SET    role = 'ADMIN', updated_at = NOW()
+WHERE  id = 'usr_replace_with_real_id';</div>
+          <div class="act-card__actions">
+            <div class="btn btn--glass-primary">⧉ &nbsp;复制 SQL</div>
+          </div>
+        </div>
+
+        <!-- ====== Dashboard ====== -->
+        <div style="margin-top: 16px; padding-top: 16px; border-top: 1px dashed rgba(255,255,255,0.10);">
+          <div class="hero">
+            <div class="hero__eyebrow">Operator · 运营</div>
+            <div class="hero__title">数据看板</div>
+            <div class="hero__sub">数据更新于 2026-06-08 21:30</div>
+          </div>
+
+          <div class="glass glass--pad-md">
+            <div class="sla">
+              <div class="sla__icon">⚠</div>
+              <div class="row__body">
+                <div class="sla__title">审核 SLA 告警</div>
+                <div class="sla__sub">当前待审核 27 条，已超过 20 条阈值，点击进入审核队列</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="metric-grid" style="margin-top: 12px;">
+            <div class="glass glass--pad-md">
+              <div class="metric__icon metric__icon--users">⚇</div>
+              <div class="metric__label">用户</div>
+              <div class="metric__value">100</div>
+              <div class="metric__sub">
+                <span><span class="metric__sub-num">7</span> 今日新增</span>
+                <span><span class="metric__sub-num metric__sub-num--warn">3</span> 已封禁</span>
+              </div>
+            </div>
+            <div class="glass glass--pad-md">
+              <div class="metric__icon metric__icon--activities">◆</div>
+              <div class="metric__label">活动</div>
+              <div class="metric__value">450</div>
+              <div class="metric__sub">
+                <span><span class="metric__sub-num metric__sub-num--danger">27</span> 待审核</span>
+                <span><span class="metric__sub-num metric__sub-num--success">80</span> 招募中</span>
+              </div>
+            </div>
+            <div class="glass glass--pad-md">
+              <div class="metric__icon metric__icon--signups">◇</div>
+              <div class="metric__label">报名</div>
+              <div class="metric__value">900</div>
+              <div class="metric__sub">
+                <span><span class="metric__sub-num metric__sub-num--accent">45</span> 今日</span>
+                <span>累计报名</span>
+              </div>
+            </div>
+            <div class="glass glass--pad-md">
+              <div class="metric__icon metric__icon--push">⏚</div>
+              <div class="metric__label">推送 Token</div>
+              <div class="metric__value">200</div>
+              <div class="metric__sub">
+                <span>已注册推送的设备数</span>
+                <span>issue #27 已落地</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="glass glass--pad-md" style="margin-top: 10px;">
+            <div class="long-row">
+              <div class="long-row__icon">↗</div>
+              <div class="long-row__body">
+                <div class="long-row__title">本周新增用户</div>
+                <div class="long-row__sub">最近 7 天累计注册</div>
+              </div>
+              <div class="long-row__value">28</div>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+            <div class="glass glass--pad-md">
+              <div class="quick">
+                <div class="quick__icon quick__icon--activities">→</div>
+                <div class="row__body">
+                  <div class="quick__title">进入审核队列</div>
+                  <div class="quick__sub">优先处理待审核活动</div>
+                </div>
+              </div>
+            </div>
+            <div class="glass glass--pad-md">
+              <div class="quick">
+                <div class="quick__icon quick__icon--users">→</div>
+                <div class="row__body">
+                  <div class="quick__title">搜索用户</div>
+                  <div class="quick__sub">按昵称 / 手机号 / id</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ====== Review queue ====== -->
+        <div style="margin-top: 16px; padding-top: 16px; border-top: 1px dashed rgba(255,255,255,0.10);">
+          <div class="hero">
+            <div class="hero__eyebrow">Operator · 审核队列</div>
+            <div class="hero__title">待处理活动</div>
+            <div class="hero__sub">共 12 条 · FIFO 最早提交优先</div>
+          </div>
+
+          <div class="filter-row">
+            <div class="filter-chip is-active">待审核</div>
+            <div class="filter-chip">招募中</div>
+            <div class="filter-chip">已驳回</div>
+            <div class="filter-chip">已结束</div>
+            <div class="filter-chip">已取消</div>
+          </div>
+
+          <div class="glass glass--pad-md">
+            <div class="act-card__top">
+              <span class="type-chip type-chip--STUDY">自习</span>
+              <span class="pill pill--pending"><span class="pill__dot"></span>待审核</span>
+            </div>
+            <div class="act-card__title">周六下午图书馆刷夜 · 自习小组</div>
+            <div class="act-card__meta">
+              <div>⏰ 06-15 14:00 - 22:00</div>
+              <div>👤 沈一然</div>
+            </div>
+            <div class="act-card__actions">
+              <div class="btn btn--ghost">✕ 驳回</div>
+              <div class="btn btn--primary">✓ 批准</div>
+            </div>
+          </div>
+
+          <div class="glass glass--pad-md">
+            <div class="act-card__top">
+              <span class="type-chip type-chip--SPORTS">运动</span>
+              <span class="pill pill--pending"><span class="pill__dot"></span>待审核</span>
+            </div>
+            <div class="act-card__title">周末飞盘局 · 朝阳公园</div>
+            <div class="act-card__meta">
+              <div>⏰ 06-12 16:00 - 18:00</div>
+              <div>👤 林夏</div>
+            </div>
+            <div class="act-card__actions">
+              <div class="btn btn--ghost">✕ 驳回</div>
+              <div class="btn btn--primary">✓ 批准</div>
+            </div>
+          </div>
+
+          <div class="glass glass--pad-md">
+            <div class="act-card__top">
+              <span class="type-chip type-chip--BOARD_GAME">桌游</span>
+              <span class="pill pill--pending"><span class="pill__dot"></span>待审核</span>
+            </div>
+            <div class="act-card__title">狼人杀夜场 · 三局连开</div>
+            <div class="act-card__meta">
+              <div>⏰ 06-13 19:00 - 23:00</div>
+              <div>👤 周也</div>
+            </div>
+            <div class="act-card__actions">
+              <div class="btn btn--ghost">✕ 驳回</div>
+              <div class="btn btn--primary">✓ 批准</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ====== Users search ====== -->
+        <div style="margin-top: 16px; padding-top: 16px; border-top: 1px dashed rgba(255,255,255,0.10);">
+          <div class="hero">
+            <div class="hero__eyebrow">Operator · 用户</div>
+            <div class="hero__title">用户搜索</div>
+            <div class="hero__sub">共 8 条 · 至少需要 1 个过滤条件</div>
+          </div>
+
+          <div class="glass glass--lg glass--pad-sm">
+            <div class="search">
+              <span class="search__icon">⌕</span>
+              <input class="search__input" placeholder="昵称 / 手机号 / id" value="李夏" />
+            </div>
+          </div>
+
+          <div class="filter-row" style="margin-top: 8px;">
+            <div class="filter-chip">全部</div>
+            <div class="filter-chip is-active">正常</div>
+            <div class="filter-chip">已封禁</div>
+          </div>
+
+          <div class="glass glass--pad-md">
+            <div class="row">
+              <div class="row__avatar">李</div>
+              <div class="row__body">
+                <div class="row__name">李夏雨 <span class="pill pill--neutral"><span class="pill__dot"></span>管理员</span></div>
+                <div class="row__sub">id …a8f3d2 · 清华大学 · 1 天前</div>
+              </div>
+              <span class="pill pill--active"><span class="pill__dot"></span>正常</span>
+            </div>
+          </div>
+
+          <div class="glass glass--pad-md">
+            <div class="row">
+              <div class="row__avatar">李</div>
+              <div class="row__body">
+                <div class="row__name">李夏天</div>
+                <div class="row__sub">id …92bc1e · 北大 · 3 天前</div>
+              </div>
+              <span class="pill pill--active"><span class="pill__dot"></span>正常</span>
+            </div>
+          </div>
+
+          <div class="glass glass--pad-md">
+            <div class="row">
+              <div class="row__avatar" style="background: linear-gradient(135deg, #EF4444, #DC2626);">李</div>
+              <div class="row__body">
+                <div class="row__name">李夏·spam</div>
+                <div class="row__sub">id …c0ffe3 · 2 周前</div>
+              </div>
+              <span class="pill pill--banned"><span class="pill__dot"></span>已封禁</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- =====================================================
+       LIGHT MODE — right (parity)
+       ===================================================== -->
+  <div class="stage stage--light">
+    <span class="stage-label">Light · parity</span>
+    <div class="mesh">
+      <div class="mesh__blob mesh__blob--1"></div>
+      <div class="mesh__blob mesh__blob--2"></div>
+      <div class="mesh__blob mesh__blob--3"></div>
+      <div class="mesh__blob mesh__blob--4"></div>
+    </div>
+
+    <div class="phone">
+      <div class="phone__bar">
+        <span>9:41</span>
+        <span class="phone__bar-icons">●●● ⌬ ▮</span>
+      </div>
+      <div class="phone__nav">
+        <div class="phone__nav-back">‹</div>
+        <span>数据看板</span>
+      </div>
+      <div class="phone__body">
+
+        <!-- ====== Dashboard light ====== -->
+        <div class="hero">
+          <div class="hero__eyebrow">StudyBuddy · 运营</div>
+          <div class="hero__title">数据看板</div>
+          <div class="hero__sub">数据更新于 2026-06-08 21:30</div>
+        </div>
+
+        <div class="glass glass--pad-md">
+          <div class="sla">
+            <div class="sla__icon">⚠</div>
+            <div class="row__body">
+              <div class="sla__title">审核 SLA 告警</div>
+              <div class="sla__sub">当前待审核 27 条，已超过 20 条阈值</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="metric-grid" style="margin-top: 12px;">
+          <div class="glass glass--pad-md">
+            <div class="metric__icon metric__icon--users">⚇</div>
+            <div class="metric__label">用户</div>
+            <div class="metric__value">100</div>
+            <div class="metric__sub">
+              <span><span class="metric__sub-num">7</span> 今日新增</span>
+              <span><span class="metric__sub-num metric__sub-num--warn">3</span> 已封禁</span>
+            </div>
+          </div>
+          <div class="glass glass--pad-md">
+            <div class="metric__icon metric__icon--activities">◆</div>
+            <div class="metric__label">活动</div>
+            <div class="metric__value">450</div>
+            <div class="metric__sub">
+              <span><span class="metric__sub-num metric__sub-num--danger">27</span> 待审核</span>
+              <span><span class="metric__sub-num metric__sub-num--success">80</span> 招募中</span>
+            </div>
+          </div>
+          <div class="glass glass--pad-md">
+            <div class="metric__icon metric__icon--signups">◇</div>
+            <div class="metric__label">报名</div>
+            <div class="metric__value">900</div>
+            <div class="metric__sub">
+              <span><span class="metric__sub-num metric__sub-num--accent">45</span> 今日</span>
+              <span>累计报名</span>
+            </div>
+          </div>
+          <div class="glass glass--pad-md">
+            <div class="metric__icon metric__icon--push">⏚</div>
+            <div class="metric__label">推送 Token</div>
+            <div class="metric__value">200</div>
+            <div class="metric__sub">
+              <span>已注册推送的设备数</span>
+              <span>issue #27 已落地</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass glass--pad-md" style="margin-top: 10px;">
+          <div class="long-row">
+            <div class="long-row__icon">↗</div>
+            <div class="long-row__body">
+              <div class="long-row__title">本周新增用户</div>
+              <div class="long-row__sub">最近 7 天累计注册</div>
+            </div>
+            <div class="long-row__value">28</div>
+          </div>
+        </div>
+
+        <!-- ====== Review queue light ====== -->
+        <div style="margin-top: 16px; padding-top: 16px; border-top: 1px dashed rgba(0,0,0,0.10);">
+          <div class="hero">
+            <div class="hero__eyebrow">Operator · 审核队列</div>
+            <div class="hero__title">待处理活动</div>
+            <div class="hero__sub">共 12 条 · FIFO</div>
+          </div>
+
+          <div class="filter-row">
+            <div class="filter-chip is-active">待审核</div>
+            <div class="filter-chip">招募中</div>
+            <div class="filter-chip">已驳回</div>
+            <div class="filter-chip">已结束</div>
+          </div>
+
+          <div class="glass glass--pad-md">
+            <div class="act-card__top">
+              <span class="type-chip type-chip--ONLINE_GAME">开黑</span>
+              <span class="pill pill--pending"><span class="pill__dot"></span>待审核</span>
+            </div>
+            <div class="act-card__title">Valorant 五黑 · 上分车队</div>
+            <div class="act-card__meta">
+              <div>⏰ 06-13 21:00 - 23:00</div>
+              <div>👤 吴凡</div>
+            </div>
+            <div class="act-card__actions">
+              <div class="btn btn--ghost">✕ 驳回</div>
+              <div class="btn btn--primary">✓ 批准</div>
+            </div>
+          </div>
+
+          <div class="glass glass--pad-md">
+            <div class="act-card__top">
+              <span class="type-chip type-chip--STUDY">自习</span>
+              <span class="pill pill--pending"><span class="pill__dot"></span>待审核</span>
+            </div>
+            <div class="act-card__title">英语口语角 · 咖啡馆 4 人</div>
+            <div class="act-card__meta">
+              <div>⏰ 06-14 19:00 - 21:00</div>
+              <div>👤 陈雨</div>
+            </div>
+            <div class="act-card__actions">
+              <div class="btn btn--ghost">✕ 驳回</div>
+              <div class="btn btn--primary">✓ 批准</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ====== Users light ====== -->
+        <div style="margin-top: 16px; padding-top: 16px; border-top: 1px dashed rgba(0,0,0,0.10);">
+          <div class="hero">
+            <div class="hero__eyebrow">Operator · 用户</div>
+            <div class="hero__title">用户搜索</div>
+            <div class="hero__sub">共 8 条</div>
+          </div>
+
+          <div class="glass glass--lg glass--pad-sm">
+            <div class="search">
+              <span class="search__icon">⌕</span>
+              <input class="search__input" placeholder="昵称 / 手机号 / id" value="" />
+            </div>
+          </div>
+
+          <div class="filter-row" style="margin-top: 8px;">
+            <div class="filter-chip is-active">全部</div>
+            <div class="filter-chip">正常</div>
+            <div class="filter-chip">已封禁</div>
+          </div>
+
+          <div class="glass glass--pad-md">
+            <div class="row">
+              <div class="row__avatar">周</div>
+              <div class="row__body">
+                <div class="row__name">周也 <span class="pill pill--neutral"><span class="pill__dot"></span>管理员</span></div>
+                <div class="row__sub">id …7e1ad4 · 上海交大 · 1 天前</div>
+              </div>
+              <span class="pill pill--active"><span class="pill__dot"></span>正常</span>
+            </div>
+          </div>
+
+          <div class="glass glass--pad-md">
+            <div class="row">
+              <div class="row__avatar" style="background: linear-gradient(135deg, #EF4444, #DC2626);">黑</div>
+              <div class="row__body">
+                <div class="row__name">黑名单用户·test</div>
+                <div class="row__sub">id …ab00ba · 1 个月前</div>
+              </div>
+              <span class="pill pill--banned"><span class="pill__dot"></span>已封禁</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  5 pages · 2 components · 1 API file · 1 mockup · glass tokens appended to <code>tokens.wxss</code>
+  <br />
+  Strictly additive — no edits to existing files except the glass-token append.
+</div>
+
+</body>
+</html>

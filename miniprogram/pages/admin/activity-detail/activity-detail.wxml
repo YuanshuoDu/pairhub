@@ -1,0 +1,174 @@
+<!--
+  审核详情页（issue #32 前端 / docs/design/admin-glass.md §6.3）
+
+  视觉层：mesh → 活动 cover → 标题 / 状态 / 字段 / 介绍 / 组织者 / 底部 sticky 玻璃 action bar。
+  驳回时弹出玻璃 bottom-sheet（带 textarea）。
+-->
+
+<view class="ad page--dark {{reduceMotion ? 'reduce-motion' : ''}}" data-theme="{{theme}}">
+
+  <!-- 4-blob mesh（brief §2） -->
+  <view class="mesh" aria-hidden="true">
+    <view class="mesh__blob mesh__blob--1"></view>
+    <view class="mesh__blob mesh__blob--2"></view>
+    <view class="mesh__blob mesh__blob--3"></view>
+    <view class="mesh__blob mesh__blob--4"></view>
+  </view>
+
+  <view class="ad__content page-enter">
+
+    <!-- ===== Loading skeleton ===== -->
+    <block wx:if="{{loading}}">
+      <glass-card tone="light" radius="md" padding="md">
+        <view class="ad__skel-line" style="width: 40%;"></view>
+        <view class="ad__skel-line" style="width: 80%;"></view>
+        <view class="ad__skel-line" style="width: 60%;"></view>
+        <view class="ad__skel-line" style="width: 70%;"></view>
+      </glass-card>
+    </block>
+
+    <block wx:elif="{{!activity}}">
+      <glass-card tone="light" radius="lg" padding="lg">
+        <view class="ad__empty">活动不存在或已下线</view>
+      </glass-card>
+    </block>
+
+    <block wx:else>
+
+      <!-- ===== Cover ===== -->
+      <view wx:if="{{activity.coverUrl}}" class="ad__cover">
+        <image src="{{activity.coverUrl}}" mode="aspectFill" />
+      </view>
+
+      <!-- ===== Title + status ===== -->
+      <glass-card tone="light" radius="md" padding="md">
+        <view class="ad__badges">
+          <view class="ad__type ad__type--{{activity.type}}">{{typeLabel}}</view>
+          <status-pill wx:if="{{activity.status === 'PENDING_REVIEW'}}" kind="pending"   text="{{statusLabel}}" size="sm" />
+          <status-pill wx:elif="{{activity.status === 'RECRUITING'}}"   kind="recruiting" text="{{statusLabel}}" size="sm" />
+          <status-pill wx:elif="{{activity.status === 'REJECTED'}}"     kind="rejected"  text="{{statusLabel}}" size="sm" />
+          <status-pill wx:else                                            kind="neutral"   text="{{statusLabel}}" size="sm" />
+        </view>
+        <view class="ad__title">{{activity.title}}</view>
+        <view wx:if="{{activity.moderationNote}}" class="ad__note">
+          <text class="ad__note-label">驳回原因</text>
+          <text class="ad__note-text">{{activity.moderationNote}}</text>
+        </view>
+      </glass-card>
+
+      <!-- ===== Fields ===== -->
+      <glass-card tone="light" radius="md" padding="md">
+        <view class="ad__row">
+          <text class="ad__icon" aria-hidden="true">⏰</text>
+          <view class="ad__row-text">
+            <view>{{timeRange}}</view>
+            <view class="ad__row-sub">{{startText}} ~ {{endText}}</view>
+          </view>
+        </view>
+        <view class="ad__row">
+          <text class="ad__icon" aria-hidden="true">📍</text>
+          <view class="ad__row-text">
+            <view>{{activity.location.name}}</view>
+            <view class="ad__row-sub">{{activity.location.addr}}</view>
+          </view>
+        </view>
+        <view class="ad__row">
+          <text class="ad__icon" aria-hidden="true">👥</text>
+          <view class="ad__row-text">
+            <view>{{activity.currentCount}} / {{activity.maxParticipants}} 人</view>
+            <view class="ad__row-sub">活动 ID · {{activity.id}}</view>
+          </view>
+        </view>
+      </glass-card>
+
+      <!-- ===== Description ===== -->
+      <glass-card tone="light" radius="md" padding="md">
+        <view class="ad__section-title">活动介绍</view>
+        <view class="ad__desc">{{activity.description}}</view>
+        <view wx:if="{{activity.tags.length}}" class="ad__tags">
+          <view class="ad__tag" wx:for="{{activity.tags}}" wx:key="*this">#{{item}}</view>
+        </view>
+      </glass-card>
+
+      <!-- ===== Organizer ===== -->
+      <glass-card tone="light" radius="md" padding="md">
+        <view class="ad__section-title">组织者</view>
+        <view class="ad__organizer">
+          <view class="ad__organizer-avatar">{{creatorName[0] || '?'}}</view>
+          <view class="ad__organizer-info">
+            <view class="ad__organizer-name">{{creatorName}}</view>
+            <view class="ad__organizer-sub">userId · {{creatorId}}</view>
+          </view>
+        </view>
+      </glass-card>
+
+      <!-- ===== Locked banner ===== -->
+      <view wx:if="{{locked}}" class="ad__locked">
+        <text class="ad__locked-icon" aria-hidden="true">⏸</text>
+        <text class="ad__locked-text">{{lockedReason}}</text>
+      </view>
+
+    </block>
+  </view>
+
+  <!-- ===== Sticky action bar ===== -->
+  <view wx:if="{{activity && !loading}}" class="ad__actionbar">
+    <view
+      class="ad__action-btn ad__action-btn--ghost"
+      hover-class="ad__action-btn--pressed"
+      bindtap="onOpenReject"
+      role="button"
+      aria-label="驳回该活动"
+    >
+      <text class="ad__action-icon" aria-hidden="true">✕</text>
+      <text>驳回</text>
+    </view>
+    <view
+      class="ad__action-btn ad__action-btn--primary"
+      hover-class="ad__action-btn--pressed"
+      bindtap="onApprove"
+      role="button"
+      aria-label="批准该活动"
+    >
+      <text class="ad__action-icon" aria-hidden="true">✓</text>
+      <text>{{submitting ? '处理中…' : '批准'}}</text>
+    </view>
+  </view>
+
+  <!-- ===== Reject bottom sheet ===== -->
+  <view wx:if="{{rejectOpen}}" class="sheet" catchtap="onCloseReject" aria-modal="true" role="dialog">
+    <view class="sheet__backdrop" aria-hidden="true"></view>
+    <view class="sheet__panel" catchtap="noop">
+      <view class="sheet__handle" aria-hidden="true"></view>
+      <view class="sheet__title">驳回活动</view>
+      <view class="sheet__sub">请填写驳回原因（1-500 字），会写入 Activity.moderationNote 反馈给创建者</view>
+
+      <textarea
+        class="sheet__textarea"
+        value="{{rejectReason}}"
+        bindinput="onReasonInput"
+        placeholder="例：活动描述包含外站链接，请修改后重新提交"
+        placeholder-class="sheet__placeholder"
+        maxlength="500"
+        auto-height
+      ></textarea>
+      <view class="sheet__count">{{rejectReason.length}} / 500</view>
+
+      <view class="sheet__actions">
+        <view
+          class="sheet__btn sheet__btn--ghost"
+          hover-class="sheet__btn--pressed"
+          bindtap="onCloseReject"
+          role="button"
+        >取消</view>
+        <view
+          class="sheet__btn sheet__btn--danger"
+          hover-class="sheet__btn--pressed"
+          bindtap="onConfirmReject"
+          role="button"
+        >{{submitting ? '处理中…' : '确认驳回'}}</view>
+      </view>
+    </view>
+  </view>
+
+</view>

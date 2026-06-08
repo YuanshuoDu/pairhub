@@ -1,0 +1,150 @@
+<!--
+  审核队列页（issue #32 前端 / docs/design/admin-glass.md §6.2）
+
+  视觉层：mesh 背景 → 顶部统计 → 状态芯片 → 玻璃卡片列表
+-->
+
+<view class="aa page--dark {{reduceMotion ? 'reduce-motion' : ''}}" data-theme="{{theme}}">
+
+  <!-- 4-blob mesh（brief §2） -->
+  <view class="mesh" aria-hidden="true">
+    <view class="mesh__blob mesh__blob--1"></view>
+    <view class="mesh__blob mesh__blob--2"></view>
+    <view class="mesh__blob mesh__blob--3"></view>
+    <view class="mesh__blob mesh__blob--4"></view>
+  </view>
+
+  <view class="aa__content page-enter">
+
+    <!-- ===== Header ===== -->
+    <view class="aa__hero">
+      <view class="aa__eyebrow">Operator · 审核队列</view>
+      <view class="aa__title">待处理活动</view>
+      <view class="aa__sub">共 {{total}} 条 · FIFO 最早提交优先</view>
+    </view>
+
+    <!-- ===== 状态过滤芯片 ===== -->
+    <scroll-view scroll-x class="aa__chips" enable-flex>
+      <view
+        wx:for="{{statusFilters}}"
+        wx:key="value"
+        class="aa__chip {{activeStatus === item.value ? 'is-active' : ''}}"
+        data-value="{{item.value}}"
+        bindtap="onStatusFilter"
+        role="button"
+        aria-label="切换状态为 {{item.label}}"
+      >
+        {{item.label}}
+      </view>
+    </scroll-view>
+
+    <!-- ===== 列表 ===== -->
+    <view class="aa__list">
+
+      <block wx:if="{{loading && isFirstLoad}}">
+        <view class="aa__skel"><loading-skeleton count="4" /></view>
+      </block>
+
+      <block wx:elif="{{!loading && !list.length}}">
+        <glass-card tone="light" radius="lg" padding="lg">
+          <empty-state
+            title="暂无活动"
+            desc="该状态下没有活动 — 切换其它状态或下拉刷新"
+            icon="◇"
+            actionText="重新加载"
+            bind:action="onRefresh"
+          />
+        </glass-card>
+      </block>
+
+      <block wx:else>
+        <glass-card
+          wx:for="{{list}}"
+          wx:key="id"
+          tone="light"
+          radius="md"
+          padding="md"
+          tappable="{{true}}"
+          bind:tap="onCardTap"
+          data-row="{{item}}"
+        >
+          <!-- 顶部：type chip + 状态药丸 + 相对时间 -->
+          <view class="row__top">
+            <view class="row__type row__type--{{item.type}}">{{item.typeLabel}}</view>
+            <status-pill
+              wx:if="{{item.status === 'PENDING_REVIEW'}}"
+              kind="pending" text="待审核" size="sm"
+            />
+            <status-pill
+              wx:elif="{{item.status === 'RECRUITING'}}"
+              kind="recruiting" text="招募中" size="sm"
+            />
+            <status-pill
+              wx:elif="{{item.status === 'REJECTED'}}"
+              kind="rejected" text="已驳回" size="sm"
+            />
+            <status-pill
+              wx:elif="{{item.status === 'ENDED'}}"
+              kind="neutral" text="已结束" size="sm"
+            />
+            <status-pill
+              wx:else
+              kind="neutral" text="{{item.status}}" size="sm"
+            />
+          </view>
+
+          <!-- 标题 -->
+          <view class="row__title ellipsis-2">{{item.title}}</view>
+
+          <!-- 元数据 -->
+          <view class="row__meta">
+            <view class="row__meta-item">
+              <text class="row__meta-icon" aria-hidden="true">⏰</text>
+              <text class="row__meta-text">{{item.timeText}}</text>
+            </view>
+            <view class="row__meta-item">
+              <text class="row__meta-icon" aria-hidden="true">👤</text>
+              <text class="row__meta-text">{{item.creatorName}}</text>
+            </view>
+          </view>
+
+          <!-- 驳回备注（若有） -->
+          <view wx:if="{{item.moderationNote}}" class="row__note">
+            <text class="row__note-label">驳回原因</text>
+            <text class="row__note-text">{{item.moderationNote}}</text>
+          </view>
+
+          <!-- 行内操作 -->
+          <view wx:if="{{activeStatus === 'PENDING_REVIEW'}}" class="row__actions">
+            <view
+              class="row__btn row__btn--ghost"
+              hover-class="row__btn--pressed"
+              data-id="{{item.id}}"
+              catchtap="onReject"
+              role="button"
+              aria-label="驳回该活动"
+            >
+              <text class="row__btn-icon" aria-hidden="true">✕</text>
+              <text>驳回</text>
+            </view>
+            <view
+              class="row__btn row__btn--primary"
+              hover-class="row__btn--pressed"
+              data-id="{{item.id}}"
+              catchtap="onApprove"
+              role="button"
+              aria-label="批准该活动"
+            >
+              <text class="row__btn-icon" aria-hidden="true">✓</text>
+              <text>{{item.busy ? '处理中…' : '批准'}}</text>
+            </view>
+          </view>
+        </glass-card>
+
+        <view class="aa__footer" wx:if="{{!hasMore && list.length}}">— 没有更多了 —</view>
+        <view class="aa__footer" wx:elif="{{loadingMore}}">加载中…</view>
+      </block>
+
+    </view>
+  </view>
+</view>

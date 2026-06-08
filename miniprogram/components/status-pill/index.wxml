@@ -1,0 +1,5 @@
+<view class="{{rootClass}}">
+  <view class="sp__dot" aria-hidden="true"></view>
+  <text class="sp__icon" aria-hidden="true">{{resolvedIcon}}</text>
+  <text class="sp__text">{{text}}</text>
+</view>

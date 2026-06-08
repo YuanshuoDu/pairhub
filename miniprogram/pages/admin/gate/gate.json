@@ -1,0 +1,10 @@
+{
+  "navigationBarTitleText": "Admin",
+  "navigationBarBackgroundColor": "transparent",
+  "navigationBarTextStyle": "white",
+  "backgroundColor": "#0B1020",
+  "disableScroll": true,
+  "usingComponents": {
+    "glass-card": "/components/glass-card/index"
+  }
+}

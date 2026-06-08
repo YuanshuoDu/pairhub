@@ -1,0 +1,83 @@
+/**
+ * glass-card WXSS — liquid glass primitive
+ *
+ * 视觉层叠（从底到顶）：
+ *   1. 玻璃底色（var(--glass-bg)）+ 32rpx backdrop-filter blur
+ *   2. 顶部高光（::before 伪元素，linear-gradient）
+ *   3. 玻璃边框（var(--glass-border)）
+ *   4. 阴影（var(--glass-shadow-1)）
+ *
+ * 不要在这里写重型渐变或 > 0.5 opacity 的阴影 — brief §1 禁止。
+ */
+
+.gc {
+  position: relative;
+  background: var(--glass-bg);
+  border: var(--glass-border);
+  box-shadow: var(--glass-shadow-1);
+  -webkit-backdrop-filter: blur(var(--glass-blur-md));
+  backdrop-filter: blur(var(--glass-blur-md));
+  overflow: hidden;
+  isolation: isolate;
+  /* 防止 backdrop-filter 在某些机型上不渲染时内容透出 */
+  will-change: transform;
+}
+
+.gc::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--glass-highlight);
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.85;
+}
+
+/* dark 模式高光替换 */
+page[data-theme='dark'] .gc,
+.page--dark .gc {
+  background: var(--glass-bg);
+  border: var(--glass-border);
+}
+page[data-theme='dark'] .gc::before,
+.page--dark .gc::before {
+  background: var(--glass-highlight-dark);
+}
+
+.gc > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ---------- tone ---------- */
+.gc--light {
+  /* 默认 light，使用 --glass-bg（已暗模式下也会自动切到深底） */
+}
+.gc--deep {
+  background: var(--glass-bg-deep);
+}
+.gc--deep::before {
+  opacity: 0.6;
+}
+
+/* ---------- radius ---------- */
+.gc--radius-md { border-radius: var(--glass-radius); }
+.gc--radius-lg { border-radius: var(--glass-radius-lg); }
+.gc--radius-pill { border-radius: var(--glass-radius-pill); }
+
+/* ---------- padding ---------- */
+.gc--padding-sm { padding: 24rpx 28rpx; }
+.gc--padding-md { padding: 32rpx 36rpx; }
+.gc--padding-lg { padding: 48rpx 44rpx; }
+
+/* ---------- interactive state ---------- */
+.gc--interactive {
+  transition: transform var(--motion-duration-fast, 120ms) ease-in-out,
+              box-shadow var(--motion-duration-base, 200ms) ease;
+  cursor: pointer;
+}
+.gc--interactive.gc--pressed,
+.gc--interactive:active {
+  transform: scale(0.98);
+  box-shadow: var(--glass-shadow-2);
+}

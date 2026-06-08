@@ -8,7 +8,12 @@
     "pages/messages/messages",
     "pages/profile/profile",
     "pages/login/login",
-    "pages/map/map"
+    "pages/map/map",
+    "pages/admin/gate/gate",
+    "pages/admin/activities/activities",
+    "pages/admin/activity-detail/activity-detail",
+    "pages/admin/users/users",
+    "pages/admin/dashboard/dashboard"
   ],
   "window": {
     "backgroundTextStyle": "light",

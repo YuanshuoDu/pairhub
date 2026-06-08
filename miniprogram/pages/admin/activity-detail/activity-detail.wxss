@@ -1,0 +1,342 @@
+/**
+ * 审核详情页样式（issue #32 前端）
+ *
+ * 关键点：底部 sticky action bar 也是玻璃面板；驳回 sheet 是从底部
+ * 弹起的玻璃面板（240ms cubic-bezier(0.32, 0.72, 0, 1) — brief §7）。
+ */
+
+.ad {
+  position: relative;
+  min-height: 100vh;
+  background: var(--admin-page-bg, #0B1020);
+  color: var(--admin-text-primary);
+  padding: 32rpx 32rpx 220rpx;  /* 给 action bar 留位置 */
+  overflow: hidden;
+}
+
+/* ---------- mesh ---------- */
+.mesh { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+.mesh__blob {
+  position: absolute;
+  width: 480rpx; height: 480rpx;
+  border-radius: 50%;
+  filter: blur(var(--mesh-blur, 100rpx));
+  mix-blend-mode: screen;
+  opacity: 0.85;
+  animation: ad-mesh-drift 60s linear infinite;
+  will-change: transform;
+}
+.mesh__blob--1 { left: -120rpx; top: -120rpx; background: radial-gradient(circle, var(--mesh-1) 0%, transparent 70%); }
+.mesh__blob--2 { right: -160rpx; top: 200rpx; background: radial-gradient(circle, var(--mesh-2) 0%, transparent 70%); animation-delay: -15s; }
+.mesh__blob--3 { left: 25%; bottom: 240rpx; background: radial-gradient(circle, var(--mesh-3) 0%, transparent 70%); animation-delay: -30s; }
+.mesh__blob--4 { right: 20%; bottom: 80rpx; background: radial-gradient(circle, var(--mesh-4) 0%, transparent 70%); animation-delay: -45s; }
+@keyframes ad-mesh-drift {
+  0%   { transform: translate(0,0) scale(1); }
+  50%  { transform: translate(40rpx, -30rpx) scale(1.05); }
+  100% { transform: translate(0,0) scale(1); }
+}
+.reduce-motion .mesh__blob { animation: none; }
+
+/* ---------- content ---------- */
+.ad__content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+  max-width: 720rpx;
+  margin: 0 auto;
+}
+
+/* ---------- cover ---------- */
+.ad__cover {
+  width: 100%;
+  height: 360rpx;
+  border-radius: var(--glass-radius-lg);
+  overflow: hidden;
+  border: var(--glass-border);
+  background: var(--glass-bg);
+}
+.ad__cover image { width: 100%; height: 100%; }
+
+/* ---------- badges ---------- */
+.ad__badges { display: flex; align-items: center; gap: 16rpx; margin-bottom: 16rpx; }
+.ad__type {
+  display: inline-flex;
+  align-items: center;
+  height: 40rpx;
+  padding: 0 20rpx;
+  border-radius: var(--glass-radius-pill);
+  font-size: 22rpx;
+  font-weight: 500;
+  color: #fff;
+}
+.ad__type--STUDY       { background: var(--color-activity-study); }
+.ad__type--SPORTS      { background: var(--color-activity-sport); }
+.ad__type--BOARD_GAME  { background: var(--color-activity-boardgame); }
+.ad__type--ONLINE_GAME { background: var(--color-activity-online-game); }
+.ad__type--OTHER       { background: var(--color-activity-other); }
+
+.ad__title {
+  font-size: 40rpx;
+  font-weight: 600;
+  color: var(--admin-text-primary);
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+.ad__note {
+  margin-top: 16rpx;
+  padding: 16rpx 20rpx;
+  border-radius: 16rpx;
+  background: rgba(239, 68, 68, 0.10);
+  border: 1rpx solid rgba(239, 68, 68, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+.ad__note-label { font-size: 20rpx; color: var(--color-error); font-weight: 500; }
+.ad__note-text  { font-size: 24rpx; color: var(--admin-text-primary); line-height: 1.5; }
+
+/* ---------- rows ---------- */
+.ad__row {
+  display: flex;
+  align-items: flex-start;
+  padding: 18rpx 0;
+  border-top: 1rpx solid rgba(148, 163, 184, 0.18);
+}
+.ad__row:first-of-type { border-top: none; padding-top: 0; }
+.ad__icon { width: 48rpx; font-size: 32rpx; flex-shrink: 0; }
+.ad__row-text { flex: 1; font-size: 28rpx; color: var(--admin-text-primary); line-height: 1.5; }
+.ad__row-sub  { font-size: 22rpx; color: var(--admin-text-secondary); margin-top: 4rpx; }
+
+.ad__section-title { font-size: 28rpx; font-weight: 600; color: var(--admin-text-primary); margin-bottom: 16rpx; }
+.ad__desc {
+  font-size: 26rpx;
+  color: var(--admin-text-primary);
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+  opacity: 0.92;
+}
+.ad__tags { display: flex; flex-wrap: wrap; margin-top: 16rpx; gap: 12rpx; }
+.ad__tag {
+  padding: 6rpx 20rpx;
+  font-size: 22rpx;
+  color: var(--color-primary);
+  background: rgba(59, 130, 246, 0.10);
+  border: 1rpx solid rgba(59, 130, 246, 0.20);
+  border-radius: var(--glass-radius-pill);
+}
+
+/* ---------- organizer ---------- */
+.ad__organizer { display: flex; align-items: center; }
+.ad__organizer-avatar {
+  width: 80rpx; height: 80rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-primary), #60A5FA);
+  color: #fff;
+  font-size: 32rpx; font-weight: 600;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.ad__organizer-info { margin-left: 20rpx; flex: 1; min-width: 0; }
+.ad__organizer-name { font-size: 28rpx; color: var(--admin-text-primary); font-weight: 500; }
+.ad__organizer-sub  { font-size: 22rpx; color: var(--admin-text-secondary); margin-top: 4rpx; font-family: monospace; }
+
+/* ---------- skel / empty ---------- */
+.ad__skel-line {
+  height: 28rpx;
+  border-radius: 8rpx;
+  margin: 12rpx 0;
+  background: linear-gradient(90deg, rgba(255,255,255,0.06) 25%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.06) 75%);
+  background-size: 200% 100%;
+  animation: skel 1.2s infinite;
+}
+.ad__empty { text-align: center; color: var(--admin-text-secondary); font-size: 28rpx; padding: 32rpx 0; }
+
+@keyframes skel {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.reduce-motion .ad__skel-line { animation: none; }
+
+/* ---------- locked banner ---------- */
+.ad__locked {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 16rpx 24rpx;
+  border-radius: var(--glass-radius);
+  background: rgba(245, 158, 11, 0.10);
+  border: 1rpx solid rgba(245, 158, 11, 0.30);
+  font-size: 24rpx;
+  color: var(--color-warning);
+}
+.ad__locked-icon { font-size: 28rpx; }
+
+/* ---------- action bar (sticky glass) ---------- */
+.ad__actionbar {
+  position: fixed;
+  left: 32rpx; right: 32rpx;
+  bottom: 32rpx;
+  display: flex;
+  gap: 16rpx;
+  padding: 16rpx;
+  background: var(--glass-bg-deep);
+  -webkit-backdrop-filter: blur(var(--glass-blur-lg));
+  backdrop-filter: blur(var(--glass-blur-lg));
+  border: var(--glass-border);
+  border-radius: var(--glass-radius-lg);
+  box-shadow: var(--glass-shadow-2);
+  z-index: 20;
+}
+.ad__action-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10rpx;
+  height: 88rpx;
+  border-radius: var(--glass-radius-pill);
+  font-size: 28rpx;
+  font-weight: 500;
+  border: var(--glass-border);
+  background: var(--glass-bg);
+  transition: transform var(--motion-duration-fast, 120ms) ease-in-out;
+}
+.ad__action-btn--primary {
+  flex: 1.4;
+  background: linear-gradient(135deg, var(--color-success), #16A34A);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 4rpx 16rpx rgba(34, 197, 94, 0.4);
+}
+.ad__action-btn--ghost {
+  color: var(--color-error);
+  background: rgba(239, 68, 68, 0.10);
+  border-color: rgba(239, 68, 68, 0.30);
+}
+.ad__action-btn--pressed,
+.ad__action-btn:active { transform: scale(0.98); }
+.ad__action-icon { font-size: 28rpx; }
+
+/* ---------- reject sheet (glass bottom sheet) ---------- */
+.sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.sheet__backdrop {
+  position: absolute; inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  -webkit-backdrop-filter: blur(8rpx);
+  backdrop-filter: blur(8rpx);
+  animation: sheet-fade 240ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+.sheet__panel {
+  position: relative;
+  width: 100%;
+  max-width: 720rpx;
+  padding: 16rpx 32rpx 48rpx;
+  background: var(--glass-bg-deep);
+  -webkit-backdrop-filter: blur(var(--glass-blur-lg));
+  backdrop-filter: blur(var(--glass-blur-lg));
+  border-top: var(--glass-border);
+  border-left: var(--glass-border);
+  border-right: var(--glass-border);
+  border-radius: 40rpx 40rpx 0 0;
+  box-shadow: var(--glass-shadow-2);
+  animation: sheet-rise 240ms cubic-bezier(0.32, 0.72, 0, 1);
+  display: flex;
+  flex-direction: column;
+}
+.sheet__handle {
+  width: 80rpx; height: 8rpx;
+  border-radius: 4rpx;
+  background: rgba(255, 255, 255, 0.20);
+  margin: 0 auto 24rpx;
+}
+.sheet__title {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: var(--admin-text-primary);
+  text-align: center;
+  margin-bottom: 8rpx;
+}
+.sheet__sub {
+  font-size: 24rpx;
+  color: var(--admin-text-secondary);
+  text-align: center;
+  margin-bottom: 24rpx;
+  line-height: 1.5;
+}
+.sheet__textarea {
+  width: 100%;
+  min-height: 200rpx;
+  padding: 24rpx;
+  background: rgba(0, 0, 0, 0.30);
+  border: 1rpx solid rgba(255, 255, 255, 0.10);
+  border-radius: 24rpx;
+  font-size: 28rpx;
+  color: var(--admin-text-primary);
+  line-height: 1.6;
+  box-sizing: border-box;
+}
+.sheet__placeholder { color: var(--admin-text-tertiary); }
+.sheet__count {
+  text-align: right;
+  font-size: 22rpx;
+  color: var(--admin-text-tertiary);
+  margin-top: 8rpx;
+}
+.sheet__actions {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 32rpx;
+}
+.sheet__btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 88rpx;
+  border-radius: var(--glass-radius-pill);
+  font-size: 28rpx;
+  font-weight: 500;
+  border: var(--glass-border);
+  background: var(--glass-bg);
+  transition: transform var(--motion-duration-fast, 120ms) ease-in-out;
+}
+.sheet__btn--ghost {
+  color: var(--admin-text-primary);
+}
+.sheet__btn--danger {
+  background: linear-gradient(135deg, var(--color-error), #DC2626);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 4rpx 16rpx rgba(239, 68, 68, 0.4);
+}
+.sheet__btn--pressed,
+.sheet__btn:active { transform: scale(0.98); }
+
+@keyframes sheet-fade {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
+}
+@keyframes sheet-rise {
+  0%   { transform: translateY(100%); }
+  100% { transform: translateY(0); }
+}
+.reduce-motion .sheet__backdrop,
+.reduce-motion .sheet__panel { animation: none; }
+
+/* ---------- page-enter ---------- */
+.page-enter { animation: ad-page-enter 320ms ease-out both; }
+@keyframes ad-page-enter {
+  0%   { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.reduce-motion .page-enter { animation: none; }

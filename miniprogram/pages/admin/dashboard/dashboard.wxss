@@ -1,0 +1,205 @@
+/**
+ * 数据看板样式（issue #32 前端）
+ * 4 张 2×2 玻璃卡 + 警告条 + 长卡 + 快捷入口。
+ */
+
+.dash {
+  position: relative;
+  min-height: 100vh;
+  background: var(--admin-page-bg, #0B1020);
+  color: var(--admin-text-primary);
+  padding: 48rpx 32rpx 96rpx;
+  overflow: hidden;
+}
+
+/* ---------- mesh ---------- */
+.mesh { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+.mesh__blob {
+  position: absolute;
+  width: 480rpx; height: 480rpx;
+  border-radius: 50%;
+  filter: blur(var(--mesh-blur, 100rpx));
+  mix-blend-mode: screen;
+  opacity: 0.85;
+  animation: dash-mesh-drift 60s linear infinite;
+  will-change: transform;
+}
+.mesh__blob--1 { left: -120rpx; top: -120rpx; background: radial-gradient(circle, var(--mesh-1) 0%, transparent 70%); }
+.mesh__blob--2 { right: -160rpx; top: 200rpx; background: radial-gradient(circle, var(--mesh-2) 0%, transparent 70%); animation-delay: -15s; }
+.mesh__blob--3 { left: 25%; bottom: -200rpx; background: radial-gradient(circle, var(--mesh-3) 0%, transparent 70%); animation-delay: -30s; }
+.mesh__blob--4 { right: 20%; bottom: 80rpx; background: radial-gradient(circle, var(--mesh-4) 0%, transparent 70%); animation-delay: -45s; }
+@keyframes dash-mesh-drift {
+  0%   { transform: translate(0,0) scale(1); }
+  50%  { transform: translate(40rpx, -30rpx) scale(1.05); }
+  100% { transform: translate(0,0) scale(1); }
+}
+.reduce-motion .mesh__blob { animation: none; }
+
+/* ---------- content ---------- */
+.dash__content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+  max-width: 720rpx;
+  margin: 0 auto;
+}
+
+.dash__hero { padding: 8rpx 8rpx 0; }
+.dash__eyebrow {
+  font-size: 22rpx; font-weight: 500; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--admin-text-tertiary);
+  margin-bottom: 6rpx;
+}
+.dash__title {
+  font-size: 56rpx; font-weight: 600; line-height: 1.15;
+  letter-spacing: -0.02em; color: var(--admin-text-primary);
+  margin-bottom: 8rpx;
+}
+.dash__sub { font-size: 24rpx; color: var(--admin-text-secondary); }
+
+/* ---------- SLA warning ---------- */
+.dash__sla { display: flex; align-items: center; gap: 16rpx; }
+.dash__sla-icon {
+  width: 64rpx; height: 64rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-error), #DC2626);
+  color: #fff;
+  font-size: 32rpx; font-weight: 600;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 0 24rpx rgba(239, 68, 68, 0.45);
+}
+.dash__sla-text { flex: 1; min-width: 0; }
+.dash__sla-title { font-size: 28rpx; font-weight: 600; color: var(--color-error); margin-bottom: 2rpx; }
+.dash__sla-sub   { font-size: 22rpx; color: var(--admin-text-secondary); line-height: 1.5; }
+
+/* ---------- metric grid ---------- */
+.dash__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20rpx;
+}
+
+.metric {
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+.metric__icon {
+  width: 56rpx; height: 56rpx;
+  border-radius: 18rpx;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 32rpx; font-weight: 600;
+  color: #fff;
+  margin-bottom: 4rpx;
+}
+.metric__icon--users      { background: linear-gradient(135deg, #6366F1, #8B5CF6); }
+.metric__icon--activities { background: linear-gradient(135deg, #0EA5E9, #38BDF8); }
+.metric__icon--signups    { background: linear-gradient(135deg, #10B981, #34D399); }
+.metric__icon--push       { background: linear-gradient(135deg, #F59E0B, #FBBF24); }
+
+.metric__label {
+  font-size: 22rpx; color: var(--admin-text-secondary);
+  text-transform: uppercase; letter-spacing: 0.04em;
+  font-weight: 500;
+}
+.metric__value {
+  font-size: 56rpx; font-weight: 600; line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--admin-text-primary);
+}
+.metric__sub {
+  display: flex; flex-direction: column; gap: 2rpx;
+  margin-top: 8rpx;
+}
+.metric__sub-block { display: flex; align-items: baseline; gap: 4rpx; }
+.metric__sub-num    { font-size: 24rpx; font-weight: 600; color: var(--admin-text-primary); }
+.metric__sub-num--accent  { color: var(--color-primary); }
+.metric__sub-num--success { color: var(--color-success); }
+.metric__sub-num--warn    { color: var(--color-warning); }
+.metric__sub-num--danger  { color: var(--color-error); }
+.metric__sub-label { font-size: 20rpx; color: var(--admin-text-tertiary); }
+
+/* ---------- long cards ---------- */
+.dash__row-card {
+  display: flex; align-items: center; gap: 20rpx;
+}
+.dash__row-icon {
+  width: 64rpx; height: 64rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #8B5CF6, #EC4899);
+  color: #fff;
+  font-size: 30rpx; font-weight: 600;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.dash__row-body  { flex: 1; min-width: 0; }
+.dash__row-title { font-size: 28rpx; font-weight: 500; color: var(--admin-text-primary); margin-bottom: 2rpx; }
+.dash__row-sub   { font-size: 22rpx; color: var(--admin-text-secondary); }
+.dash__row-value {
+  font-size: 40rpx; font-weight: 600;
+  color: var(--admin-text-primary);
+  letter-spacing: -0.02em;
+}
+
+/* ---------- quick entries ---------- */
+.dash__quick {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20rpx;
+}
+.dash__quick-icon {
+  width: 64rpx; height: 64rpx;
+  border-radius: 18rpx;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 36rpx; font-weight: 600;
+  color: #fff;
+  flex-shrink: 0;
+}
+.dash__quick-icon--activities { background: linear-gradient(135deg, var(--color-primary), #60A5FA); }
+.dash__quick-icon--users      { background: linear-gradient(135deg, #6366F1, #8B5CF6); }
+.dash__quick-text { flex: 1; min-width: 0; }
+.dash__quick-title { font-size: 26rpx; font-weight: 500; color: var(--admin-text-primary); margin-bottom: 2rpx; }
+.dash__quick-sub   { font-size: 20rpx; color: var(--admin-text-secondary); }
+
+/* 把 row layout 应用到所有 quick cards（glass-card 内部是 slot） */
+.dash__quick > view {
+  display: flex; align-items: center; gap: 16rpx;
+}
+
+/* ---------- error ---------- */
+.dash__error {
+  display: flex; align-items: center; gap: 16rpx;
+  padding: 16rpx 24rpx;
+  border-radius: var(--glass-radius);
+  background: rgba(239, 68, 68, 0.10);
+  border: 1rpx solid rgba(239, 68, 68, 0.25);
+}
+.dash__error-icon {
+  width: 48rpx; height: 48rpx;
+  border-radius: 50%;
+  background: var(--color-error);
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28rpx; font-weight: 600;
+  flex-shrink: 0;
+}
+.dash__error-text { flex: 1; font-size: 24rpx; color: var(--admin-text-primary); }
+.dash__error-btn {
+  padding: 8rpx 20rpx;
+  background: var(--color-error);
+  color: #fff;
+  border-radius: var(--glass-radius-pill);
+  font-size: 22rpx;
+  font-weight: 500;
+}
+
+/* ---------- page-enter ---------- */
+.page-enter { animation: dash-page-enter 320ms ease-out both; }
+@keyframes dash-page-enter {
+  0%   { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.reduce-motion .page-enter { animation: none; }

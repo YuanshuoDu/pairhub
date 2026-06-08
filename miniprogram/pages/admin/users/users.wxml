@@ -1,0 +1,208 @@
+<!--
+  用户搜索页（issue #32 前端 / docs/design/admin-glass.md §6.4）
+  视觉：mesh → 玻璃搜索框 → 状态芯片 → 玻璃用户行 → action sheet
+-->
+
+<view class="au page--dark {{reduceMotion ? 'reduce-motion' : ''}}" data-theme="{{theme}}">
+
+  <!-- 4-blob mesh -->
+  <view class="mesh" aria-hidden="true">
+    <view class="mesh__blob mesh__blob--1"></view>
+    <view class="mesh__blob mesh__blob--2"></view>
+    <view class="mesh__blob mesh__blob--3"></view>
+    <view class="mesh__blob mesh__blob--4"></view>
+  </view>
+
+  <view class="au__content page-enter">
+
+    <!-- ===== Header ===== -->
+    <view class="au__hero">
+      <view class="au__eyebrow">Operator · 用户</view>
+      <view class="au__title">用户搜索</view>
+      <view class="au__sub">共 {{total}} 条 · 至少需要 1 个过滤条件</view>
+    </view>
+
+    <!-- ===== 搜索框（玻璃） ===== -->
+    <glass-card tone="light" radius="lg" padding="sm">
+      <view class="au__search">
+        <text class="au__search-icon" aria-hidden="true">⌕</text>
+        <input
+          class="au__search-input"
+          value="{{search}}"
+          bindinput="onSearchInput"
+          bindconfirm="onSubmitSearch"
+          placeholder="昵称 / 手机号 / id"
+          placeholder-class="au__search-placeholder"
+          confirm-type="search"
+        />
+        <view
+          wx:if="{{search}}"
+          class="au__search-clear"
+          bindtap="onClearSearch"
+          role="button"
+          aria-label="清空搜索"
+        >×</view>
+      </view>
+    </glass-card>
+
+    <!-- ===== 状态芯片 ===== -->
+    <scroll-view scroll-x class="au__chips" enable-flex>
+      <view
+        class="au__chip {{statusFilter === 'ALL' ? 'is-active' : ''}}"
+        data-value="ALL"
+        bindtap="onStatusFilter"
+        role="button"
+      >全部</view>
+      <view
+        class="au__chip {{statusFilter === 'ACTIVE' ? 'is-active' : ''}}"
+        data-value="ACTIVE"
+        bindtap="onStatusFilter"
+        role="button"
+      >正常</view>
+      <view
+        class="au__chip {{statusFilter === 'BANNED' ? 'is-active' : ''}}"
+        data-value="BANNED"
+        bindtap="onStatusFilter"
+        role="button"
+      >已封禁</view>
+    </scroll-view>
+
+    <!-- ===== 列表 ===== -->
+    <view class="au__list">
+
+      <block wx:if="{{loading && isFirstLoad}}">
+        <loading-skeleton count="4" />
+      </block>
+
+      <block wx:elif="{{!loading && !list.length && !search && statusFilter === 'ALL'}}">
+        <glass-card tone="light" radius="lg" padding="lg">
+          <empty-state
+            title="输入条件开始搜索"
+            desc="昵称 / 手机号 / id 子串匹配；也可直接按 ACTIVE / BANNED 过滤"
+            icon="⌕"
+          />
+        </glass-card>
+      </block>
+
+      <block wx:elif="{{!loading && !list.length}}">
+        <glass-card tone="light" radius="lg" padding="lg">
+          <empty-state
+            title="无匹配结果"
+            desc="试试其它关键字，或切回「全部」"
+            icon="◇"
+            actionText="重新加载"
+            bind:action="onRefresh"
+          />
+        </glass-card>
+      </block>
+
+      <block wx:else>
+        <glass-card
+          wx:for="{{list}}"
+          wx:key="id"
+          tone="light"
+          radius="md"
+          padding="md"
+        >
+          <view
+            class="row"
+            hover-class="row--pressed"
+            hover-stay-time="80"
+            bindlongpress="onUserLongPress"
+            data-row="{{item}}"
+            role="button"
+            aria-label="长按管理 {{item.nickname}}"
+          >
+            <view class="row__avatar">{{item.initial}}</view>
+            <view class="row__body">
+              <view class="row__name">
+                <text>{{item.nickname}}</text>
+                <status-pill
+                  wx:if="{{item.role === 'ADMIN'}}"
+                  kind="neutral" text="管理员" size="sm"
+                />
+              </view>
+              <view class="row__sub">
+                <text class="row__sub-id">id {{item.shortId}}</text>
+                <text wx:if="{{item.school}}" class="row__sub-dot">·</text>
+                <text wx:if="{{item.school}}" class="row__sub-school">{{item.school}}</text>
+                <text class="row__sub-dot">·</text>
+                <text class="row__sub-time">{{item.createdText}}</text>
+              </view>
+            </view>
+            <view class="row__pills">
+              <status-pill
+                wx:if="{{item.status === 'ACTIVE'}}"
+                kind="active" text="正常" size="sm"
+              />
+              <status-pill
+                wx:elif="{{item.status === 'BANNED'}}"
+                kind="banned" text="已封禁" size="sm"
+              />
+              <status-pill
+                wx:else kind="neutral" text="{{item.status}}" size="sm"
+              />
+            </view>
+          </view>
+        </glass-card>
+
+        <view class="au__footer" wx:if="{{!hasMore && list.length}}">— 没有更多了 —</view>
+        <view class="au__footer" wx:elif="{{loadingMore}}">加载中…</view>
+      </block>
+
+    </view>
+  </view>
+
+  <!-- ===== Action sheet（封禁 / 解封） ===== -->
+  <view wx:if="{{actionTarget}}" class="sheet" catchtap="onCloseAction" aria-modal="true" role="dialog">
+    <view class="sheet__backdrop" aria-hidden="true"></view>
+    <view class="sheet__panel" catchtap="noop">
+      <view class="sheet__handle" aria-hidden="true"></view>
+      <view class="sheet__title">
+        {{actionTarget.nickname}}
+      </view>
+      <view class="sheet__sub">
+        <text>id {{actionTarget.shortId}}</text>
+        <text wx:if="{{actionTarget.school}}">· {{actionTarget.school}}</text>
+      </view>
+
+      <view class="sheet__target-status">
+        <status-pill
+          wx:if="{{actionTarget.status === 'ACTIVE'}}"
+          kind="active" text="当前：正常" size="sm"
+        />
+        <status-pill
+          wx:elif="{{actionTarget.status === 'BANNED'}}"
+          kind="banned" text="当前：已封禁" size="sm"
+        />
+        <status-pill
+          wx:else kind="neutral" text="当前：{{actionTarget.status}}" size="sm"
+        />
+      </view>
+
+      <view class="sheet__actions">
+        <view
+          class="sheet__btn sheet__btn--ghost"
+          hover-class="sheet__btn--pressed"
+          bindtap="onCloseAction"
+          role="button"
+        >取消</view>
+        <view
+          wx:if="{{actionTarget.status === 'ACTIVE'}}"
+          class="sheet__btn sheet__btn--danger"
+          hover-class="sheet__btn--pressed"
+          bindtap="onToggleBan"
+          role="button"
+        >{{busy ? '处理中…' : '封禁该用户'}}</view>
+        <view
+          wx:else
+          class="sheet__btn sheet__btn--primary"
+          hover-class="sheet__btn--pressed"
+          bindtap="onToggleBan"
+          role="button"
+        >{{busy ? '处理中…' : '解除封禁'}}</view>
+      </view>
+    </view>
+  </view>
+
+</view>
