@@ -141,8 +141,9 @@ export function canTransition(from: Status, to: Status): boolean {
 // ---------------------------------------------------------------------------
 
 const CACHE_TTL_SECONDS = 5 * 60;
+const CACHE_PREFIX = 'activity:list:';
 const cacheKey = (query: object) =>
-  `activity:list:${Buffer.from(JSON.stringify(query)).toString('base64url')}`;
+  `${CACHE_PREFIX}${Buffer.from(JSON.stringify(query)).toString('base64url')}`;
 
 async function readCache(
   redis: { get: (k: string) => Promise<string | null> },
@@ -163,6 +164,40 @@ async function writeCache(
   value: unknown,
 ): Promise<void> {
   await redis.set(key, JSON.stringify(value), 'EX', CACHE_TTL_SECONDS);
+}
+
+/**
+ * Drop every cached list response. Called from every write path
+ * (create / update / delete activity, signup / cancel signup) so the
+ * next list request rebuilds from the database instead of returning
+ * stale rows for up to 5 minutes.
+ *
+ * Hotfix-2 (issue #51 / docs/verification/mvp-validation.md §P1.2):
+ * before this helper, new activities / cancellations / count changes
+ * would surface in the UI only after the TTL expired, leading to
+ * "I just posted but I can't see it" complaints.
+ *
+ * We use SCAN + DEL inside a single round-trip per 200 keys, not
+ * `KEYS *`, so Redis never blocks on a hot production set.
+ */
+export async function invalidateActivityListCache(
+  redis: {
+    scan: (cursor: string, ...args: unknown[]) => Promise<[string, string[]]>;
+    del: (...keys: string[]) => Promise<unknown>;
+  },
+): Promise<void> {
+  let cursor = '0';
+  do {
+    const [next, keys] = await redis.scan(cursor, 'MATCH', `${CACHE_PREFIX}*`, 'COUNT', 200);
+    cursor = next;
+    if (keys.length > 0) {
+      // Chunked DEL — Redis accepts a variadic key list, but a very
+      // large fan-out would still be slow. 200 per round-trip is fine
+      // because the per-write fan-in is small (single hot key, not
+      // millions of distinct queries).
+      await redis.del(...keys);
+    }
+  } while (cursor !== '0');
 }
 
 // ---------------------------------------------------------------------------
@@ -365,6 +400,10 @@ export async function registerActivityModule(app: FastifyInstance): Promise<void
       },
     });
 
+    // Hotfix-2 P1.2: drop the list cache so the new row is visible
+    // immediately. (SCAN is non-blocking; cheap relative to the write.)
+    await invalidateActivityListCache(app.redis as never);
+
     return { data: created };
     },
   );
@@ -447,6 +486,23 @@ export async function registerActivityModule(app: FastifyInstance): Promise<void
       throw new ForbiddenError('已取消的活动不能再修改');
     }
 
+    // Hotfix-2 (issue #51 / docs/verification/mvp-validation.md §P2.2):
+    // the previous body refine short-circuited when startTime was
+    // undefined, so a PATCH that only sent endTime would skip the
+    // "new endTime > existing startTime" check. Re-validate now that
+    // we have the existing row in hand.
+    const mergedStart = body.data.startTime
+      ? new Date(body.data.startTime)
+      : existing.startTime;
+    const mergedEnd = body.data.endTime
+      ? new Date(body.data.endTime)
+      : existing.endTime;
+    if (mergedEnd <= mergedStart) {
+      throw new ValidationError({
+        issues: [{ code: 'invalid_time_range', path: ['endTime'], message: 'endTime must be after startTime' }],
+      });
+    }
+
     const updated = await app.prisma.activity.update({
       where: { id: params.data.id },
       data: {
@@ -469,6 +525,9 @@ export async function registerActivityModule(app: FastifyInstance): Promise<void
         ...(body.data.tags !== undefined ? { tags: body.data.tags } : {}),
       },
     });
+
+    // Hotfix-2 P1.2: title / time / maxParticipants changes affect list view.
+    await invalidateActivityListCache(app.redis as never);
 
     return { data: updated };
     },
@@ -507,6 +566,10 @@ export async function registerActivityModule(app: FastifyInstance): Promise<void
       where: { id: params.data.id },
       data: { status: 'CANCELED' },
     });
+
+    // Hotfix-2 P1.2: a cancelled activity must disappear from the
+    // default list view (status != CANCELED filter) immediately.
+    await invalidateActivityListCache(app.redis as never);
 
     return { data: { id: updated.id, status: updated.status } };
   });
