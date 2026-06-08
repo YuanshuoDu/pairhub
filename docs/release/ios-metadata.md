@@ -189,6 +189,98 @@ Before pasting this metadata into App Store Connect:
 - [ ] Test account (if used) is fresh and credentials work
 - [ ] Compliance questions answered (encryption: usually "no" for HTTPS-only)
 - [ ] Export compliance: "No" for HTTPS-only, no custom encryption
+- [ ] `ACCESS_TOKEN` injected via `--dart-define` (see §9) and the
+      map screen renders the Mapbox style (not the placeholder view)
 
 Once the first App Store Connect submission is approved, **this file
 becomes the changelog** — update it on every release.
+
+---
+
+## 9. Mapbox access token (Flutter + Android)
+
+The Flutter `MapboxMap` widget (PR #59, issue #35) reads a public
+Mapbox access token at **build time** via `--dart-define`. The same
+mechanism is used on Android (issue #31 scaffold). This section is
+the operator runbook for the iOS / Android releases.
+
+### 9.1 Get a public token
+
+1. Sign in to <https://account.mapbox.com/access-tokens/>
+2. Click **Create a token**
+3. Name it `studybuddy-<platform>-public` (e.g. `studybuddy-ios-public`)
+4. **Public scopes only** (defaults: `styles:read`, `fonts:read`,
+   `vision:read`, optionally `geocoding:read`). Do **NOT** enable any
+   secret scopes on this token.
+5. Copy the token (starts with `pk.…`)
+
+### 9.2 Inject at build time
+
+The Dart side reads the token via
+`String.fromEnvironment('ACCESS_TOKEN', defaultValue: '')` (see
+`app/lib/features/map/presentation/map_screen.dart`).
+
+**Local dev**:
+
+```bash
+cd app
+flutter run --dart-define ACCESS_TOKEN=pk.eyJ1Ijoi…
+```
+
+**iOS release build**:
+
+```bash
+cd app
+flutter build ipa --release \
+  --dart-define ACCESS_TOKEN=pk.eyJ1Ijoi…
+```
+
+For Xcode-driven builds (Xcode UI → Edit Scheme → Run → Arguments →
+Arguments Passed On Launch), add:
+
+```
+--dart-define ACCESS_TOKEN=pk.eyJ1Ijoi…
+```
+
+**Android release build**:
+
+```bash
+cd app
+flutter build apk --release \
+  --dart-define ACCESS_TOKEN=pk.eyJ1Ijoi…
+```
+
+### 9.3 CI / CD
+
+Inject the token from a GitHub repo secret:
+
+```yaml
+# .github/workflows/release.yml
+- name: Build release
+  env:
+    ACCESS_TOKEN: ${{ secrets.MAPBOX_PUBLIC_TOKEN }}
+  run: |
+    flutter build apk --release --dart-define ACCESS_TOKEN=$ACCESS_TOKEN
+    flutter build ipa --release --dart-define ACCESS_TOKEN=$ACCESS_TOKEN
+```
+
+For Android, the Mapbox **secret** token (`sk.…`, with the
+`Downloads: Read` scope) is a separate, build-host-only secret
+needed by Gradle to pull the native SDK from
+`maven.mapbox.com/releases`. See
+`docs/release/android-setup.md` §3 for the gradle wiring.
+
+### 9.4 Production policy
+
+- Rotate the **public** token every 90 days (revoke old + create new).
+- Restrict the public token's allowed URL referrers to
+  `studybuddy.app/*` in the Mapbox dashboard.
+- The Mapbox **secret** token (Android downloads) should be rotated
+  every 6 months; any compromise requires revoking immediately and
+  invalidating the old token's `Downloads: Read` scope.
+- **Never** commit either token to git, paste in a public channel,
+  or ship a debug build that embeds the production public token.
+- Empty / non-`pk.…` token → the map screen shows a friendly
+  "configure your token" view (see
+  `app/lib/features/map/presentation/map_screen.dart`); the
+  app does not crash.

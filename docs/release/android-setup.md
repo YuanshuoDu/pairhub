@@ -61,24 +61,62 @@ ANDROID_SDK_ROOT=C:\Users\Steven.du\AppData\Local\Android\Sdk
 
 ---
 
-## 3. Mapbox secret token
+## 3. Mapbox tokens (TWO of them)
 
-`mapbox_gl` plugin 在 gradle 编译时需要从 `https://api.mapbox.com/downloads/v2/releases/maven` 拉 native SDK。这需要 **secret** token（`sk.*`），不是 public `pk.*`。
+StudyBuddy needs **two distinct** Mapbox tokens:
 
-**CI**：在 GitHub repo settings → Secrets → `MAPBOX_DOWNLOADS_TOKEN` 加一个 secret，workflow 用它写 `~/.gradle/gradle.properties`：
+| Token | Where | Source | Lifetime |
+| --- | --- | --- | --- |
+| **Public** `pk.…` | Dart code via `--dart-define ACCESS_TOKEN=…` | <https://account.mapbox.com/access-tokens/> | commit to repo? **NO** — passed at build time |
+| **Secret** `sk.…` | Gradle host (`~/.gradle/gradle.properties` `MAPBOX_DOWNLOADS_TOKEN`) | same dashboard, **with `Downloads: Read` scope** | commit to repo? **NO** — host file |
+
+The public token is what the running app sends to the Mapbox API at
+runtime to render tiles. The secret token is what the Gradle build
+uses once, to download the native SDK from `maven.mapbox.com`.
+
+### 3.1 Public token — Flutter runtime
+
+See [ios-metadata.md §9](./ios-metadata.md#9-mapbox-access-token-flutter--android) for the full runbook. TL;DR:
+
+```bash
+cd app
+flutter build apk --release --dart-define ACCESS_TOKEN=pk.eyJ…
+```
+
+CI injects from the `MAPBOX_PUBLIC_TOKEN` GitHub secret.
+
+### 3.2 Secret token — Gradle downloads
+
+`mapbox_gl` plugin 在 gradle 编译时需要从
+`https://api.mapbox.com/downloads/v2/releases/maven` 拉 native SDK。
+这需要 **secret** token（`sk.*`），不是 public `pk.*`。
+
+**CI**：在 GitHub repo settings → Secrets → `MAPBOX_DOWNLOADS_TOKEN`
+加一个 secret，workflow 用它写 `~/.gradle/gradle.properties`：
 
 ```yaml
-- name: Inject Mapbox token
+- name: Inject Mapbox secret token
   run: |
     mkdir -p ~/.gradle
     echo "MAPBOX_DOWNLOADS_TOKEN=${{ secrets.MAPBOX_DOWNLOADS_TOKEN }}" >> ~/.gradle/gradle.properties
 ```
 
-**本地开发**：`~/.gradle/gradle.properties`（**全局 gradle home**，不在 repo 里）：
+**本地开发**：`~/.gradle/gradle.properties`（**全局 gradle home**，
+不在 repo 里）：
 
 ```properties
 MAPBOX_DOWNLOADS_TOKEN=sk.eyJ...YOUR_SECRET...
 ```
+
+### 3.3 Rotation policy
+
+- Public token: **every 90 days**. Revoke + create new in
+  Mapbox dashboard, update `MAPBOX_PUBLIC_TOKEN` GitHub secret,
+  ship a build. Old clients keep working until their next refresh.
+- Secret token: **every 6 months**, or **immediately** if anyone
+  with gradle access might have leaked it. Revoking invalidates
+  future SDK downloads, so coordinate with ops to avoid a build
+  outage window.
 
 ---
 
