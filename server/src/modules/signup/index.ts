@@ -21,6 +21,7 @@
  */
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import type { SignupStatus } from '@prisma/client';
 
 import {
   ConflictError,
@@ -30,6 +31,7 @@ import {
   ValidationError,
 } from '@/lib/errors.js';
 import { env } from '@/lib/env.js';
+import { invalidateActivityListCache } from '@/modules/activity/index.js';
 
 const idParamSchema = z.object({
   id: z.string().min(1).max(64).regex(/^[a-z0-9]+$/i, 'id 格式不合法'),
@@ -84,11 +86,35 @@ export async function registerSignupModule(app: FastifyInstance): Promise<void> 
           throw new ConflictError('activity_full', '活动已满');
         }
 
-        // create will throw P2002 on duplicate; the unique index makes
-        // double-booking a hard error.
-        const signup = await tx.signup.create({
-          data: { activityId, userId, status: 'APPROVED' },
+        // If the user previously signed up and then cancelled, the
+        // @@unique([activityId, userId]) index will reject a fresh
+        // INSERT (P2002). We recover by flipping the existing CANCELED
+        // row back to APPROVED instead of creating a new one — same
+        // business outcome, no error to the caller.
+        //
+        // Hotfix-2 (issue #51 / docs/verification/mvp-validation.md §P1.1):
+        // before this change, a user who cancelled could never re-sign-up
+        // for the same activity; the unique constraint would block the
+        // INSERT every time.
+        const existing = await tx.signup.findUnique({
+          where: { activityId_userId: { activityId, userId } },
         });
+        let signup: { id: string; status: SignupStatus };
+        if (existing) {
+          if (existing.status === 'APPROVED') {
+            // Idempotent re-tap: nothing to do.
+            return { signup: existing, newCount: activity.currentCount, isFull: activity.status === 'FULL' };
+          }
+          // CANCELED / PENDING / REJECTED → revive as APPROVED.
+          signup = await tx.signup.update({
+            where: { id: existing.id },
+            data: { status: 'APPROVED', canceledAt: null, signedAt: new Date() },
+          });
+        } else {
+          signup = await tx.signup.create({
+            data: { activityId, userId, status: 'APPROVED' },
+          });
+        }
 
         const newCount = activity.currentCount + 1;
         const shouldBeFull = newCount >= activity.maxParticipants;
@@ -102,6 +128,10 @@ export async function registerSignupModule(app: FastifyInstance): Promise<void> 
 
         return { signup, newCount, isFull: shouldBeFull };
       });
+
+      // Hotfix-2 P1.2: currentCount + status may have changed (RECRUITING → FULL).
+      // Drop the list cache so the next reader sees the new state.
+      await invalidateActivityListCache(app.redis as never);
 
       return { data: result };
     },
@@ -155,6 +185,9 @@ export async function registerSignupModule(app: FastifyInstance): Promise<void> 
 
         return { signupId: signup.id, newCount, reopened: shouldReopen };
       });
+
+      // Hotfix-2 P1.2: same as signup-create — count/status can change.
+      await invalidateActivityListCache(app.redis as never);
 
       return { data: result };
     },

@@ -255,7 +255,15 @@ export async function registerAuthModule(app: FastifyInstance): Promise<void> {
     if (!user) {
       user = await prisma.user.create({
         data: {
-          openid: phone ? compositeOpenid : compositeOpenid,
+          // compositeOpenid is always the unique secondary key; phone (if
+          // provided) is the primary lookup key for the WeChat phone-unlock
+          // flow. We don't write the bare providerSub in either branch.
+          //
+          // Hotfix-2 (issue #51 / docs/verification/mvp-validation.md §P2.1):
+          // the previous code had `phone ? compositeOpenid : compositeOpenid`
+          // — both branches identical, copy-paste leftover. Collapsed to a
+          // single value.
+          openid: compositeOpenid,
           phone: phone ?? null,
           nickname: nickname ?? '留学生',
           avatar: avatar ?? null,
