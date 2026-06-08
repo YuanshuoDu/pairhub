@@ -81,7 +81,10 @@ model Activity {
   coverUrl        String?            @map("cover_url")
   locationName    String             @map("location_name")
   locationAddr    String             @map("location_addr")
-  // GCJ-02 (Tencent map coordinate system). Decimal(10,7) is precise to ~1cm.
+  // WGS-84 (international standard; same coordinate system as Mapbox).
+  // Decimal(10,7) is precise to ~1cm. The original source was GCJ-02
+  // (Tencent) but PR #37 (mapbox-migration) standardized on WGS-84.
+  // Geo queries in modules/activity/index.ts cast to float8 for trig.
   locationLat     Decimal            @map("location_lat") @db.Decimal(10, 7)
   locationLng     Decimal            @map("location_lng") @db.Decimal(10, 7)
   startTime       DateTime           @map("start_time")

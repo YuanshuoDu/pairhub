@@ -22,6 +22,7 @@
  */
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { Prisma } from '@prisma/client';
 
 import { ForbiddenError, NotFoundError, UnauthorizedError, ValidationError } from '@/lib/errors.js';
 import { checkFields } from '@/lib/content-safety.js';
@@ -47,14 +48,24 @@ const activityStatusSchema = z.enum([
   'CANCELED',
 ]);
 
-export const listQuerySchema = z.object({
-  type: activityTypeSchema.optional(),
-  status: activityStatusSchema.optional(),
-  /** Free-text city name (matches locationName loosely). */
-  city: z.string().trim().min(1).max(50).optional(),
-  page: z.coerce.number().int().min(1).default(1),
-  pageSize: z.coerce.number().int().min(1).max(100).default(20),
-});
+export const listQuerySchema = z
+  .object({
+    type: activityTypeSchema.optional(),
+    status: activityStatusSchema.optional(),
+    /** Free-text city name (matches locationName loosely). */
+    city: z.string().trim().min(1).max(50).optional(),
+    /** Geo "near me" filter — WGS-84 (decimal degrees, same as the stored
+     *  location_lat / location_lng). All three must be present together. */
+    lat: z.coerce.number().min(-90).max(90).optional(),
+    lng: z.coerce.number().min(-180).max(180).optional(),
+    radiusKm: z.coerce.number().positive().max(200).default(5),
+    page: z.coerce.number().int().min(1).default(1),
+    pageSize: z.coerce.number().int().min(1).max(100).default(20),
+  })
+  .refine(
+    (v) => (v.lat === undefined) === (v.lng === undefined),
+    { message: 'lat 和 lng 必须同时提供', path: ['lat'] },
+  );
 
 export const createBodySchema = z
   .object({
@@ -161,6 +172,11 @@ async function writeCache(
 export async function registerActivityModule(app: FastifyInstance): Promise<void> {
   /**
    * GET /api/v1/activities — list with filters + cache
+   *
+   * Geo "near me" mode (issue #35): when `lat` + `lng` + `radiusKm` are
+   * supplied we route through a Haversine `$queryRaw` so the database
+   * does the distance math + sort + filter in one round-trip. Without
+   * geo, we use the standard Prisma findMany and sort by startTime.
    */
   app.get('/api/v1/activities', async (req) => {
     const parsed = listQuerySchema.safeParse(req.query);
@@ -174,6 +190,101 @@ export async function registerActivityModule(app: FastifyInstance): Promise<void
       return { data: cached, cached: true };
     }
 
+    // ---- Geo "near me" branch (Haversine in SQL) ----
+    if (q.lat !== undefined && q.lng !== undefined) {
+      const skip = (q.page - 1) * q.pageSize;
+
+      // WGS-84 Haversine. Earth radius = 6371 km. LEAST/GREATEST clamp
+      // protects against floating-point drift near antipodal points
+      // where the acos argument would otherwise be 1.00000002 → NaN.
+      // The two CASTs (::float8) are required because location_lat /
+      // location_lng are Decimal(10,7) in Prisma; trig functions reject
+      // numeric type out of the box on PG.
+      //
+      // Filters type / status / city are pushed into the SQL so the
+      // distance sort is correct under the filter. status='CANCELED'
+      // is excluded by default (matches non-geo branch semantics).
+      const typeFilter = q.type ? Prisma.sql`AND type = ${q.type}::"ActivityType"` : Prisma.empty;
+      const statusFilter = q.status
+        ? Prisma.sql`AND status = ${q.status}::"ActivityStatus"`
+        : Prisma.sql`AND status <> 'CANCELED'::"ActivityStatus"`;
+      const cityFilter = q.city
+        ? Prisma.sql`AND location_name ILIKE ${'%' + q.city + '%'}`
+        : Prisma.empty;
+
+      const distanceExpr = Prisma.sql`(
+        6371 * acos(
+          LEAST(1.0, GREATEST(-1.0,
+            cos(radians(${q.lat})) * cos(radians(location_lat::float8)) *
+            cos(radians(location_lng::float8) - radians(${q.lng})) +
+            sin(radians(${q.lat})) * sin(radians(location_lat::float8))
+          ))
+        )
+      )`;
+
+      const rows = await app.prisma.$queryRaw<Array<{ id: string; distance_km: number }>>(
+        Prisma.sql`
+          SELECT id, ${distanceExpr} AS distance_km
+          FROM activities
+          WHERE 1=1
+            ${typeFilter}
+            ${statusFilter}
+            ${cityFilter}
+            AND ${distanceExpr} <= ${q.radiusKm}
+          ORDER BY distance_km ASC
+          LIMIT ${q.pageSize} OFFSET ${skip}
+        `,
+      );
+
+      // Fetch the full activity rows in one shot (single PK lookup) so
+      // the response shape matches the non-geo branch. Maintain the
+      // distance order from the raw query.
+      const ids = rows.map((r) => r.id);
+      const distanceMap = new Map(rows.map((r) => [r.id, r.distance_km]));
+      const data = ids.length
+        ? await app.prisma.activity.findMany({
+            where: { id: { in: ids } },
+          })
+        : [];
+      data.sort((a, b) => (distanceMap.get(a.id) ?? 0) - (distanceMap.get(b.id) ?? 0));
+
+      // Total: how many activities within radius (regardless of page).
+      // One more query, but cheap (uses the same where-clause + index).
+      const totalRows = await app.prisma.$queryRaw<Array<{ count: bigint }>>(
+        Prisma.sql`
+          SELECT COUNT(*)::bigint AS count
+          FROM activities
+          WHERE 1=1
+            ${typeFilter}
+            ${statusFilter}
+            ${cityFilter}
+            AND ${distanceExpr} <= ${q.radiusKm}
+        `,
+      );
+      const total = Number(totalRows[0]?.count ?? 0);
+
+      const hasMore = skip + data.length < total;
+      // Attach distance_km to each row so the client can render "1.2 km"
+      // labels next to the pin. Rounded to 2 decimal places.
+      const enriched = data.map((a) => ({
+        ...a,
+        distanceKm:
+          distanceMap.get(a.id) !== undefined
+            ? Math.round((distanceMap.get(a.id) as number) * 100) / 100
+            : null,
+      }));
+      const result = {
+        data: enriched,
+        total,
+        page: q.page,
+        pageSize: q.pageSize,
+        hasMore,
+      };
+      await writeCache(app.redis as never, cacheKey(q), result);
+      return { data: result };
+    }
+
+    // ---- Standard branch (no geo) ----
     const where: Record<string, unknown> = {};
     if (q.type) where['type'] = q.type;
     if (q.status) where['status'] = q.status;
