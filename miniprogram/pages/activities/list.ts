@@ -48,6 +48,7 @@ interface ListCustom {
   onStatusFilter: (e: WechatMiniprogram.TouchEvent) => void;
   onCardTap: (e: WechatMiniprogram.CustomEvent) => void;
   onSignupTap: (e: WechatMiniprogram.CustomEvent) => void;
+  onOpenMap: () => void;
   onRetry: () => void;
 }
 
@@ -111,6 +112,15 @@ Page<ListData, ListCustom>({
 
   onRetry() {
     this._fetchPage(1, false);
+  },
+
+  /**
+   * Issue #35 — open the "near me" map page. The page reads its own
+   * location (wx.getLocation) and queries /api/v1/activities?lat=&lng=
+   * &radiusKm= server-side; we don't pass any state across.
+   */
+  onOpenMap() {
+    wx.navigateTo({ url: '/pages/map/map' });
   },
 
   async _fetchPage(page: number, append: boolean) {

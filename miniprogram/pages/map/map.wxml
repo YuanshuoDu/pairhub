@@ -1,0 +1,76 @@
+<wxs src="../../wxs/format.wxs" module="fmt" />
+<view class="map-page">
+  <!-- 顶部：定位状态 + 半径控制 -->
+  <view class="map-header">
+    <view class="loc-row">
+      <text class="loc-icon">📍</text>
+      <view class="loc-text">
+        <view class="loc-label">当前位置</view>
+        <view class="loc-value">
+          {{locationName || (loading ? '正在获取…' : '点击右侧定位')}}
+        </view>
+      </view>
+      <button class="loc-btn" size="mini" bindtap="onRelocate">重新定位</button>
+    </view>
+    <view class="radius-row">
+      <text class="radius-label">搜索半径</text>
+      <slider
+        class="radius-slider"
+        min="1" max="50" step="1" value="{{radiusKm}}"
+        show-value activeColor="#3B82F6" backgroundColor="#E2E8F0"
+        bindchanging="onRadiusChanging" bindchange="onRadiusChange" />
+      <text class="radius-value">{{radiusKm}} km</text>
+    </view>
+  </view>
+
+  <!-- 地图区域：生产环境用 web-view 加载 Mapbox embed；本地开发用静态占位 -->
+  <view class="map-canvas">
+    <web-view
+      wx:if="{{embedUrl}}"
+      src="{{embedUrl}}"
+      bindmessage="onMarkerTap" />
+    <view wx:else class="map-placeholder">
+      <text class="map-emoji">🗺️</text>
+      <view class="map-placeholder-title">Mapbox 视图</view>
+      <view class="map-placeholder-desc">生产环境配置 studybuddy.app/m/embed.html 后即可启用</view>
+    </view>
+  </view>
+
+  <!-- 附近活动列表（按距离排序，driven by PR #53 backend） -->
+  <view class="results">
+    <view class="results-head">
+      <text class="results-count">{{activities.length}} 个活动</text>
+      <text class="results-sort">按距离排序</text>
+    </view>
+    <view wx:if="{{loading}}" class="results-loading">
+      <text>加载中…</text>
+    </view>
+    <view wx:elif="{{activities.length === 0}}" class="results-empty">
+      <text class="empty-emoji">🔍</text>
+      <view>当前范围内暂无活动</view>
+      <view class="empty-hint">试试扩大搜索半径，或者自己<text class="empty-link" bindtap="onCreateActivity">发一个</text></view>
+    </view>
+    <view wx:else>
+      <view
+        wx:for="{{activities}}"
+        wx:key="id"
+        class="activity-card"
+        data-id="{{item.id}}"
+        bindtap="onActivityTap">
+        <view class="card-row1">
+          <text class="type-chip type-{{item.type}}">{{item.type}}</text>
+          <text class="card-distance">{{fmt.distance(item.distanceKm)}}</text>
+        </view>
+        <view class="card-title">{{item.title}}</view>
+        <view class="card-meta">
+          <text class="meta-loc">📍 {{item.locationName}}</text>
+          <text class="meta-time">⏰ {{fmt.datetime(item.startTime)}}</text>
+        </view>
+        <view class="card-row4">
+          <text class="meta-count">👥 {{item.currentCount}}/{{item.maxParticipants}}</text>
+          <text class="meta-cta">查看详情 →</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

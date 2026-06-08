@@ -15,6 +15,30 @@
   margin-bottom: 16rpx;
 }
 
+.alist__sub-row {
+  display: flex; align-items: center; gap: 16rpx;
+  margin-bottom: 16rpx;
+}
+.alist__sub-row .alist__chips--sub {
+  flex: 1; padding: 0; border-bottom: none; margin-bottom: 0;
+}
+.alist__map-btn {
+  display: flex; align-items: center; gap: 6rpx;
+  padding: 8rpx 20rpx;
+  background: var(--color-primary-container);
+  color: var(--color-primary);
+  border-radius: 999rpx;
+  font-size: 24rpx; font-weight: 500;
+  flex-shrink: 0;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+.alist__map-btn:active {
+  background: #BFDBFE;
+}
+.map-emoji { font-size: 28rpx; }
+.map-label { font-size: 24rpx; }
+
 .alist__chip {
   display: inline-block;
   padding: 12rpx 28rpx;

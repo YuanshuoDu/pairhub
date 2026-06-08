@@ -1,0 +1,31 @@
+/**
+ * wxs helper for page templates. Pure functions only — wxs runs in
+ * a sandboxed VM separate from the JS context.
+ *
+ * Currently used by pages/map/map.wxml for distance / datetime
+ * formatting. We keep this in a single file so adding new helpers
+ * doesn't require touching every wxml.
+ */
+
+var formatDistance = function (km) {
+  if (km === null || km === undefined || isNaN(km)) return '';
+  if (km < 1) return Math.round(km * 1000) + ' m';
+  return (Math.round(km * 10) / 10).toFixed(1) + ' km';
+};
+
+var formatDateTime = function (iso) {
+  if (!iso) return '';
+  var d = getDate(iso);
+  if (isNaN(d.getTime())) return '';
+  var pad = function (n) { return n < 10 ? '0' + n : '' + n; };
+  var month = pad(d.getMonth() + 1);
+  var day = pad(d.getDate());
+  var hour = pad(d.getHours());
+  var min = pad(d.getMinutes());
+  return month + '/' + day + ' ' + hour + ':' + min;
+};
+
+module.exports = {
+  distance: formatDistance,
+  datetime: formatDateTime,
+};

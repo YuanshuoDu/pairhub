@@ -1,0 +1,172 @@
+/* =========================================================
+   附近活动 (Map + 列表) — 微信小程序页面
+   与 #17 design system v1 token 对齐
+   ========================================================= */
+
+.map-page {
+  min-height: 100vh;
+  background: var(--color-bg);
+  padding-bottom: 48rpx;
+}
+
+.map-header {
+  background: var(--color-surface);
+  padding: 24rpx 32rpx;
+  border-bottom: 1rpx solid var(--color-divider);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+.loc-row {
+  display: flex; align-items: center; gap: 16rpx;
+  margin-bottom: 16rpx;
+}
+.loc-icon { font-size: 36rpx; }
+.loc-text { flex: 1; }
+.loc-label {
+  font-size: 22rpx; color: var(--color-text-secondary);
+  margin-bottom: 4rpx;
+}
+.loc-value {
+  font-size: 28rpx; color: var(--color-text-primary);
+  font-weight: 500;
+}
+.loc-btn {
+  background: var(--color-primary-container);
+  color: var(--color-primary);
+  border: none;
+  border-radius: var(--radius-pill);
+  font-size: 24rpx;
+  padding: 8rpx 24rpx;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.radius-row {
+  display: flex; align-items: center; gap: 16rpx;
+}
+.radius-label {
+  font-size: 24rpx; color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+.radius-slider {
+  flex: 1;
+  margin: 0;
+}
+.radius-value {
+  font-size: 24rpx; color: var(--color-primary);
+  font-weight: 600;
+  min-width: 80rpx; text-align: right;
+}
+
+/* 地图区域 */
+.map-canvas {
+  width: 100%;
+  height: 480rpx;
+  background: var(--color-surface-variant);
+  position: relative;
+  overflow: hidden;
+}
+.map-canvas web-view {
+  width: 100%;
+  height: 100%;
+}
+.map-placeholder {
+  width: 100%; height: 100%;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  color: var(--color-text-secondary);
+  text-align: center;
+  padding: 32rpx;
+}
+.map-emoji { font-size: 96rpx; margin-bottom: 16rpx; }
+.map-placeholder-title {
+  font-size: 32rpx; color: var(--color-text-primary);
+  font-weight: 600; margin-bottom: 8rpx;
+}
+.map-placeholder-desc {
+  font-size: 24rpx; color: var(--color-text-placeholder);
+  max-width: 480rpx; line-height: 1.5;
+}
+
+/* 结果列表 */
+.results { padding: 32rpx; }
+.results-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  margin-bottom: 24rpx;
+}
+.results-count {
+  font-size: 32rpx; color: var(--color-text-primary);
+  font-weight: 700;
+}
+.results-sort {
+  font-size: 24rpx; color: var(--color-text-secondary);
+}
+.results-loading, .results-empty {
+  background: var(--color-surface);
+  border: 1rpx solid var(--color-divider);
+  border-radius: var(--radius-lg);
+  padding: 64rpx 32rpx;
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: 28rpx;
+}
+.results-empty { display: flex; flex-direction: column; gap: 12rpx; align-items: center; }
+.empty-emoji { font-size: 72rpx; margin-bottom: 16rpx; }
+.empty-hint { font-size: 24rpx; color: var(--color-text-placeholder); }
+.empty-link {
+  color: var(--color-primary); font-weight: 500;
+  text-decoration: underline;
+  display: inline;
+}
+
+.activity-card {
+  background: var(--color-surface);
+  border: 1rpx solid var(--color-divider);
+  border-radius: var(--radius-lg);
+  padding: 24rpx;
+  margin-bottom: 16rpx;
+  transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.activity-card:active {
+  background: var(--color-surface-variant);
+  transform: scale(0.98);
+}
+.card-row1 {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12rpx;
+}
+.type-chip {
+  display: inline-block;
+  font-size: 20rpx; font-weight: 700; letter-spacing: 0.05em;
+  padding: 4rpx 12rpx;
+  border-radius: var(--radius-sm);
+}
+.type-STUDY { background: var(--color-primary-container); color: var(--color-activity-study); }
+.type-SPORTS { background: var(--color-success-bg); color: var(--color-activity-sport); }
+.type-BOARD_GAME { background: #F3E8FF; color: var(--color-activity-boardgame); }
+.type-ONLINE_GAME { background: var(--color-error-bg); color: var(--color-activity-online); }
+.type-OTHER { background: var(--color-surface-variant); color: var(--color-text-secondary); }
+
+.card-distance {
+  font-size: 24rpx; color: var(--color-primary);
+  font-weight: 600;
+}
+.card-title {
+  font-size: 32rpx; color: var(--color-text-primary);
+  font-weight: 600; line-height: 1.4;
+  margin-bottom: 12rpx;
+}
+.card-meta {
+  display: flex; flex-direction: column; gap: 6rpx;
+  font-size: 24rpx; color: var(--color-text-secondary);
+  margin-bottom: 16rpx;
+}
+.card-row4 {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-top: 16rpx;
+  border-top: 1rpx solid var(--color-divider);
+}
+.meta-count { font-size: 24rpx; color: var(--color-text-secondary); }
+.meta-cta { font-size: 24rpx; color: var(--color-primary); font-weight: 500; }

@@ -12,18 +12,24 @@
     </view>
   </scroll-view>
 
-  <!-- 状态筛选 -->
-  <scroll-view scroll-x class="alist__chips alist__chips--sub" enable-flex>
-    <view
-      wx:for="{{statusFilters}}"
-      wx:key="value"
-      class="alist__chip alist__chip--sub {{activeStatus === item.value ? 'is-active' : ''}}"
-      data-value="{{item.value}}"
-      bindtap="onStatusFilter"
-    >
-      {{item.label}}
+  <!-- 状态筛选 + 地图入口 -->
+  <view class="alist__sub-row">
+    <scroll-view scroll-x class="alist__chips alist__chips--sub" enable-flex>
+      <view
+        wx:for="{{statusFilters}}"
+        wx:key="value"
+        class="alist__chip alist__chip--sub {{activeStatus === item.value ? 'is-active' : ''}}"
+        data-value="{{item.value}}"
+        bindtap="onStatusFilter"
+      >
+        {{item.label}}
+      </view>
+    </scroll-view>
+    <view class="alist__map-btn" bindtap="onOpenMap" aria-label="附近活动地图">
+      <text class="map-emoji">🗺️</text>
+      <text class="map-label">附近</text>
     </view>
-  </scroll-view>
+  </view>
 
   <!-- 列表 -->
   <view class="alist__list">
