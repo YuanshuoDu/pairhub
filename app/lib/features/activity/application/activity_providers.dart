@@ -260,3 +260,48 @@ final AutoDisposeAsyncNotifierProviderFamily<ActivityDetailController, Activity,
         .family<ActivityDetailController, Activity, String>(
   ActivityDetailController.new,
 );
+
+// ---------------------------------------------------------------------------
+// Map screen — issue #35
+// ---------------------------------------------------------------------------
+
+/// Composite key for the nearby-activities query on the map screen.
+/// Encoded as a record so family-cached lookups are cheap and stable.
+typedef NearbyKey = ({double lat, double lng, int radiusKm, String? type});
+
+/// One-shot fetch of activities within `radiusKm` of (lat, lng), sorted
+/// by `distanceKm` ascending. Re-fires whenever the user changes the
+/// radius slider or the type chip. Pull-to-refresh = `ref.invalidate`.
+final AutoDisposeFutureProviderFamily<ActivityListState, NearbyKey>
+    nearbyActivitiesProvider =
+    FutureProvider.autoDispose.family<ActivityListState, NearbyKey>(
+  (Ref ref, NearbyKey key) async {
+    final ActivityApi api = ref.watch(activityApiProvider);
+    final ActivityListResponse res = await api.list(ActivityListQuery(
+      lat: key.lat,
+      lng: key.lng,
+      radiusKm: key.radiusKm,
+      type: _typeFromString(key.type),
+      page: 1,
+      pageSize: 100, // map screen wants everything within radius
+    ));
+    return ActivityListState(
+      items: res.data,
+      page: 2,
+      pageSize: res.pageSize,
+      hasMore: res.resolveHasMore(),
+      total: res.total,
+    );
+  },
+);
+
+ActivityType? _typeFromString(String? s) {
+  switch (s) {
+    case 'STUDY': return ActivityType.study;
+    case 'SPORTS': return ActivityType.sports;
+    case 'BOARD_GAME': return ActivityType.boardGame;
+    case 'ONLINE_GAME': return ActivityType.onlineGame;
+    case 'OTHER': return ActivityType.other;
+    default: return null;
+  }
+}

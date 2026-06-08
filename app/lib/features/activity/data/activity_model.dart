@@ -82,6 +82,7 @@ class Activity {
     required this.createdAt,
     required this.updatedAt,
     this.isJoined = false,
+    this.distanceKm,
   });
 
   final String id;
@@ -114,6 +115,11 @@ class Activity {
   /// anonymous or the user has not signed up.
   final bool isJoined;
 
+  /// Issue #35 — only set when the row came from the geo "near me"
+  /// endpoint. Distance in kilometres from the query point (rounded
+  /// to 2 decimal places by the server).
+  final double? distanceKm;
+
   factory Activity.fromJson(Map<String, dynamic> json) {
     return Activity(
       id: json['id'] as String,
@@ -135,6 +141,7 @@ class Activity {
       createdAt: (json['createdAt'] as String?) ?? '',
       updatedAt: (json['updatedAt'] as String?) ?? '',
       isJoined: json['isJoined'] as bool? ?? false,
+      distanceKm: (json['distanceKm'] as num?)?.toDouble(),
     );
   }
 
@@ -142,6 +149,7 @@ class Activity {
     int? currentCount,
     ActivityStatus? status,
     bool? isJoined,
+    double? distanceKm,
   }) {
     return Activity(
       id: id,
@@ -163,6 +171,7 @@ class Activity {
       createdAt: createdAt,
       updatedAt: updatedAt,
       isJoined: isJoined ?? this.isJoined,
+      distanceKm: distanceKm ?? this.distanceKm,
     );
   }
 }
@@ -213,13 +222,22 @@ class ActivityListResponse {
   }
 }
 
-/// Filter for the activity list endpoint. Both fields are optional and
+/// Filter for the activity list endpoint. All fields are optional and
 /// serialised as query params by [ActivityApi.list].
+///
+/// Issue #35: lat / lng / radiusKm drive the "near me" mode on the
+/// backend (PR #53). When all three are set, the server runs a
+/// Haversine SQL filter + sort and decorates each row with
+/// `distanceKm`. The Flutter UI on the map screen reads that back
+/// to render distance labels.
 class ActivityListQuery {
   const ActivityListQuery({
     this.type,
     this.status,
     this.city,
+    this.lat,
+    this.lng,
+    this.radiusKm = 5,
     this.page = 1,
     this.pageSize = 20,
   });
@@ -227,6 +245,9 @@ class ActivityListQuery {
   final ActivityType? type;
   final ActivityStatus? status;
   final String? city;
+  final double? lat;
+  final double? lng;
+  final int radiusKm;
   final int page;
   final int pageSize;
 
@@ -235,11 +256,17 @@ class ActivityListQuery {
     int? pageSize,
     ActivityType? type,
     ActivityStatus? status,
+    double? lat,
+    double? lng,
+    int? radiusKm,
   }) {
     return ActivityListQuery(
       type: type ?? this.type,
       status: status ?? this.status,
       city: city,
+      lat: lat ?? this.lat,
+      lng: lng ?? this.lng,
+      radiusKm: radiusKm ?? this.radiusKm,
       page: page ?? this.page,
       pageSize: pageSize ?? this.pageSize,
     );
@@ -253,6 +280,13 @@ class ActivityListQuery {
     if (type != null) m['type'] = type!.wire;
     if (status != null) m['status'] = status!.wire;
     if (city != null && city!.isNotEmpty) m['city'] = city;
+    // Geo "near me" — when both lat + lng are set, push the radius
+    // along with them. Server rejects mismatched lat/lng (issue #35).
+    if (lat != null && lng != null) {
+      m['lat'] = lat;
+      m['lng'] = lng;
+      m['radiusKm'] = radiusKm;
+    }
     return m;
   }
 }

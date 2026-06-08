@@ -34,6 +34,14 @@ dependencies:
   # Env / config
   flutter_dotenv: ^5.1.0
 
+  # Mapbox GL — issue #35 nearby-activities map. The native plugin
+  # pulls in the Mapbox SDK at build time; on iOS it adds a few MB
+  # to the IPA but it's a one-time cost.
+  mapbox_gl: ^0.16.0
+
+  # Geolocator — wraps platform location services for the map screen.
+  geolocator: ^11.0.0
+
   # Utilities
   intl: ^0.19.0
   cupertino_icons: ^1.0.6

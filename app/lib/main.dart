@@ -34,6 +34,8 @@ Future<void> main() async {
     // Load .env BEFORE we build the ProviderScope so the API base URL is
     // available when Dio is constructed.
     await dotenv.load(fileName: 'assets/.env');
+    // Issue #35 — Mapbox token is now read at map widget mount time via
+    // MapboxConfig.accessToken (no global setter to call).
     runApp(const ProviderScope(child: StudyBuddyApp()));
   });
 }
