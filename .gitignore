@@ -1,0 +1,3 @@
+# Mavis local-only artifacts — never commit these
+.harness/
+.mavis/
