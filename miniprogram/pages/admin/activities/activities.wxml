@@ -1,12 +1,11 @@
 <!--
   审核队列页（issue #32 前端 / docs/design/admin-glass.md §6.2）
 
-  视觉层：mesh 背景 → 顶部统计 → 状态芯片 → 玻璃卡片列表
+  v2：玻璃面板用 class="glass ..." 全局类；不再用 <glass-card> 组件。
 -->
 
 <view class="aa page--dark {{reduceMotion ? 'reduce-motion' : ''}}" data-theme="{{theme}}">
 
-  <!-- 4-blob mesh（brief §2） -->
   <view class="mesh" aria-hidden="true">
     <view class="mesh__blob mesh__blob--1"></view>
     <view class="mesh__blob mesh__blob--2"></view>
@@ -16,14 +15,12 @@
 
   <view class="aa__content page-enter">
 
-    <!-- ===== Header ===== -->
     <view class="aa__hero">
       <view class="aa__eyebrow">Operator · 审核队列</view>
       <view class="aa__title">待处理活动</view>
       <view class="aa__sub">共 {{total}} 条 · FIFO 最早提交优先</view>
     </view>
 
-    <!-- ===== 状态过滤芯片 ===== -->
     <scroll-view scroll-x class="aa__chips" enable-flex>
       <view
         wx:for="{{statusFilters}}"
@@ -38,7 +35,6 @@
       </view>
     </scroll-view>
 
-    <!-- ===== 列表 ===== -->
     <view class="aa__list">
 
       <block wx:if="{{loading && isFirstLoad}}">
@@ -46,7 +42,7 @@
       </block>
 
       <block wx:elif="{{!loading && !list.length}}">
-        <glass-card tone="light" radius="lg" padding="lg">
+        <view class="glass glass--radius-lg glass--padding-lg">
           <empty-state
             title="暂无活动"
             desc="该状态下没有活动 — 切换其它状态或下拉刷新"
@@ -54,21 +50,18 @@
             actionText="重新加载"
             bind:action="onRefresh"
           />
-        </glass-card>
+        </view>
       </block>
 
       <block wx:else>
-        <glass-card
+        <view
           wx:for="{{list}}"
           wx:key="id"
-          tone="light"
-          radius="md"
-          padding="md"
-          tappable="{{true}}"
-          bind:tap="onCardTap"
+          class="glass glass--radius-md glass--padding-md glass--tappable"
+          hover-class="glass--hover"
           data-row="{{item}}"
+          bindtap="onCardTap"
         >
-          <!-- 顶部：type chip + 状态药丸 + 相对时间 -->
           <view class="row__top">
             <view class="row__type row__type--{{item.type}}">{{item.typeLabel}}</view>
             <status-pill
@@ -93,10 +86,8 @@
             />
           </view>
 
-          <!-- 标题 -->
           <view class="row__title ellipsis-2">{{item.title}}</view>
 
-          <!-- 元数据 -->
           <view class="row__meta">
             <view class="row__meta-item">
               <text class="row__meta-icon" aria-hidden="true">⏰</text>
@@ -108,13 +99,11 @@
             </view>
           </view>
 
-          <!-- 驳回备注（若有） -->
           <view wx:if="{{item.moderationNote}}" class="row__note">
             <text class="row__note-label">驳回原因</text>
             <text class="row__note-text">{{item.moderationNote}}</text>
           </view>
 
-          <!-- 行内操作 -->
           <view wx:if="{{activeStatus === 'PENDING_REVIEW'}}" class="row__actions">
             <view
               class="row__btn row__btn--ghost"
@@ -139,7 +128,7 @@
               <text>{{item.busy ? '处理中…' : '批准'}}</text>
             </view>
           </view>
-        </glass-card>
+        </view>
 
         <view class="aa__footer" wx:if="{{!hasMore && list.length}}">— 没有更多了 —</view>
         <view class="aa__footer" wx:elif="{{loadingMore}}">加载中…</view>

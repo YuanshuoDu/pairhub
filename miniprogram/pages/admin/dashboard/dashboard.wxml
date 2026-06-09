@@ -1,11 +1,10 @@
 <!--
   数据看板页（issue #32 前端 / docs/design/admin-glass.md §6.5）
-  视觉：mesh → 顶部 hero → SLA 警告（条件渲染）→ 2×2 玻璃卡网格 → 长卡（活动）
+  v2：玻璃面板用 class="glass ..." 全局类。
 -->
 
 <view class="dash page--dark {{reduceMotion ? 'reduce-motion' : ''}}" data-theme="{{theme}}">
 
-  <!-- 4-blob mesh -->
   <view class="mesh" aria-hidden="true">
     <view class="mesh__blob mesh__blob--1"></view>
     <view class="mesh__blob mesh__blob--2"></view>
@@ -15,7 +14,6 @@
 
   <view class="dash__content page-enter">
 
-    <!-- ===== Header ===== -->
     <view class="dash__hero">
       <view class="dash__eyebrow">StudyBuddy · 运营</view>
       <view class="dash__title">数据看板</view>
@@ -23,8 +21,7 @@
       <view wx:else class="dash__sub">正在拉取最新数据…</view>
     </view>
 
-    <!-- ===== SLA 警告 ===== -->
-    <glass-card wx:if="{{slaWarning}}" tone="light" radius="md" padding="md" tappable="{{true}}" bind:tap="onOpenActivitiesQueue">
+    <view wx:if="{{slaWarning}}" class="glass glass--radius-md glass--padding-md glass--tappable" hover-class="glass--hover" bindtap="onOpenActivitiesQueue">
       <view class="dash__sla">
         <view class="dash__sla-icon" aria-hidden="true">⚠</view>
         <view class="dash__sla-text">
@@ -32,13 +29,11 @@
           <view class="dash__sla-sub">当前待审核 {{metrics.activities.pending}} 条，已超过 20 条阈值，点击进入审核队列</view>
         </view>
       </view>
-    </glass-card>
+    </view>
 
-    <!-- ===== 2×2 hero 网格 ===== -->
     <view class="dash__grid">
 
-      <!-- Users -->
-      <glass-card tone="light" radius="lg" padding="md" tappable="{{true}}" bind:tap="onCardUsers">
+      <view class="glass glass--radius-lg glass--padding-md glass--tappable" hover-class="glass--hover" bindtap="onCardUsers">
         <view class="metric">
           <view class="metric__icon metric__icon--users" aria-hidden="true">⚇</view>
           <view class="metric__label">用户</view>
@@ -54,10 +49,9 @@
             </text>
           </view>
         </view>
-      </glass-card>
+      </view>
 
-      <!-- Activities -->
-      <glass-card tone="light" radius="lg" padding="md" tappable="{{true}}" bind:tap="onCardActivities">
+      <view class="glass glass--radius-lg glass--padding-md glass--tappable" hover-class="glass--hover" bindtap="onCardActivities">
         <view class="metric">
           <view class="metric__icon metric__icon--activities" aria-hidden="true">◆</view>
           <view class="metric__label">活动</view>
@@ -73,10 +67,9 @@
             </text>
           </view>
         </view>
-      </glass-card>
+      </view>
 
-      <!-- Signups -->
-      <glass-card tone="light" radius="lg" padding="md" tappable="{{true}}" bind:tap="onCardSignups">
+      <view class="glass glass--radius-lg glass--padding-md glass--tappable" hover-class="glass--hover" bindtap="onCardSignups">
         <view class="metric">
           <view class="metric__icon metric__icon--signups" aria-hidden="true">◇</view>
           <view class="metric__label">报名</view>
@@ -91,10 +84,9 @@
             </text>
           </view>
         </view>
-      </glass-card>
+      </view>
 
-      <!-- PushTokens -->
-      <glass-card tone="light" radius="lg" padding="md" tappable="{{true}}" bind:tap="onCardPushTokens">
+      <view class="glass glass--radius-lg glass--padding-md glass--tappable" hover-class="glass--hover" bindtap="onCardPushTokens">
         <view class="metric">
           <view class="metric__icon metric__icon--push" aria-hidden="true">⏚</view>
           <view class="metric__label">推送 Token</view>
@@ -108,11 +100,10 @@
             </text>
           </view>
         </view>
-      </glass-card>
+      </view>
     </view>
 
-    <!-- ===== 长卡：Users 增长 ===== -->
-    <glass-card tone="light" radius="md" padding="md">
+    <view class="glass glass--radius-md glass--padding-md">
       <view class="dash__row-card">
         <view class="dash__row-icon" aria-hidden="true">↗</view>
         <view class="dash__row-body">
@@ -121,28 +112,26 @@
         </view>
         <view class="dash__row-value">{{metrics.users.newThisWeek}}</view>
       </view>
-    </glass-card>
+    </view>
 
-    <!-- ===== 操作入口 ===== -->
     <view class="dash__quick">
-      <glass-card tone="light" radius="md" padding="md" tappable="{{true}}" bind:tap="onOpenActivitiesQueue">
+      <view class="glass glass--radius-md glass--padding-md glass--tappable" hover-class="glass--hover" bindtap="onOpenActivitiesQueue">
         <view class="dash__quick-icon dash__quick-icon--activities" aria-hidden="true">→</view>
         <view class="dash__quick-text">
           <view class="dash__quick-title">进入审核队列</view>
           <view class="dash__quick-sub">优先处理待审核活动</view>
         </view>
-      </glass-card>
+      </view>
 
-      <glass-card tone="light" radius="md" padding="md" tappable="{{true}}" bind:tap="onCardUsers">
+      <view class="glass glass--radius-md glass--padding-md glass--tappable" hover-class="glass--hover" bindtap="onCardUsers">
         <view class="dash__quick-icon dash__quick-icon--users" aria-hidden="true">→</view>
         <view class="dash__quick-text">
           <view class="dash__quick-title">搜索用户</view>
           <view class="dash__quick-sub">按昵称 / 手机号 / id</view>
         </view>
-      </glass-card>
+      </view>
     </view>
 
-    <!-- ===== 错误占位 ===== -->
     <view wx:if="{{errorMsg}}" class="dash__error">
       <text class="dash__error-icon" aria-hidden="true">!</text>
       <text class="dash__error-text">{{errorMsg}}</text>

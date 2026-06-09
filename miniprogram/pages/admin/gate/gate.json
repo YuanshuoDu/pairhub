@@ -4,7 +4,7 @@
   "navigationBarTextStyle": "white",
   "backgroundColor": "#0B1020",
   "disableScroll": true,
-  "usingComponents": {
-    "glass-card": "/components/glass-card/index"
+"usingComponents": {
+    "status-pill": "/components/status-pill/index"
   }
 }

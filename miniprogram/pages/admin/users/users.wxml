@@ -1,11 +1,10 @@
 <!--
   用户搜索页（issue #32 前端 / docs/design/admin-glass.md §6.4）
-  视觉：mesh → 玻璃搜索框 → 状态芯片 → 玻璃用户行 → action sheet
+  v2：玻璃面板用 class="glass ..." / "glass-deep ..." 全局类。
 -->
 
 <view class="au page--dark {{reduceMotion ? 'reduce-motion' : ''}}" data-theme="{{theme}}">
 
-  <!-- 4-blob mesh -->
   <view class="mesh" aria-hidden="true">
     <view class="mesh__blob mesh__blob--1"></view>
     <view class="mesh__blob mesh__blob--2"></view>
@@ -15,15 +14,13 @@
 
   <view class="au__content page-enter">
 
-    <!-- ===== Header ===== -->
     <view class="au__hero">
       <view class="au__eyebrow">Operator · 用户</view>
       <view class="au__title">用户搜索</view>
       <view class="au__sub">共 {{total}} 条 · 至少需要 1 个过滤条件</view>
     </view>
 
-    <!-- ===== 搜索框（玻璃） ===== -->
-    <glass-card tone="light" radius="lg" padding="sm">
+    <view class="glass glass--radius-lg glass--padding-sm">
       <view class="au__search">
         <text class="au__search-icon" aria-hidden="true">⌕</text>
         <input
@@ -43,9 +40,8 @@
           aria-label="清空搜索"
         >×</view>
       </view>
-    </glass-card>
+    </view>
 
-    <!-- ===== 状态芯片 ===== -->
     <scroll-view scroll-x class="au__chips" enable-flex>
       <view
         class="au__chip {{statusFilter === 'ALL' ? 'is-active' : ''}}"
@@ -67,7 +63,6 @@
       >已封禁</view>
     </scroll-view>
 
-    <!-- ===== 列表 ===== -->
     <view class="au__list">
 
       <block wx:if="{{loading && isFirstLoad}}">
@@ -75,17 +70,17 @@
       </block>
 
       <block wx:elif="{{!loading && !list.length && !search && statusFilter === 'ALL'}}">
-        <glass-card tone="light" radius="lg" padding="lg">
+        <view class="glass glass--radius-lg glass--padding-lg">
           <empty-state
             title="输入条件开始搜索"
             desc="昵称 / 手机号 / id 子串匹配；也可直接按 ACTIVE / BANNED 过滤"
             icon="⌕"
           />
-        </glass-card>
+        </view>
       </block>
 
       <block wx:elif="{{!loading && !list.length}}">
-        <glass-card tone="light" radius="lg" padding="lg">
+        <view class="glass glass--radius-lg glass--padding-lg">
           <empty-state
             title="无匹配结果"
             desc="试试其它关键字，或切回「全部」"
@@ -93,16 +88,14 @@
             actionText="重新加载"
             bind:action="onRefresh"
           />
-        </glass-card>
+        </view>
       </block>
 
       <block wx:else>
-        <glass-card
+        <view
           wx:for="{{list}}"
           wx:key="id"
-          tone="light"
-          radius="md"
-          padding="md"
+          class="glass glass--radius-md glass--padding-md"
         >
           <view
             class="row"
@@ -144,7 +137,7 @@
               />
             </view>
           </view>
-        </glass-card>
+        </view>
 
         <view class="au__footer" wx:if="{{!hasMore && list.length}}">— 没有更多了 —</view>
         <view class="au__footer" wx:elif="{{loadingMore}}">加载中…</view>
@@ -153,10 +146,9 @@
     </view>
   </view>
 
-  <!-- ===== Action sheet（封禁 / 解封） ===== -->
   <view wx:if="{{actionTarget}}" class="sheet" catchtap="onCloseAction" aria-modal="true" role="dialog">
     <view class="sheet__backdrop" aria-hidden="true"></view>
-    <view class="sheet__panel" catchtap="noop">
+    <view class="sheet__panel glass-deep glass--radius-lg" catchtap="noop">
       <view class="sheet__handle" aria-hidden="true"></view>
       <view class="sheet__title">
         {{actionTarget.nickname}}

@@ -1,16 +1,12 @@
 <!--
   Admin 入口页（issue #32 前端 / docs/design/admin-glass.md §6.1）
 
-  视觉分层（从底到顶）：
-    1. .gate  容器（暗色页面底）
-    2. .mesh  4-blob 网格渐变（4 个绝对定位 view + blur + mix-blend-mode）
-    3. .gate__content
-    4. 玻璃面板：标题 / 当前角色 / 状态 / SQL hint / 操作按钮
+  v2 (per verifier feedback on attempt 1)：玻璃面板用 class="glass ..." 全局
+  类直接渲染（不再用 <glass-card> 组件）。
 -->
 
 <view class="gate page--dark {{reduceMotion ? 'reduce-motion' : ''}}" data-theme="{{theme}}">
 
-  <!-- 4-blob mesh background（brief §2） -->
   <view class="mesh" aria-hidden="true">
     <view class="mesh__blob mesh__blob--1"></view>
     <view class="mesh__blob mesh__blob--2"></view>
@@ -20,15 +16,13 @@
 
   <view class="gate__content page-enter">
 
-    <!-- ===== 顶部：标题 / 副标题 ===== -->
     <view class="gate__hero">
       <view class="gate__eyebrow">StudyBuddy · Admin</view>
       <view class="gate__title">管理员控制台</view>
       <view class="gate__sub">审核活动 · 维护用户 · 看板监控</view>
     </view>
 
-    <!-- ===== 检测中 ===== -->
-    <glass-card wx:if="{{checking}}" tone="light" radius="lg" padding="lg">
+    <view wx:if="{{checking}}" class="glass glass--radius-lg glass--padding-lg">
       <view class="gate__row">
         <view class="gate__spinner" aria-hidden="true"></view>
         <view class="gate__row-text">
@@ -36,10 +30,9 @@
           <view class="gate__row-sub">调取 /api/v1/users/me 验证 role</view>
         </view>
       </view>
-    </glass-card>
+    </view>
 
-    <!-- ===== 已识别为 ADMIN（跳转中） ===== -->
-    <glass-card wx:elif="{{role === 'ADMIN' && !errorMsg}}" tone="light" radius="lg" padding="lg">
+    <view wx:elif="{{role === 'ADMIN' && !errorMsg}}" class="glass glass--radius-lg glass--padding-lg">
       <view class="gate__row">
         <view class="gate__icon gate__icon--ok" aria-hidden="true">✓</view>
         <view class="gate__row-text">
@@ -47,12 +40,11 @@
           <view class="gate__row-sub">{{nickname}} · 正在进入数据看板…</view>
         </view>
       </view>
-    </glass-card>
+    </view>
 
-    <!-- ===== 非管理员 / 未登录 / 探测失败 ===== -->
     <block wx:elif="{{resolved && role !== 'ADMIN'}}">
 
-      <glass-card tone="light" radius="lg" padding="lg">
+      <view class="glass glass--radius-lg glass--padding-lg">
         <view class="gate__row">
           <view class="gate__icon gate__icon--warn" aria-hidden="true">!</view>
           <view class="gate__row-text">
@@ -62,10 +54,9 @@
             </view>
           </view>
         </view>
-      </glass-card>
+      </view>
 
-      <!-- 步骤 1：登录 / 重新探测 -->
-      <glass-card tone="light" radius="md" padding="md" tappable="{{true}}" bind:tap="onRefresh">
+      <view class="glass glass--radius-md glass--padding-md glass--tappable" hover-class="glass--hover" bindtap="onRefresh">
         <view class="gate__step">
           <view class="gate__step-num">1</view>
           <view class="gate__step-text">
@@ -74,10 +65,9 @@
           </view>
           <view class="gate__step-cta">刷新</view>
         </view>
-      </glass-card>
+      </view>
 
-      <!-- 步骤 2：复制 SQL -->
-      <glass-card tone="light" radius="md" padding="md">
+      <view class="glass glass--radius-md glass--padding-md">
         <view class="gate__step">
           <view class="gate__step-num">2</view>
           <view class="gate__step-text">
@@ -108,10 +98,9 @@
         <view class="gate__hint">
           见 docs/admin/playbook.md §1 — grant admin SQL one-liner
         </view>
-      </glass-card>
+      </view>
 
-      <!-- 步骤 3：登出 / 回到首页 -->
-      <glass-card tone="deep" radius="md" padding="md" tappable="{{true}}" bind:tap="onExit">
+      <view class="glass glass-deep glass--radius-md glass--padding-md glass--tappable" hover-class="glass--hover" bindtap="onExit">
         <view class="gate__step">
           <view class="gate__step-num">3</view>
           <view class="gate__step-text">
@@ -120,7 +109,7 @@
           </view>
           <view class="gate__step-cta">返回</view>
         </view>
-      </glass-card>
+      </view>
 
     </block>
 

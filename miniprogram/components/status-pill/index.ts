@@ -3,11 +3,9 @@
  *
  * Apple-style 状态药丸（issue #32 前端 / docs/design/admin-glass.md §8）。
  *
- * Props:
- *   kind   'pending' | 'active' | 'banned' | 'rejected' | 'recruiting' | 'neutral'
- *   icon   string   短文本（1-2 字符 / 单 emoji / 单中文字），无障碍 + 视觉
- *   text   string   主文案（必填）
- *   size   'sm' | 'md'  字号档位
+ * v2 (per verifier feedback on attempt 1)：玻璃底用全局 .glass 类（透过
+ * styleIsolation: 'apply-shared'），而不是组件自己定义一份玻璃样式。
+ * .pill / .pill--{kind,size} / .pill__dot 等是组件本地的排版类。
  *
  * 视觉：药丸形（var(--glass-radius-pill)），浅色玻璃底 + 左侧色点 + 图标 + 文案。
  * 颜色来自现有语义 token（--color-success / --color-error / --color-warning / --color-primary），
@@ -32,6 +30,12 @@ const DEFAULT_ICON: Record<StatusPillKind, string> = {
 };
 
 Component({
+  /** 关键：让全局 .glass 类从 tokens.wxss 透传进来（默认是 isolated） */
+  options: {
+    styleIsolation: 'apply-shared',
+    multipleSlots: true,
+  },
+
   properties: {
     kind: {
       type: String,
@@ -52,7 +56,7 @@ Component({
   },
 
   data: {
-    rootClass: 'sp sp--neutral sp--md',
+    rootClass: 'glass glass--radius-pill pill pill--neutral pill--md',
     resolvedIcon: '·',
   },
 
@@ -66,7 +70,13 @@ Component({
       const k = (kind || 'neutral') as StatusPillKind;
       const resolvedIcon = icon && icon.length > 0 ? icon : DEFAULT_ICON[k] || '·';
       this.setData({
-        rootClass: `sp sp--${k} sp--${size || 'md'}`,
+        rootClass: [
+          'glass',
+          'glass--radius-pill',
+          'pill',
+          `pill--${k}`,
+          `pill--${size || 'md'}`,
+        ].join(' '),
         resolvedIcon,
       });
     },

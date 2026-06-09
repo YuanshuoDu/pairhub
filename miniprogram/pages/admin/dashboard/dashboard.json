@@ -6,7 +6,6 @@
   "enablePullDownRefresh": true,
   "backgroundTextStyle": "light",
   "usingComponents": {
-    "glass-card": "/components/glass-card/index",
     "status-pill": "/components/status-pill/index"
   }
 }

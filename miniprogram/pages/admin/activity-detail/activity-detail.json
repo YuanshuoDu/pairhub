@@ -5,7 +5,6 @@
   "backgroundColor": "#0B1020",
   "disableScroll": false,
   "usingComponents": {
-    "glass-card": "/components/glass-card/index",
     "status-pill": "/components/status-pill/index"
   }
 }

@@ -1,28 +1,25 @@
 /**
  * status-pill WXSS
  *
- * 玻璃药丸：浅色玻璃底 + 1px 玻璃边 + 左侧色点 + 紧凑 icon+text。
- * 颜色编码：色点 (sp__dot) 决定种类；icon+text 同时出现满足 a11y §8 要求。
+ * v2 (per verifier feedback on attempt 1)：玻璃底由全局 .glass 类
+ * (tokens.wxss) 提供；本文件只承载 .pill 的排版（gap / padding / 字号 /
+ * 色点 / icon / text）。颜色经 .pill--{kind} 注入到 color（currentColor
+ * 继承给 .pill__dot）。通过 styleIsolation: 'apply-shared' 让组件内部能
+ * 使用全局 .glass 类，组件 WXSS 本身不重定义玻璃样式。
  */
 
-.sp {
+.pill {
   display: inline-flex;
   align-items: center;
   gap: 8rpx;
   padding: 6rpx 16rpx;
-  border-radius: var(--glass-radius-pill);
-  background: var(--glass-bg);
-  -webkit-backdrop-filter: blur(var(--glass-blur-sm));
-  backdrop-filter: blur(var(--glass-blur-sm));
-  border: var(--glass-border);
-  box-shadow: var(--glass-shadow-1);
   font-size: 22rpx;
   line-height: 1.2;
   white-space: nowrap;
   vertical-align: middle;
 }
 
-.sp__dot {
+.pill__dot {
   width: 12rpx;
   height: 12rpx;
   border-radius: 50%;
@@ -32,34 +29,34 @@
   opacity: 0.85;
 }
 
-.sp__icon {
+.pill__icon {
   font-size: 22rpx;
   font-weight: 600;
   line-height: 1;
 }
-.sp__text {
+.pill__text {
   font-size: inherit;
   color: var(--admin-text-primary);
   font-weight: 500;
 }
 
 /* sizes */
-.sp--sm {
+.pill--sm {
   padding: 4rpx 12rpx;
   font-size: 20rpx;
   gap: 6rpx;
 }
-.sp--sm .sp__dot { width: 10rpx; height: 10rpx; }
-.sp--sm .sp__icon { font-size: 20rpx; }
+.pill--sm .pill__dot { width: 10rpx; height: 10rpx; }
+.pill--sm .pill__icon { font-size: 20rpx; }
 
-.sp--md {
+.pill--md {
   /* default — 上面已定义 */
 }
 
 /* kind — 颜色直接走现有语义 token，禁止引入新色（brief §5） */
-.sp--pending   { color: var(--color-warning); }
-.sp--active    { color: var(--color-success); }
-.sp--banned    { color: var(--color-error); }
-.sp--rejected  { color: var(--color-error); }
-.sp--recruiting{ color: var(--color-primary); }
-.sp--neutral   { color: var(--color-text-secondary); }
+.pill--pending   { color: var(--color-warning); }
+.pill--active    { color: var(--color-success); }
+.pill--banned    { color: var(--color-error); }
+.pill--rejected  { color: var(--color-error); }
+.pill--recruiting{ color: var(--color-primary); }
+.pill--neutral   { color: var(--color-text-secondary); }
