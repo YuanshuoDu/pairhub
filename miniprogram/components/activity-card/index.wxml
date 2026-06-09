@@ -1,4 +1,9 @@
-<view class="ac" bindtap="onTap">
+<view
+  class="ac"
+  bindtap="onTap"
+  aria-label="{{activity.title}}，{{typeLabel}}，{{activity.currentCount}}/{{activity.maxParticipants}}人"
+  aria-role="button"
+>
   <view class="ac__cover" wx:if="{{activity.coverUrl}}">
     <image src="{{activity.coverUrl}}" mode="aspectFill" />
   </view>
