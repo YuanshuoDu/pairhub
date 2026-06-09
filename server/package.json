@@ -27,6 +27,7 @@
     "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
     "prisma:seed": "tsx prisma/seed.ts",
+    "prisma:seed:large": "tsx prisma/seed-large.ts",
     "verify": "pnpm typecheck && pnpm lint && pnpm test"
   },
   "dependencies": {
@@ -65,6 +66,7 @@
     "vitest": "^2.1.2"
   },
   "prisma": {
-    "seed": "tsx prisma/seed.ts"
+    "seed": "tsx prisma/seed.ts",
+    "seed-large": "tsx prisma/seed-large.ts"
   }
 }
