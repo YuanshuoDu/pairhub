@@ -12,7 +12,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/network/api_exception.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../shared/extensions/context.dart';
 import '../../../shared/widgets/empty_view.dart';
@@ -201,7 +200,7 @@ class _Header extends StatelessWidget {
             children: <Widget>[
               IconButton(
                 icon: const Icon(Icons.arrow_back),
-                color: AppColors.onSurface,
+                color: DesignColors.onSurface,
                 onPressed: () => context.pop(),
               ),
               const SizedBox(width: DesignSpacing.sm),
@@ -252,7 +251,7 @@ class _SearchField extends StatelessWidget {
           const Icon(
             Icons.search_rounded,
             size: 18,
-            color: AppColors.onSurfaceVariant,
+            color: DesignColors.onSurfaceVariant,
           ),
           const SizedBox(width: DesignSpacing.sm),
           Expanded(
@@ -272,7 +271,7 @@ class _SearchField extends StatelessWidget {
           if (controller.text.isNotEmpty)
             IconButton(
               icon: const Icon(Icons.close_rounded, size: 18),
-              color: AppColors.onSurfaceVariant,
+              color: DesignColors.onSurfaceVariant,
               tooltip: '清除',
               onPressed: () {
                 controller.clear();
@@ -340,14 +339,14 @@ class _StatusChip extends StatelessWidget {
       onTap: onTap,
       child: Glass(
         size: GlassSize.sm,
-        color: active ? AppColors.onSurface.withOpacity(0.20) : null,
+        color: active ? DesignColors.onSurface.withOpacity(0.20) : null,
         padding: const EdgeInsets.symmetric(
           horizontal: DesignSpacing.md,
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: active ? AppColors.onSurface : AppColors.onSurfaceVariant,
+            color: active ? DesignColors.onSurface : DesignColors.onSurfaceVariant,
             fontSize: 12,
             fontWeight: FontWeight.w500,
           ),
@@ -457,10 +456,10 @@ class _Row extends ConsumerWidget {
           CircleAvatar(
             radius: 22,
             backgroundColor:
-                AppColors.primaryContainer.withOpacity(0.6),
+                DesignColors.primaryContainer.withOpacity(0.6),
             child: const Icon(
               Icons.person_outline,
-              color: AppColors.onSurface,
+              color: DesignColors.onSurface,
             ),
           ),
           const SizedBox(width: DesignSpacing.md),

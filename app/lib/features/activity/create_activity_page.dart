@@ -7,7 +7,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../shared/extensions/context.dart';
 import '../../shared/models/activity.dart';
 
@@ -41,14 +41,14 @@ class _CreateActivityPageState extends State<CreateActivityPage> {
         title: const Text('创建活动'),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSpacing.lg),
+        padding: const EdgeInsets.all(DesignSpacing.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text('活动类型', style: context.text.titleMedium),
-            const SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: DesignSpacing.sm),
             Wrap(
-              spacing: AppSpacing.sm,
+              spacing: DesignSpacing.sm,
               children: ActivityType.values
                   .map((ActivityType t) => ChoiceChip(
                         label: Text(t.label),
@@ -57,28 +57,28 @@ class _CreateActivityPageState extends State<CreateActivityPage> {
                       ))
                   .toList(),
             ),
-            const SizedBox(height: AppSpacing.xl),
+            const SizedBox(height: DesignSpacing.xl),
             Text('标题', style: context.text.titleMedium),
-            const SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: DesignSpacing.sm),
             TextField(
               controller: _title,
               decoration: const InputDecoration(hintText: '例如：周末去图书馆'),
             ),
-            const SizedBox(height: AppSpacing.lg),
+            const SizedBox(height: DesignSpacing.lg),
             Text('描述', style: context.text.titleMedium),
-            const SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: DesignSpacing.sm),
             TextField(
               controller: _description,
               maxLines: 4,
               decoration: const InputDecoration(hintText: '简单介绍活动安排'),
             ),
-            const SizedBox(height: AppSpacing.xxl),
+            const SizedBox(height: DesignSpacing.xxl),
             // Placeholder for Step3 (map / time) — full implementation in W2.
             Container(
               height: 200,
               decoration: BoxDecoration(
-                color: AppColors.primaryContainer,
-                borderRadius: BorderRadius.circular(AppRadius.lg),
+                color: DesignColors.primaryContainer,
+                borderRadius: BorderRadius.circular(DesignRadius.lg),
               ),
               child: Center(
                 child: Text(
@@ -88,7 +88,7 @@ class _CreateActivityPageState extends State<CreateActivityPage> {
                 ),
               ),
             ),
-            const SizedBox(height: AppSpacing.xl),
+            const SizedBox(height: DesignSpacing.xl),
             SizedBox(
               width: double.infinity,
               child: FilledButton(

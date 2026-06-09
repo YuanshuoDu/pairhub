@@ -11,7 +11,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/network/api_exception.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../shared/extensions/context.dart';
 import '../../../shared/widgets/empty_view.dart';
@@ -180,7 +179,7 @@ class _Header extends StatelessWidget {
             children: <Widget>[
               IconButton(
                 icon: const Icon(Icons.arrow_back),
-                color: AppColors.onSurface,
+                color: DesignColors.onSurface,
                 onPressed: () => context.pop(),
                 tooltip: '返回',
               ),
@@ -237,7 +236,7 @@ class _StatusFilterRow extends StatelessWidget {
             child: Glass(
               size: GlassSize.sm,
               color: active
-                  ? AppColors.primary.withOpacity(0.30)
+                  ? DesignColors.primary.withOpacity(0.30)
                   : null,
               padding: const EdgeInsets.symmetric(
                 horizontal: DesignSpacing.md,
@@ -247,8 +246,8 @@ class _StatusFilterRow extends StatelessWidget {
                 s.label,
                 style: TextStyle(
                   color: active
-                      ? AppColors.primary
-                      : AppColors.onSurface,
+                      ? DesignColors.primary
+                      : DesignColors.onSurface,
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                 ),
@@ -281,7 +280,7 @@ class _TypeFilterRow extends StatelessWidget {
               child: Glass(
                 size: GlassSize.sm,
                 color: current == null
-                    ? AppColors.onSurface.withOpacity(0.20)
+                    ? DesignColors.onSurface.withOpacity(0.20)
                     : null,
                 padding: const EdgeInsets.symmetric(
                   horizontal: DesignSpacing.md,
@@ -290,8 +289,8 @@ class _TypeFilterRow extends StatelessWidget {
                   '全部类型',
                   style: TextStyle(
                     color: current == null
-                        ? AppColors.onSurface
-                        : AppColors.onSurfaceVariant,
+                        ? DesignColors.onSurface
+                        : DesignColors.onSurfaceVariant,
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                   ),
@@ -306,7 +305,7 @@ class _TypeFilterRow extends StatelessWidget {
             child: Glass(
               size: GlassSize.sm,
               color: active
-                  ? AppColors.onSurface.withOpacity(0.20)
+                  ? DesignColors.onSurface.withOpacity(0.20)
                   : null,
               padding: const EdgeInsets.symmetric(
                 horizontal: DesignSpacing.md,
@@ -315,8 +314,8 @@ class _TypeFilterRow extends StatelessWidget {
                 t.label,
                 style: TextStyle(
                   color: active
-                      ? AppColors.onSurface
-                      : AppColors.onSurfaceVariant,
+                      ? DesignColors.onSurface
+                      : DesignColors.onSurfaceVariant,
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                 ),
@@ -405,7 +404,7 @@ class _Row extends ConsumerWidget {
               Icon(
                 Icons.schedule_outlined,
                 size: 14,
-                color: AppColors.onSurfaceVariant,
+                color: DesignColors.onSurfaceVariant,
               ),
               const SizedBox(width: 4),
               Text(
@@ -427,7 +426,7 @@ class _Row extends ConsumerWidget {
               Icon(
                 Icons.person_outline,
                 size: 14,
-                color: AppColors.onSurfaceVariant,
+                color: DesignColors.onSurfaceVariant,
               ),
               const SizedBox(width: 4),
               Expanded(
@@ -446,7 +445,7 @@ class _Row extends ConsumerWidget {
               Icon(
                 Icons.place_outlined,
                 size: 14,
-                color: AppColors.onSurfaceVariant,
+                color: DesignColors.onSurfaceVariant,
               ),
               const SizedBox(width: 4),
               Expanded(
@@ -516,12 +515,12 @@ class _ActionButton extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Icon(icon, size: 16, color: AppColors.onSurface),
+            Icon(icon, size: 16, color: DesignColors.onSurface),
             const SizedBox(width: DesignSpacing.xs),
             Text(
               label,
               style: const TextStyle(
-                color: AppColors.onSurface,
+                color: DesignColors.onSurface,
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
               ),

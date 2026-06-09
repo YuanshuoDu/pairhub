@@ -1,16 +1,16 @@
 // App-wide Material 3 theme.
 //
-// Built from a single brand seed (AppColors.kBrandSeed). Final palette will
+// Built from a single brand seed (DesignColors.primary). Final palette will
 // replace the seed once the UI/UX track lands design-system-v1.
 
 import 'package:flutter/material.dart';
 
-import 'app_colors.dart';
+import 'design_tokens.dart';
 
 abstract final class AppTheme {
   static ThemeData light() {
     final ColorScheme scheme = ColorScheme.fromSeed(
-      seedColor: AppColors.primary,
+      seedColor: DesignColors.primary,
       brightness: Brightness.light,
     );
     return _base(scheme);
@@ -19,7 +19,7 @@ abstract final class AppTheme {
 
   static ThemeData dark() {
     final ColorScheme scheme = ColorScheme.fromSeed(
-      seedColor: AppColors.primary,
+      seedColor: DesignColors.primary,
       brightness: Brightness.dark,
     );
     return _base(scheme);
@@ -44,7 +44,7 @@ abstract final class AppTheme {
         style: FilledButton.styleFrom(
           minimumSize: const Size.fromHeight(48),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
+            borderRadius: BorderRadius.circular(DesignRadius.lg),
           ),
           textStyle: text.titleMedium,
         ),
@@ -53,7 +53,7 @@ abstract final class AppTheme {
         style: OutlinedButton.styleFrom(
           minimumSize: const Size.fromHeight(48),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
+            borderRadius: BorderRadius.circular(DesignRadius.lg),
           ),
         ),
       ),
@@ -62,7 +62,7 @@ abstract final class AppTheme {
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.lg),
+          borderRadius: BorderRadius.circular(DesignRadius.lg),
           side: BorderSide(color: scheme.outlineVariant),
         ),
       ),
@@ -70,24 +70,24 @@ abstract final class AppTheme {
         filled: true,
         fillColor: scheme.surfaceContainerHighest,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderRadius: BorderRadius.circular(DesignRadius.md),
           borderSide: BorderSide.none,
         ),
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.lg,
-          vertical: AppSpacing.md,
+          horizontal: DesignSpacing.lg,
+          vertical: DesignSpacing.md,
         ),
       ),
       chipTheme: ChipThemeData(
         side: BorderSide(color: scheme.outlineVariant),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.pill),
+          borderRadius: BorderRadius.circular(DesignRadius.pill),
         ),
       ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderRadius: BorderRadius.circular(DesignRadius.md),
         ),
       ),
       dividerTheme: DividerThemeData(color: scheme.outlineVariant, space: 1, thickness: 1),

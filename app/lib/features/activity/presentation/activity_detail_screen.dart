@@ -24,7 +24,7 @@ import 'package:intl/intl.dart';
 import '../../../core/auth/auth_state.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/router/app_router.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/design_tokens.dart';
 import '../../../shared/extensions/context.dart';
 import '../../../shared/widgets/error_view.dart';
 import '../../../shared/widgets/loading_view.dart';
@@ -96,15 +96,15 @@ class _DetailBody extends ConsumerWidget {
             onRefresh: () =>
                 ref.read(activityDetailProvider(activity.id).notifier).refresh(),
             child: ListView(
-              padding: const EdgeInsets.all(AppSpacing.lg),
+              padding: const EdgeInsets.all(DesignSpacing.lg),
               children: <Widget>[
                 // Cover placeholder — real image lands in a follow-up issue.
                 AspectRatio(
                   aspectRatio: 16 / 9,
                   child: Container(
                     decoration: BoxDecoration(
-                      color: AppColors.primaryContainer,
-                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      color: DesignColors.primaryContainer,
+                      borderRadius: BorderRadius.circular(DesignRadius.lg),
                     ),
                     child: Center(
                       child: Icon(
@@ -117,29 +117,29 @@ class _DetailBody extends ConsumerWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: AppSpacing.lg),
+                const SizedBox(height: DesignSpacing.lg),
                 _Badges(activity: activity),
-                const SizedBox(height: AppSpacing.sm),
+                const SizedBox(height: DesignSpacing.sm),
                 Text(activity.title, style: context.text.headlineSmall),
-                const SizedBox(height: AppSpacing.lg),
+                const SizedBox(height: DesignSpacing.lg),
                 _InfoCard(activity: activity),
-                const SizedBox(height: AppSpacing.lg),
+                const SizedBox(height: DesignSpacing.lg),
                 if (activity.description.isNotEmpty) ...<Widget>[
                   _SectionCard(
                     title: '活动介绍',
                     child:
                         Text(activity.description, style: context.text.bodyMedium),
                   ),
-                  const SizedBox(height: AppSpacing.lg),
+                  const SizedBox(height: DesignSpacing.lg),
                 ],
                 if (activity.tags.isNotEmpty) ...<Widget>[
                   _TagsRow(tags: activity.tags),
-                  const SizedBox(height: AppSpacing.lg),
+                  const SizedBox(height: DesignSpacing.lg),
                 ],
                 _MapPlaceholder(activity: activity),
-                const SizedBox(height: AppSpacing.lg),
+                const SizedBox(height: DesignSpacing.lg),
                 _OrganizerCard(creatorId: activity.creatorId),
-                const SizedBox(height: AppSpacing.lg),
+                const SizedBox(height: DesignSpacing.lg),
               ],
             ),
           ),
@@ -165,8 +165,8 @@ class _Badges extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Wrap(
-      spacing: AppSpacing.sm,
-      runSpacing: AppSpacing.xs,
+      spacing: DesignSpacing.sm,
+      runSpacing: DesignSpacing.xs,
       children: <Widget>[
         _TypeChip(type: activity.type),
         _StatusChip(status: activity.status),
@@ -186,7 +186,7 @@ class _TypeChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: color.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(AppRadius.pill),
+        borderRadius: BorderRadius.circular(DesignRadius.pill),
       ),
       child: Text(
         type.label,
@@ -198,15 +198,15 @@ class _TypeChip extends StatelessWidget {
   static Color _typeColor(ActivityType t) {
     switch (t) {
       case ActivityType.study:
-        return AppColors.activityStudy;
+        return DesignColors.activityStudy;
       case ActivityType.sports:
-        return AppColors.activitySport;
+        return DesignColors.activitySport;
       case ActivityType.boardGame:
-        return AppColors.activityBoardgame;
+        return DesignColors.activityBoardgame;
       case ActivityType.onlineGame:
-        return AppColors.activityGame;
+        return DesignColors.activityGame;
       case ActivityType.other:
-        return AppColors.activityOther;
+        return DesignColors.activityOther;
     }
   }
 }
@@ -222,7 +222,7 @@ class _StatusChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: color.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(AppRadius.pill),
+        borderRadius: BorderRadius.circular(DesignRadius.pill),
       ),
       child: Text(
         status.label,
@@ -234,15 +234,15 @@ class _StatusChip extends StatelessWidget {
   static Color _statusColor(ActivityStatus s) {
     switch (s) {
       case ActivityStatus.recruiting:
-        return AppColors.success;
+        return DesignColors.success;
       case ActivityStatus.full:
-        return AppColors.warning;
+        return DesignColors.warning;
       case ActivityStatus.started:
-        return AppColors.info;
+        return DesignColors.info;
       case ActivityStatus.ended:
-        return AppColors.outline;
+        return DesignColors.outline;
       case ActivityStatus.canceled:
-        return AppColors.error;
+        return DesignColors.error;
     }
   }
 }
@@ -256,7 +256,7 @@ class _InfoCard extends StatelessWidget {
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
+        padding: const EdgeInsets.all(DesignSpacing.lg),
         child: Column(
           children: <Widget>[
             _InfoRow(
@@ -264,13 +264,13 @@ class _InfoCard extends StatelessWidget {
               title: formatActivityTimeRange(activity.startTime, activity.endTime),
               subtitle: '${formatIso(activity.startTime)} ~ ${formatIso(activity.endTime)}',
             ),
-            const Divider(height: AppSpacing.lg),
+            const Divider(height: DesignSpacing.lg),
             _InfoRow(
               icon: Icons.place_outlined,
               title: activity.locationName,
               subtitle: activity.locationAddr,
             ),
-            const Divider(height: AppSpacing.lg),
+            const Divider(height: DesignSpacing.lg),
             _InfoRow(
               icon: Icons.group_outlined,
               title: '${activity.currentCount} / ${activity.maxParticipants} 人',
@@ -299,7 +299,7 @@ class _InfoRow extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Icon(icon, size: 20, color: context.colorScheme.outline),
-        const SizedBox(width: AppSpacing.md),
+        const SizedBox(width: DesignSpacing.md),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -332,12 +332,12 @@ class _SectionCard extends StatelessWidget {
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
+        padding: const EdgeInsets.all(DesignSpacing.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(title, style: context.text.titleSmall),
-            const SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: DesignSpacing.sm),
             child,
           ],
         ),
@@ -353,8 +353,8 @@ class _TagsRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Wrap(
-      spacing: AppSpacing.sm,
-      runSpacing: AppSpacing.xs,
+      spacing: DesignSpacing.sm,
+      runSpacing: DesignSpacing.xs,
       children: tags
           .map((String t) => Chip(
                 label: Text('#$t'),
@@ -376,18 +376,18 @@ class _MapPlaceholder extends StatelessWidget {
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
+        padding: const EdgeInsets.all(DesignSpacing.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text('地点', style: context.text.titleSmall),
-            const SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: DesignSpacing.sm),
             AspectRatio(
               aspectRatio: 16 / 9,
               child: Container(
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceVariant,
-                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  color: DesignColors.surfaceVariant,
+                  borderRadius: BorderRadius.circular(DesignRadius.md),
                 ),
                 child: Center(
                   child: Column(
@@ -415,7 +415,7 @@ class _MapPlaceholder extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: AppSpacing.xs),
+            const SizedBox(height: DesignSpacing.xs),
             Text(
               '地图渲染待 issue #35 接入',
               style: context.text.labelSmall?.copyWith(
@@ -438,17 +438,17 @@ class _OrganizerCard extends StatelessWidget {
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
+        padding: const EdgeInsets.all(DesignSpacing.lg),
         child: Row(
           children: <Widget>[
             CircleAvatar(
-              backgroundColor: AppColors.primaryContainer,
+              backgroundColor: DesignColors.primaryContainer,
               child: Icon(
                 Icons.person,
                 color: context.colorScheme.onPrimaryContainer,
               ),
             ),
-            const SizedBox(width: AppSpacing.md),
+            const SizedBox(width: DesignSpacing.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -561,7 +561,7 @@ class _ActionFooterState extends ConsumerState<_ActionFooter> {
           ),
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+            style: FilledButton.styleFrom(backgroundColor: DesignColors.error),
             child: const Text('确认取消'),
           ),
         ],
@@ -598,15 +598,15 @@ class _ActionFooterState extends ConsumerState<_ActionFooter> {
       top: false,
       child: Container(
         padding: const EdgeInsets.fromLTRB(
-          AppSpacing.lg,
-          AppSpacing.md,
-          AppSpacing.lg,
-          AppSpacing.md,
+          DesignSpacing.lg,
+          DesignSpacing.md,
+          DesignSpacing.lg,
+          DesignSpacing.md,
         ),
         decoration: BoxDecoration(
           color: context.colorScheme.surface,
           border: Border(
-            top: BorderSide(color: AppColors.outline),
+            top: BorderSide(color: DesignColors.outline),
           ),
         ),
         child: widget.isCreator
@@ -619,7 +619,7 @@ class _ActionFooterState extends ConsumerState<_ActionFooter> {
                       label: const Text('编辑'),
                     ),
                   ),
-                  const SizedBox(width: AppSpacing.md),
+                  const SizedBox(width: DesignSpacing.md),
                   Expanded(
                     child: FilledButton.icon(
                       onPressed: (_busy || a.status == ActivityStatus.canceled)
@@ -627,7 +627,7 @@ class _ActionFooterState extends ConsumerState<_ActionFooter> {
                           : _handleCancelActivity,
                       icon: const Icon(Icons.delete_outline),
                       style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.error,
+                        backgroundColor: DesignColors.error,
                       ),
                       label: Text(
                         a.status == ActivityStatus.canceled

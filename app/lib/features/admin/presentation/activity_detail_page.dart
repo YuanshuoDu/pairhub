@@ -11,7 +11,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/network/api_exception.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../shared/extensions/context.dart';
 import '../../../shared/widgets/error_view.dart';
@@ -139,7 +138,7 @@ class _Body extends ConsumerWidget {
                 children: <Widget>[
                   IconButton(
                     icon: const Icon(Icons.arrow_back),
-                    color: AppColors.onSurface,
+                    color: DesignColors.onSurface,
                     onPressed: () => context.pop(),
                   ),
                   const SizedBox(width: DesignSpacing.sm),
@@ -248,7 +247,7 @@ class _InfoRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: DesignSpacing.xs),
       child: Row(
         children: <Widget>[
-          Icon(icon, size: 18, color: AppColors.onSurfaceVariant),
+          Icon(icon, size: 18, color: DesignColors.onSurfaceVariant),
           const SizedBox(width: DesignSpacing.sm),
           SizedBox(
             width: 56,
@@ -422,7 +421,7 @@ class _RejectSheetState extends State<_RejectSheet> {
               width: 36,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.onSurfaceVariant.withOpacity(0.6),
+                color: DesignColors.onSurfaceVariant.withOpacity(0.6),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),

@@ -22,7 +22,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/auth/auth_state.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../shared/extensions/context.dart';
 import '../application/admin_providers.dart';
@@ -136,7 +135,7 @@ class _AdminGatePageState extends ConsumerState<AdminGatePage> {
                                       fontFamily: 'monospace',
                                       fontSize: 12,
                                       height: 1.4,
-                                      color: AppColors.onSurface,
+                                      color: DesignColors.onSurface,
                                     ),
                                   ),
                                 ),
@@ -149,7 +148,7 @@ class _AdminGatePageState extends ConsumerState<AdminGatePage> {
                                         : Icons.copy_rounded,
                                     color: _copied
                                         ? DesignColors.success
-                                        : AppColors.onSurface,
+                                        : DesignColors.onSurface,
                                   ),
                                   onPressed: _copySqlHint,
                                 ),

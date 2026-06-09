@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/auth/auth_state.dart';
 import '../../core/router/app_router.dart';
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../shared/extensions/context.dart';
 
 class ProfilePage extends ConsumerWidget {
@@ -35,21 +35,21 @@ class ProfilePage extends ConsumerWidget {
         ],
       ),
       body: ListView(
-        padding: const EdgeInsets.all(AppSpacing.lg),
+        padding: const EdgeInsets.all(DesignSpacing.lg),
         children: <Widget>[
           // Header
           Row(
             children: <Widget>[
               CircleAvatar(
                 radius: 32,
-                backgroundColor: AppColors.primaryContainer,
+                backgroundColor: DesignColors.primaryContainer,
                 child: Icon(
                   Icons.person,
                   size: 32,
                   color: context.colorScheme.onPrimaryContainer,
                 ),
               ),
-              const SizedBox(width: AppSpacing.lg),
+              const SizedBox(width: DesignSpacing.lg),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -68,18 +68,18 @@ class ProfilePage extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.xl),
+          const SizedBox(height: DesignSpacing.xl),
           // Stats row (placeholder)
           const Row(
             children: <Widget>[
               _StatCard(label: '我创建', value: '0'),
-              SizedBox(width: AppSpacing.md),
+              SizedBox(width: DesignSpacing.md),
               _StatCard(label: '我参加', value: '0'),
-              SizedBox(width: AppSpacing.md),
+              SizedBox(width: DesignSpacing.md),
               _StatCard(label: '评价', value: '0'),
             ],
           ),
-          const SizedBox(height: AppSpacing.xl),
+          const SizedBox(height: DesignSpacing.xl),
           // Sections
           _SectionTile(
             icon: Icons.list_alt,
@@ -112,7 +112,7 @@ class _StatCard extends StatelessWidget {
     return Expanded(
       child: Card(
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+          padding: const EdgeInsets.symmetric(vertical: DesignSpacing.lg),
           child: Column(
             children: <Widget>[
               Text(value, style: context.text.headlineMedium),
@@ -135,7 +135,7 @@ class _SectionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+      margin: const EdgeInsets.only(bottom: DesignSpacing.sm),
       child: ListTile(
         leading: Icon(icon),
         title: Text(title),

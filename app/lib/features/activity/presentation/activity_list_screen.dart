@@ -16,7 +16,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/network/api_exception.dart';
 import '../../../core/router/app_router.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/design_tokens.dart';
 import '../../../shared/extensions/context.dart';
 import '../../../shared/widgets/empty_view.dart';
 import '../../../shared/widgets/error_view.dart';
@@ -150,9 +150,9 @@ class _ActivityListScreenState extends ConsumerState<ActivityListScreen> {
         // (which doubles as a tap-to-retry on error).
         return ListView.separated(
           controller: _scrollController,
-          padding: const EdgeInsets.all(AppSpacing.lg),
+          padding: const EdgeInsets.all(DesignSpacing.lg),
           itemCount: state.items.length + 1,
-          separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.md),
+          separatorBuilder: (_, __) => const SizedBox(height: DesignSpacing.md),
           itemBuilder: (BuildContext context, int i) {
             if (i == state.items.length) {
               return _ListFooter(
@@ -183,7 +183,7 @@ class _ListFooter extends StatelessWidget {
   Widget build(BuildContext context) {
     if (!state.hasMore) {
       return const Padding(
-        padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
+        padding: EdgeInsets.symmetric(vertical: DesignSpacing.lg),
         child: Center(
           child: Text(
             '— 没有更多了 —',
@@ -194,7 +194,7 @@ class _ListFooter extends StatelessWidget {
     }
     if (state.isLoadingMore) {
       return const Padding(
-        padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
+        padding: EdgeInsets.symmetric(vertical: DesignSpacing.lg),
         child: Center(
           child: SizedBox(
             width: 18,
@@ -207,7 +207,7 @@ class _ListFooter extends StatelessWidget {
     return InkWell(
       onTap: onLoadMore,
       child: const Padding(
-        padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
+        padding: EdgeInsets.symmetric(vertical: DesignSpacing.lg),
         child: Center(
           child: Text(
             '加载更多 ↓',
@@ -244,7 +244,7 @@ class _FilterBar extends StatelessWidget {
       color: context.colorScheme.surface,
       elevation: 0,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+        padding: const EdgeInsets.symmetric(vertical: DesignSpacing.sm),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
@@ -253,7 +253,7 @@ class _FilterBar extends StatelessWidget {
               selected: query.type,
               onChanged: onTypeChanged,
             ),
-            const SizedBox(height: AppSpacing.xs),
+            const SizedBox(height: DesignSpacing.xs),
             _ChipRow<ActivityStatus>(
               chips: ActivityFilters.statusChips,
               selected: query.status,
@@ -286,9 +286,9 @@ class _ChipRow<T> extends StatelessWidget {
       height: dense ? 36 : 40,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+        padding: const EdgeInsets.symmetric(horizontal: DesignSpacing.lg),
         itemCount: chips.length,
-        separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.sm),
+        separatorBuilder: (_, __) => const SizedBox(width: DesignSpacing.sm),
         itemBuilder: (BuildContext context, int i) {
           final ({String label, T? value}) chip = chips[i];
           final bool isActive = chip.value == selected;
@@ -319,14 +319,14 @@ class _ActivityCard extends StatelessWidget {
       child: InkWell(
         onTap: () => context.go(AppRoutes.activityPath(activity.id)),
         child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.lg),
+          padding: const EdgeInsets.all(DesignSpacing.lg),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Row(
                 children: <Widget>[
                   _TypeBadge(type: activity.type),
-                  const SizedBox(width: AppSpacing.sm),
+                  const SizedBox(width: DesignSpacing.sm),
                   _StatusBadge(status: activity.status),
                   const Spacer(),
                   Text(
@@ -335,14 +335,14 @@ class _ActivityCard extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: DesignSpacing.sm),
               Text(
                 activity.title,
                 style: context.text.titleLarge,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: AppSpacing.xs),
+              const SizedBox(height: DesignSpacing.xs),
               Row(
                 children: <Widget>[
                   Icon(
@@ -399,7 +399,7 @@ class _TypeBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
         color: color.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(AppRadius.pill),
+        borderRadius: BorderRadius.circular(DesignRadius.pill),
       ),
       child: Text(
         type.label,
@@ -411,15 +411,15 @@ class _TypeBadge extends StatelessWidget {
   static Color _typeColor(ActivityType type) {
     switch (type) {
       case ActivityType.study:
-        return AppColors.activityStudy;
+        return DesignColors.activityStudy;
       case ActivityType.sports:
-        return AppColors.activitySport;
+        return DesignColors.activitySport;
       case ActivityType.boardGame:
-        return AppColors.activityBoardgame;
+        return DesignColors.activityBoardgame;
       case ActivityType.onlineGame:
-        return AppColors.activityGame;
+        return DesignColors.activityGame;
       case ActivityType.other:
-        return AppColors.activityOther;
+        return DesignColors.activityOther;
     }
   }
 }
@@ -435,7 +435,7 @@ class _StatusBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
         color: color.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(AppRadius.pill),
+        borderRadius: BorderRadius.circular(DesignRadius.pill),
       ),
       child: Text(
         status.label,
@@ -447,15 +447,15 @@ class _StatusBadge extends StatelessWidget {
   static Color _statusColor(ActivityStatus s) {
     switch (s) {
       case ActivityStatus.recruiting:
-        return AppColors.success;
+        return DesignColors.success;
       case ActivityStatus.full:
-        return AppColors.warning;
+        return DesignColors.warning;
       case ActivityStatus.started:
-        return AppColors.info;
+        return DesignColors.info;
       case ActivityStatus.ended:
-        return AppColors.outline;
+        return DesignColors.outline;
       case ActivityStatus.canceled:
-        return AppColors.error;
+        return DesignColors.error;
     }
   }
 }

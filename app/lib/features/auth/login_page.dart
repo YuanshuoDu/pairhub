@@ -10,7 +10,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/auth/auth_state.dart';
 import '../../core/router/app_router.dart';
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../shared/extensions/context.dart';
 import '../../shared/widgets/loading_view.dart';
 
@@ -62,7 +62,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     return Scaffold(
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+          padding: const EdgeInsets.symmetric(horizontal: DesignSpacing.xl),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
@@ -73,8 +73,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   width: 96,
                   height: 96,
                   decoration: BoxDecoration(
-                    color: AppColors.primaryContainer,
-                    borderRadius: BorderRadius.circular(AppRadius.xl),
+                    color: DesignColors.primaryContainer,
+                    borderRadius: BorderRadius.circular(DesignRadius.xl),
                   ),
                   child: Icon(
                     Icons.school_outlined,
@@ -83,13 +83,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   ),
                 ),
               ),
-              const SizedBox(height: AppSpacing.xl),
+              const SizedBox(height: DesignSpacing.xl),
               Text(
                 'StudyBuddy',
                 style: context.text.displayMedium,
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: DesignSpacing.sm),
               Text(
                 '让留学生 30 秒内找到搭子',
                 style: context.text.bodyMedium?.copyWith(
@@ -106,7 +106,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 foreground: Colors.white,
                 onPressed: _signInWithApple,
               ),
-              const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: DesignSpacing.md),
               // Google
               _SocialButton(
                 icon: Icons.g_mobiledata,
@@ -116,13 +116,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 borderColor: context.colorScheme.outline,
                 onPressed: _signInWithGoogle,
               ),
-              const SizedBox(height: AppSpacing.xl),
+              const SizedBox(height: DesignSpacing.xl),
               Text(
                 '继续即表示同意《用户协议》和《隐私政策》',
                 style: context.text.bodySmall,
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: AppSpacing.lg),
+              const SizedBox(height: DesignSpacing.lg),
             ],
           ),
         ),
@@ -159,7 +159,7 @@ class _SocialButton extends StatelessWidget {
           foregroundColor: foreground,
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
+            borderRadius: BorderRadius.circular(DesignRadius.lg),
             side: borderColor != null
                 ? BorderSide(color: borderColor!)
                 : BorderSide.none,
@@ -169,7 +169,7 @@ class _SocialButton extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             Icon(icon, size: 24),
-            const SizedBox(width: AppSpacing.sm),
+            const SizedBox(width: DesignSpacing.sm),
             Text(label, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
           ],
         ),

@@ -15,6 +15,10 @@
 // 'package:mapbox_gl/mapbox_gl.dart' as mapbox;` pattern only matters
 // when shadowing Mapbox's own `LatLng` against Flutter's `LatLng`,
 // which we don't need because the Flutter SDK doesn't expose one.
+//
+// Body rendering is dispatched through a sealed [MapView] hierarchy so
+// the "we have a token" / "we don't" branches are exhaustive — the
+// compiler will flag any new branch we forget to wire up.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -23,8 +27,8 @@ import 'package:go_router/go_router.dart';
 import 'package:mapbox_gl/mapbox_gl.dart' as mb;
 
 import '../../../core/router/app_router.dart';
-import '../../activity/data/activity_model.dart';
 import '../../activity/application/activity_providers.dart';
+import '../../activity/data/activity_model.dart';
 
 class MapScreen extends ConsumerStatefulWidget {
   const MapScreen({super.key});
@@ -43,7 +47,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   bool _locating = false;
 
   /// Public Mapbox access token. Build with:
-  ///   flutter run --dart-define ACCESS_TOKEN=pk.eyJ…
+  ///   flutter run --dart-define ACCESS_TOKEN=pk. eyJ…
   /// In production this is injected by the CI build (see
   /// android-setup.md / ios-metadata.md). Empty string falls back
   /// to the placeholder + helpful view.
@@ -132,53 +136,35 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     }
   }
 
+  /// Decide which body variant to render based on the access-token
+  /// state. The result is fed to an exhaustive `switch` below — adding
+  /// a new branch forces the compiler to complain here.
+  MapView _resolveView() {
+    if (_accessToken.isEmpty || !_accessToken.startsWith('pk.')) {
+      return const ListFallbackView();
+    }
+    return MapboxMapView(
+      accessToken: _accessToken,
+      userPosition: _userPosition,
+      onMapCreated: _onMapCreated,
+      onActivitiesLoaded: _refreshSymbols,
+      radiusKm: _radiusKm,
+      typeFilter: _typeFilter,
+      onRadiusChange: (int v) => setState(() => _radiusKm = v),
+      onTypeChange: (String? t) => setState(() => _typeFilter = t),
+      onCardTap: (String id) => context.push(AppRoutes.activityPath(id)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (_accessToken.isEmpty || !_accessToken.startsWith('pk.')) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('附近活动')),
-        body: const _MissingTokenView(),
-      );
-    }
+    final MapView view = _resolveView();
     return Scaffold(
       appBar: AppBar(title: const Text('附近活动')),
-      body: Stack(
-        children: <Widget>[
-          mb.MapboxMap(
-            accessToken: _accessToken,
-            initialCameraPosition: mb.CameraPosition(
-              target: _userPosition != null
-                  ? mb.LatLng(_userPosition!.latitude, _userPosition!.longitude)
-                  : const mb.LatLng(39.9842, 116.3074),
-              zoom: 13,
-            ),
-            onMapCreated: _onMapCreated,
-            myLocationEnabled: _userPosition != null,
-            styleString: 'mapbox://styles/mapbox/streets-v12',
-          ),
-          if (_userPosition != null) _NearbyList(
-            lat: _userPosition!.latitude,
-            lng: _userPosition!.longitude,
-            radiusKm: _radiusKm,
-            typeFilter: _typeFilter,
-            onRadiusChange: (int v) => setState(() => _radiusKm = v),
-            onTypeChange: (String? t) => setState(() => _typeFilter = t),
-            onCardTap: (String id) => context.push(AppRoutes.activityPath(id)),
-            onActivitiesLoaded: _refreshSymbols,
-          )
-          else
-            const Positioned(
-              left: 0, right: 0, bottom: 0,
-              child: SizedBox(
-                height: 220,
-                child: ColoredBox(
-                  color: Colors.white,
-                  child: Center(child: Text('正在获取位置…')),
-                ),
-              ),
-            ),
-        ],
-      ),
+      body: switch (view) {
+        MapboxMapView() => view.build(context),
+        ListFallbackView() => view.build(context),
+      },
       floatingActionButton: FloatingActionButton(
         onPressed: _locating ? null : _locate,
         child: _locating
@@ -191,6 +177,120 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     );
   }
 }
+
+// ---------------------------------------------------------------------------
+// Sealed body hierarchy
+// ---------------------------------------------------------------------------
+
+/// The body content of [MapScreen]. Two branches today — `MapboxMapView`
+/// when we have a valid token, `ListFallbackView` otherwise. Adding a
+/// third branch (e.g. an offline cache view) is a compiler-checked edit
+/// at the `switch` site in [MapScreen].
+sealed class MapView {
+  const MapView();
+
+  /// Concrete builder. Subclasses implement their own visual.
+  Widget build(BuildContext context);
+}
+
+/// Real Mapbox-backed map view. Wires the controller, the live symbols,
+/// and the draggable nearby list on top of the `MapboxMap` widget.
+class MapboxMapView extends MapView {
+  const MapboxMapView({
+    required this.accessToken,
+    required this.userPosition,
+    required this.onMapCreated,
+    required this.onActivitiesLoaded,
+    required this.radiusKm,
+    required this.typeFilter,
+    required this.onRadiusChange,
+    required this.onTypeChange,
+    required this.onCardTap,
+  });
+
+  final String accessToken;
+  final geo.Position? userPosition;
+  final void Function(mb.MapboxMapController controller) onMapCreated;
+  final Future<void> Function(List<Activity>) onActivitiesLoaded;
+  final int radiusKm;
+  final String? typeFilter;
+  final ValueChanged<int> onRadiusChange;
+  final ValueChanged<String?> onTypeChange;
+  final ValueChanged<String> onCardTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: <Widget>[
+        mb.MapboxMap(
+          accessToken: accessToken,
+          initialCameraPosition: mb.CameraPosition(
+            target: userPosition != null
+                ? mb.LatLng(userPosition!.latitude, userPosition!.longitude)
+                : const mb.LatLng(39.9842, 116.3074),
+            zoom: 13,
+          ),
+          onMapCreated: onMapCreated,
+          myLocationEnabled: userPosition != null,
+          styleString: 'mapbox://styles/mapbox/streets-v12',
+        ),
+        if (userPosition != null) _NearbyList(
+          lat: userPosition!.latitude,
+          lng: userPosition!.longitude,
+          radiusKm: radiusKm,
+          typeFilter: typeFilter,
+          onRadiusChange: onRadiusChange,
+          onTypeChange: onTypeChange,
+          onCardTap: onCardTap,
+          onActivitiesLoaded: onActivitiesLoaded,
+        )
+        else
+          const Positioned(
+            left: 0, right: 0, bottom: 0,
+            child: SizedBox(
+              height: 220,
+              child: ColoredBox(
+                color: Colors.white,
+                child: Center(child: Text('正在获取位置…')),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// Placeholder shown when no valid Mapbox access token is configured.
+/// Renders a friendly hint + a pointer to the build/run docs.
+class ListFallbackView extends MapView {
+  const ListFallbackView();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.all(32),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Text('🗺️', style: TextStyle(fontSize: 64)),
+          SizedBox(height: 16),
+          Text('Mapbox 视图未配置',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+          SizedBox(height: 8),
+          Text(
+            '请用 --dart-define ACCESS_TOKEN=pk. eyJ… 重新构建。\n完整步骤见 docs/release/android-setup.md 与 ios-metadata.md。',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 13, color: Colors.black54),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Private helpers used by MapboxMapView
+// ---------------------------------------------------------------------------
 
 class _NearbyList extends ConsumerWidget {
   const _NearbyList({
@@ -373,29 +473,4 @@ class _TypeChoice {
   const _TypeChoice(this.value, this.label);
   final String? value;
   final String label;
-}
-
-class _MissingTokenView extends StatelessWidget {
-  const _MissingTokenView();
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(32),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: const <Widget>[
-          Text('🗺️', style: TextStyle(fontSize: 64)),
-          SizedBox(height: 16),
-          Text('Mapbox 视图未配置',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-          SizedBox(height: 8),
-          Text(
-            '请用 --dart-define ACCESS_TOKEN=pk.eyJ… 重新构建。\n完整步骤见 docs/release/android-setup.md 与 ios-metadata.md。',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 13, color: Colors.black54),
-          ),
-        ],
-      ),
-    );
-  }
 }
