@@ -2,64 +2,17 @@
  * 全局样式 + 主题变量
  *
  * 设计原则：
- * - 颜色 / 间距 / 字号 / 圆角全部 CSS 变量化，方便换肤
+ * - 颜色 / 间距 / 字号 / 圆角 / 阴影 / 动效 全部在 tokens.wxss 中定义为 CSS
+ *   自定义属性（design-system-v1），本文件只做导入、reset 与工具类聚合
  * - 不写具体业务的样式，全部走 components 或页面 .wxss
  * - 使用 rpx 适配（iPhone6 750 设计稿）
+ *
+ * 改主题：只改 tokens.wxss，全局生效。
+ * 加主题：先在 docs/design/system-v1.md 提需求，再补到 tokens.wxss +
+ *   Flutter tokens + HTML mockup 三端。
  */
 
-page {
-  /* ========== 主题色 ========== */
-  --color-primary: #4f8cff;
-  --color-primary-light: #e8f0ff;
-  --color-primary-dark: #2f6cdb;
-  --color-secondary: #ff8a3d;
-  --color-success: #18bc6c;
-  --color-warning: #f5a623;
-  --color-danger: #e94b4b;
-
-  /* ========== 文字 ========== */
-  --color-text-primary: #1a1a1a;
-  --color-text-regular: #4a4a4a;
-  --color-text-secondary: #8a8a8a;
-  --color-text-placeholder: #c0c0c0;
-  --color-text-inverse: #ffffff;
-
-  /* ========== 背景 ========== */
-  --color-bg: #f5f6fa;
-  --color-bg-card: #ffffff;
-  --color-bg-mask: rgba(0, 0, 0, 0.5);
-
-  /* ========== 边框 ========== */
-  --color-border: #ebedf0;
-  --color-divider: #f0f0f0;
-
-  /* ========== 间距 ========== */
-  --space-xs: 8rpx;
-  --space-sm: 16rpx;
-  --space-md: 24rpx;
-  --space-lg: 32rpx;
-  --space-xl: 48rpx;
-  --space-xxl: 64rpx;
-
-  /* ========== 圆角 ========== */
-  --radius-sm: 8rpx;
-  --radius-md: 16rpx;
-  --radius-lg: 24rpx;
-  --radius-pill: 999rpx;
-
-  /* ========== 字号 ========== */
-  --font-xs: 22rpx;
-  --font-sm: 26rpx;
-  --font-md: 28rpx;
-  --font-lg: 32rpx;
-  --font-xl: 36rpx;
-  --font-xxl: 44rpx;
-
-  /* ========== 阴影 ========== */
-  --shadow-sm: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 8rpx 24rpx rgba(0, 0, 0, 0.1);
-}
+@import './styles/tokens.wxss';
 
 /* ========== Reset ========== */
 page,
@@ -73,9 +26,9 @@ page button {
 page {
   background: var(--color-bg);
   color: var(--color-text-primary);
-  font-size: var(--font-md);
-  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif;
-  line-height: 1.5;
+  font-size: var(--font-body-m);
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', 'Microsoft YaHei', sans-serif;
+  line-height: var(--line-cjk-body);
 }
 
 view,
@@ -112,7 +65,7 @@ text {
   color: var(--color-text-secondary);
 }
 .text-danger {
-  color: var(--color-danger);
+  color: var(--color-error);
 }
 .text-bold {
   font-weight: 600;
@@ -163,8 +116,12 @@ button::after {
   background: var(--color-primary);
   color: var(--color-text-inverse);
   border-radius: var(--radius-pill);
-  font-size: var(--font-md);
+  font-size: var(--font-body-m);
   font-weight: 500;
+  transition: background var(--motion-duration-fast) cubic-bezier(0.2, 0, 0, 1);
+}
+.btn-primary:active {
+  background: var(--color-primary-active);
 }
 .btn-primary[disabled],
 .btn-primary.btn-disabled {
@@ -178,9 +135,43 @@ button::after {
   justify-content: center;
   padding: 0 var(--space-lg);
   height: 88rpx;
-  background: var(--color-primary-light);
+  background: var(--color-primary-container);
   color: var(--color-primary);
   border-radius: var(--radius-pill);
-  font-size: var(--font-md);
+  font-size: var(--font-body-m);
   font-weight: 500;
+}
+
+/* ========== Status badge utilities (shared across pages) ==========
+ * Pages can apply these directly, e.g. <view class="status-badge status-badge--RECRUITING">招募中</view>
+ * Mirrors `DesignColors` in Flutter.
+ */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6rpx 20rpx;
+  border-radius: var(--radius-pill);
+  font-size: var(--font-label-m);
+  font-weight: 500;
+  line-height: 1.4;
+}
+.status-badge--RECRUITING {
+  background: var(--color-success-bg);
+  color: var(--color-success);
+}
+.status-badge--FULL {
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
+}
+.status-badge--STARTED {
+  background: var(--color-info);
+  color: var(--color-on-primary);
+}
+.status-badge--ENDED {
+  background: var(--color-surface-variant);
+  color: var(--color-on-surface-variant);
+}
+.status-badge--CANCELED {
+  background: var(--color-error-bg);
+  color: var(--color-error);
 }

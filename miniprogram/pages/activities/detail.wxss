@@ -1,3 +1,10 @@
+/* Activity detail page — issue #22
+ *
+ * All colors / spacing / radius / shadow resolved via the design-system
+ * tokens imported through app.wxss → styles/tokens.wxss.
+ * See: docs/design/system-v1.md
+ */
+
 .detail {
   min-height: 100vh;
   padding-bottom: 200rpx;
@@ -6,7 +13,12 @@
 
 .detail__skeleton {
   height: 480rpx;
-  background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
+  background: linear-gradient(
+    90deg,
+    var(--color-surface-variant) 25%,
+    var(--color-divider) 50%,
+    var(--color-surface-variant) 75%
+  );
   background-size: 200% 100%;
   animation: skel 1.2s infinite;
 }
@@ -28,52 +40,56 @@
 
 .detail__card {
   background: var(--color-bg-card);
-  margin: 24rpx 32rpx;
-  padding: 32rpx;
-  border-radius: 16rpx;
-  box-shadow: var(--shadow-sm);
+  margin: var(--space-md) var(--space-lg);
+  padding: var(--space-lg);
+  border-radius: var(--radius-md);
+  box-shadow: var(--elevation-soft);
 }
 
 .detail__badges {
   display: flex;
   align-items: center;
-  gap: 16rpx;
-  margin-bottom: 16rpx;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
 }
 
 .detail__type,
 .detail__status {
   display: inline-block;
   padding: 6rpx 20rpx;
-  border-radius: 999rpx;
-  font-size: 22rpx;
-  color: #fff;
+  border-radius: var(--radius-pill);
+  font-size: var(--font-label-m);
+  color: var(--color-on-primary);
   font-weight: 500;
 }
 
-.detail__type--STUDY { background: #4f8cff; }
-.detail__type--SPORTS { background: #18bc6c; }
-.detail__type--BOARD_GAME { background: #f5a623; }
-.detail__type--ONLINE_GAME { background: #9b59b6; }
-.detail__type--OTHER { background: #8a8a8a; }
+/* Activity type tints — sourced from --color-activity-* tokens */
+.detail__type--STUDY       { background: var(--color-activity-study); }
+.detail__type--SPORTS      { background: var(--color-activity-sport); }
+.detail__type--BOARD_GAME  { background: var(--color-activity-boardgame); }
+.detail__type--ONLINE_GAME { background: var(--color-activity-online-game); }
+.detail__type--OTHER       { background: var(--color-activity-other); }
 
+/* Activity status — full-saturation hero variants.
+ * Soft variants: use the shared .status-badge--<STATUS> utility class
+ * from app.wxss. */
 .detail__status--RECRUITING { background: var(--color-success); }
-.detail__status--FULL { background: var(--color-warning); }
-.detail__status--STARTED { background: var(--color-primary); }
-.detail__status--ENDED { background: var(--color-text-secondary); }
-.detail__status--CANCELED { background: var(--color-danger); }
+.detail__status--FULL       { background: var(--color-warning); }
+.detail__status--STARTED    { background: var(--color-info); }
+.detail__status--ENDED      { background: var(--color-on-surface-variant); }
+.detail__status--CANCELED   { background: var(--color-error); }
 
 .detail__title {
-  font-size: 40rpx;
+  font-size: var(--font-headline-l);
   font-weight: 700;
   color: var(--color-text-primary);
-  line-height: 1.4;
+  line-height: var(--line-snug);
 }
 
 .detail__row {
   display: flex;
   align-items: flex-start;
-  padding: 20rpx 0;
+  padding: var(--space-sm) 0;
   border-top: 1rpx solid var(--color-divider);
 }
 
@@ -84,34 +100,35 @@
 
 .detail__icon {
   width: 48rpx;
-  font-size: 32rpx;
+  font-size: var(--font-title-m);
   flex-shrink: 0;
+  color: var(--color-primary);
 }
 
 .detail__row-text {
   flex: 1;
-  font-size: 28rpx;
+  font-size: var(--font-body-m);
   color: var(--color-text-primary);
-  line-height: 1.5;
+  line-height: var(--line-normal);
 }
 
 .detail__row-sub {
-  font-size: 24rpx;
+  font-size: var(--font-body-s);
   color: var(--color-text-secondary);
-  margin-top: 4rpx;
+  margin-top: var(--space-2xs);
 }
 
 .detail__section-title {
-  font-size: 30rpx;
+  font-size: var(--font-title-m);
   font-weight: 600;
   color: var(--color-text-primary);
-  margin-bottom: 16rpx;
+  margin-bottom: var(--space-sm);
 }
 
 .detail__desc {
-  font-size: 28rpx;
+  font-size: var(--font-body-m);
   color: var(--color-text-regular);
-  line-height: 1.7;
+  line-height: var(--line-cjk-relaxed);
   white-space: pre-wrap;
   word-break: break-word;
 }
@@ -119,47 +136,47 @@
 .detail__tags {
   display: flex;
   flex-wrap: wrap;
-  margin-top: 16rpx;
-  gap: 12rpx;
+  margin-top: var(--space-sm);
+  gap: var(--space-xs);
 }
 
 .detail__tag {
   padding: 6rpx 20rpx;
-  font-size: 24rpx;
+  font-size: var(--font-body-s);
   color: var(--color-primary);
-  background: var(--color-primary-light);
-  border-radius: 999rpx;
+  background: var(--color-primary-container);
+  border-radius: var(--radius-pill);
 }
 
 .detail__map-name {
-  font-size: 30rpx;
+  font-size: var(--font-title-m);
   font-weight: 600;
   color: var(--color-text-primary);
-  margin-bottom: 8rpx;
+  margin-bottom: var(--space-xs);
 }
 
 .detail__map-addr {
-  font-size: 26rpx;
+  font-size: var(--font-label-m);
   color: var(--color-text-regular);
-  margin-bottom: 8rpx;
+  margin-bottom: var(--space-xs);
 }
 
 .detail__map-coord {
   display: flex;
-  gap: 16rpx;
-  font-size: 24rpx;
+  gap: var(--space-sm);
+  font-size: var(--font-body-s);
   color: var(--color-text-secondary);
   font-family: monospace;
-  margin-bottom: 16rpx;
+  margin-bottom: var(--space-sm);
 }
 
 .detail__map-placeholder {
-  margin-top: 16rpx;
-  padding: 64rpx 24rpx;
+  margin-top: var(--space-sm);
+  padding: var(--space-2xl) var(--space-md);
   background: var(--color-bg);
   border-radius: var(--radius-md);
   text-align: center;
-  font-size: 24rpx;
+  font-size: var(--font-body-s);
   color: var(--color-text-placeholder);
   border: 1rpx dashed var(--color-border);
 }
@@ -172,10 +189,10 @@
 .detail__organizer-avatar {
   width: 80rpx;
   height: 80rpx;
-  border-radius: 50%;
-  background: var(--color-primary-light);
+  border-radius: var(--radius-pill);
+  background: var(--color-primary-container);
   color: var(--color-primary);
-  font-size: 32rpx;
+  font-size: var(--font-title-m);
   font-weight: 600;
   display: flex;
   align-items: center;
@@ -183,20 +200,20 @@
 }
 
 .detail__organizer-info {
-  margin-left: 24rpx;
+  margin-left: var(--space-md);
   flex: 1;
 }
 
 .detail__organizer-name {
-  font-size: 30rpx;
+  font-size: var(--font-title-m);
   color: var(--color-text-primary);
   font-weight: 500;
 }
 
 .detail__organizer-sub {
-  font-size: 24rpx;
+  font-size: var(--font-body-s);
   color: var(--color-text-secondary);
-  margin-top: 4rpx;
+  margin-top: var(--space-2xs);
 }
 
 .detail__footer {
@@ -206,18 +223,18 @@
   bottom: 0;
   display: flex;
   align-items: center;
-  gap: 16rpx;
-  padding: 16rpx 32rpx;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-lg);
   background: var(--color-bg-card);
-  box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.04);
+  box-shadow: var(--elevation-medium);
   z-index: 10;
 }
 
 .detail__footer-btn {
   flex: 1;
   height: 88rpx;
-  border-radius: 999rpx;
-  font-size: 28rpx;
+  border-radius: var(--radius-pill);
+  font-size: var(--font-body-m);
   display: inline-flex;
   align-items: center;
   justify-content: center;
