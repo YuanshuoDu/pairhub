@@ -1,0 +1,7 @@
+source "https://rubygems.org"
+
+# Fastlane — issue #31.
+# Pinned to 2.220+ for the supply plugin's compat with the Google
+# Play upload API changes. Run `bundle install` from `app/` to
+# bootstrap; then `bundle exec fastlane <lane>`.
+gem "fastlane", "~> 2.220"

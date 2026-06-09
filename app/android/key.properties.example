@@ -1,0 +1,30 @@
+# =============================================================================
+# Pairhub release signing config (example)
+# =============================================================================
+# This file is gitignored. Copy this to `app/android/key.properties` and
+# fill in the real values when you're ready to build a signed release.
+#
+# Step-by-step runbook:
+#   docs/release/android-google-play.md
+#
+# The keystore (pairhub-release.jks) is also gitignored. Keep it on
+# the build host (CI secret + 1-2 trusted operator machines). NEVER
+# commit it; NEVER email it; NEVER upload to a shared drive without E2E
+# encryption.
+#
+# storePassword / keyPassword are typically the same string — that's
+# industry standard. Use a 20+ char passphrase. Store the passphrase
+# in the team password manager (1Password / Bitwarden) and in CI's
+# "encrypted secrets" store, never in plaintext env.
+# =============================================================================
+
+# Path to the keystore file. Relative to the app/android/ directory
+# (so this would be ./pairhub-release.jks next to this file).
+storeFile=pairhub-release.jks
+
+# Keystore + key passphrases (use 1Password to generate + store).
+storePassword=REPLACE_WITH_20_CHAR_PASSPHRASE
+keyPassword=REPLACE_WITH_20_CHAR_PASSPHRASE
+
+# Alias for the key inside the keystore. Convention: pairhub-release.
+keyAlias=pairhub-release

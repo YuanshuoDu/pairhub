@@ -1,0 +1,161 @@
+# =============================================================================
+# Android release build (issue #31).
+# =============================================================================
+# Triggers on `v*.*.*` tag push. Builds an UNSIGNED release App Bundle
+# (AAB) + APK and uploads them as workflow artifacts. The operator
+# downloads, signs locally with their key.properties, then uploads to
+# Play Store / 国内 APK distribution.
+#
+# We do NOT put the signing keystore in CI. The fastlane lane
+# `build_aab` is for the operator's local machine; CI is intentionally
+# unsigned so a leaked CI secret can't ship a malicious signed APK.
+# =============================================================================
+
+name: Android release build
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      flutter_version:
+        description: 'Flutter version override (defaults to .tool-versions)'
+        required: false
+        default: ''
+
+# Cancel in-progress runs of this workflow on the same ref
+concurrency:
+  group: android-release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build signed AAB + universal APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ github.event.inputs.flutter_version || '3.24.0' }}
+          channel: stable
+          cache: true
+
+      - name: Show Flutter version
+        run: flutter --version
+
+      - name: Cache pub
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pub-cache
+            app/.dart_tool
+            app/.flutter-plugins
+            app/.flutter-plugins-dependencies
+            app/build
+          key: ${{ runner.os }}-pub-${{ hashFiles('app/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
+
+      - name: Install Ruby + fastlane
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          working-directory: app
+          bundler-cache: true
+
+      - name: Flutter pub get
+        working-directory: app
+        run: flutter pub get
+
+      - name: Dart analyze
+        working-directory: app
+        run: flutter analyze --fatal-infos --fatal-warnings
+
+      - name: Build AAB (unsigned — signing is done locally)
+        working-directory: app
+        run: |
+          flutter build appbundle --release \
+            --obfuscate \
+            --split-debug-info=build/symbols
+
+      - name: Build APK (universal, unsigned)
+        working-directory: app
+        run: |
+          flutter build apk --release \
+            --target-platform=android-arm,android-arm64,android-x64 \
+            --obfuscate \
+            --split-debug-info=build/symbols
+
+      - name: Verify AAB with aapt2
+        uses: android-actions/setup-android@v3
+        with:
+          # aapt2 ships in build-tools, install just the build-tools
+          # (full SDK isn't needed).
+          build-tools-version: '34.0.0'
+
+      - name: aapt2 dump badging (sanity check)
+        working-directory: app
+        run: |
+          $ANDROID_HOME/build-tools/34.0.0/aapt2 dump badging \
+            build/app/outputs/bundle/release/app-release.aab \
+            | tee aapt2-badging.txt
+
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-aab-${{ github.ref_name }}
+          path: app/build/app/outputs/bundle/release/app-release.aab
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-apk-${{ github.ref_name }}
+          path: app/build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Upload symbol files (for crash de-obfuscation)
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-symbols-${{ github.ref_name }}
+          path: app/build/symbols
+          retention-days: 90
+          if-no-files-found: warn
+
+      - name: Upload aapt2 dump
+        uses: actions/upload-artifact@v4
+        with:
+          name: aapt2-badging-${{ github.ref_name }}
+          path: app/aapt2-badging.txt
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Release summary
+        if: success()
+        run: |
+          echo "## Android release build ready" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Tag**: \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**AAB**: download from the workflow artifacts panel" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Next steps" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "1. Download the AAB + APK artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "2. Sign locally with \`app/android/key.properties\` (see \`docs/release/android-google-play.md\`)" >> $GITHUB_STEP_SUMMARY
+          echo "3. Upload to Google Play internal test track: \`cd app && bundle exec fastlane android upload_play\`" >> $GITHUB_STEP_SUMMARY
+          echo "4. Or upload to GitHub Release for 国内 APK direct: \`gh release create ${{ github.ref_name }} ...\`" >> $GITHUB_STEP_SUMMARY

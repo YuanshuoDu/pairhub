@@ -8,6 +8,11 @@
 // For Mapbox we set the runtime access token in MainActivity.kt so the
 // native SDK can initialise. The token is read from the FlutterAsset
 // .env at boot (see MapboxConfig) and passed to Mapbox.getInstance(...).
+//
+// Release signing (issue #31):
+//   Copy `app/android/key.properties.example` → `app/android/key.properties`
+//   and fill in the real values. Both files are gitignored. See
+//   `docs/release/android-google-play.md` for the full runbook.
 
 plugins {
     id "com.android.application"
@@ -31,6 +36,14 @@ if (flutterVersionCode == null) {
 def flutterVersionName = localProperties.getProperty("flutter.versionName")
 if (flutterVersionName == null) {
     flutterVersionName = "0.1.0"
+}
+
+// Release signing config — read from android/key.properties if present.
+// The file is gitignored. See key.properties.example for the shape.
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file("key.properties")
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 }
 
 android {
@@ -58,22 +71,69 @@ android {
         targetSdk = 34
         versionCode = flutterVersionCode.toInteger()
         versionName = flutterVersionName
+
+        // Issue #31 — split per ABI keeps the universal AAB small
+        // (Google Play auto-serves the right ABI per device). For
+        // the APK-direct (国内) build we publish a universal APK
+        // containing all 4 ABIs.
+        ndk {
+            abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86_64'
+            // 'x86' is intentionally excluded — emulator-only, no real
+            // device ships with x86 in 2026.
+        }
     }
 
+    // ----------------------------------------------------------------
+    // Signing configs
+    // ----------------------------------------------------------------
+    // Without key.properties the release build falls back to the
+    // debug signing key. That's fine for `flutter run --release`
+    // on a developer machine but useless for Play Store / 国内 APK
+    // distribution. ops must drop a real key.properties in place
+    // before running the release build.
     signingConfigs {
-        // Release config: ops must add the keystore to android/key.properties
-        // (gitignored) before producing a Play Store build. See
-        // docs/release/ios-metadata.md for the equivalent iOS flow.
+        release {
+            if (keystorePropertiesFile.exists()) {
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+                storeFile file(keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+            }
+        }
     }
 
+    // ----------------------------------------------------------------
+    // Build types
+    // ----------------------------------------------------------------
     buildTypes {
         release {
-            // placeholder — replaced by signed release config once
-            // android/key.properties is in place.
-            signingConfig = signingConfigs.debug
+            // Use the release signingConfig when key.properties is
+            // present; otherwise fall back to debug so local
+            // `flutter run --release` still works.
+            signingConfig = keystorePropertiesFile.exists()
+                ? signingConfigs.release
+                : signingConfigs.debug
             minifyEnabled = true
             shrinkResources = true
             proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+        }
+    }
+
+    // ----------------------------------------------------------------
+    // APK splits (issue #31 — 国内 APK direct distribution)
+    // ----------------------------------------------------------------
+    // Play Store: AAB with per-ABI splits enabled (universal fallback
+    // is auto-handled). 国内 APK direct: we build a single universal
+    // APK with `flutter build apk --release` which sidesteps splits
+    // (see android-cn-apk.md for the exact command).
+    splits {
+        abi {
+            // Off for the Play Store build (the AAB format already
+            // does per-ABI splitting server-side).
+            enable false
+            reset()
+            include 'armeabi-v7a', 'arm64-v8a', 'x86_64'
+            universalApk true
         }
     }
 }

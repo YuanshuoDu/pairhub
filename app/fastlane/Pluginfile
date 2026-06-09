@@ -1,0 +1,12 @@
+# =============================================================================
+# Pairhub Fastlane plugins (issue #31).
+# =============================================================================
+# To install: `cd app/ && bundle exec fastlane install_plugins`
+# (Gemfile in app/ pins fastlane to ~> 2.220).
+#
+# - supply:        Google Play Store upload (AAB + listing metadata)
+# - screengrab:    capture screenshots for the Play Store listing
+#                  (used by docs/release/screenshots/README.md's pipeline)
+# =============================================================================
+gem 'fastlane-plugin-supply', '~> 0.5'
+gem 'fastlane-plugin-versioning_android', '~> 0.10'

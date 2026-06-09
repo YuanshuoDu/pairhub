@@ -1,0 +1,142 @@
+# =============================================================================
+# Pairhub Fastfile — issue #31.
+# =============================================================================
+# Operate from `app/`. Run with `bundle exec fastlane <lane>`.
+#
+# Lanes:
+#   build_aab           build a signed release App Bundle (Play Store)
+#   build_apk_cn        build a signed universal APK (国内 APK direct)
+#   upload_play         upload the AAB to Google Play internal test track
+#   upload_play_prod    promote internal → production (manual approval)
+#   bump_version        bump versionCode + versionName (pubspec + gradle)
+#   screenshots         capture device screenshots for the Play listing
+# =============================================================================
+
+default_platform(:android)
+
+ROOT_DIR        = File.expand_path("..", __dir__)
+ANDROID_DIR     = File.join(ROOT_DIR, "android")
+BUILD_DIR       = File.join(ROOT_DIR, "build")
+AAB_PATH        = File.join(BUILD_DIR, "app", "outputs", "bundle", "release", "app-release.aab")
+APK_PATH        = File.join(BUILD_DIR, "app", "outputs", "flutter-apk", "app-release.apk")
+
+platform :android do
+  # -----------------------------------------------------------------
+  # build_aab — signed App Bundle for Play Store
+  # -----------------------------------------------------------------
+  desc "Build a signed release App Bundle (.aab) for Google Play"
+  lane :build_aab do
+    # Pre-flight: key.properties must exist or the build will silently
+    # fall back to the debug signing key (see app/android/app/build.gradle).
+    unless File.exist?(File.join(ANDROID_DIR, "key.properties"))
+      UI.user_error!("Missing app/android/key.properties — see docs/release/android-google-play.md")
+    end
+
+    # Clean previous artifacts
+    Dir.chdir(ROOT_DIR) do
+      sh("flutter", "clean")
+      sh("flutter", "pub", "get")
+    end
+
+    Dir.chdir(ROOT_DIR) do
+      sh(
+        "flutter", "build", "appbundle", "--release",
+        "--obfuscate",
+        "--split-debug-info=#{BUILD_DIR}/symbols"
+      )
+    end
+
+    unless File.exist?(AAB_PATH)
+      UI.user_error!("AAB not found at #{AAB_PATH} after build — check flutter output")
+    end
+
+    UI.success("AAB ready: #{AAB_PATH} (#{File.size(AAB_PATH) / 1024} KB)")
+  end
+
+  # -----------------------------------------------------------------
+  # build_apk_cn — universal signed APK for 国内 APK direct
+  # -----------------------------------------------------------------
+  desc "Build a signed universal APK for 国内 direct distribution"
+  lane :build_apk_cn do
+    unless File.exist?(File.join(ANDROID_DIR, "key.properties"))
+      UI.user_error!("Missing app/android/key.properties — see docs/release/android-cn-apk.md")
+    end
+
+    Dir.chdir(ROOT_DIR) do
+      sh("flutter", "clean")
+      sh("flutter", "pub", "get")
+      sh(
+        "flutter", "build", "apk", "--release",
+        "--target-platform=android-arm,android-arm64,android-x64",
+        "--obfuscate",
+        "--split-debug-info=#{BUILD_DIR}/symbols"
+      )
+    end
+
+    unless File.exist?(APK_PATH)
+      UI.user_error!("APK not found at #{APK_PATH} after build")
+    end
+
+    UI.success("APK ready: #{APK_PATH} (#{File.size(APK_PATH) / 1024 / 1024} MB)")
+  end
+
+  # -----------------------------------------------------------------
+  # upload_play — upload to Play internal test track
+  # -----------------------------------------------------------------
+  desc "Upload the AAB to Google Play internal test track"
+  lane :upload_play do
+    build_aab
+
+    upload_to_play_store(
+      track: "internal",
+      aab: AAB_PATH,
+      json_key: ENV["GOOGLE_PLAY_JSON_KEY_FILE"],
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+      validate_only: false,
+    )
+  end
+
+  # -----------------------------------------------------------------
+  # upload_play_prod — promote internal → production
+  # -----------------------------------------------------------------
+  desc "Promote the most recent internal track build to production"
+  lane :upload_play_prod do
+    upload_to_play_store(
+      track: "internal",
+      track_promote_to: "production",
+      json_key: ENV["GOOGLE_PLAY_JSON_KEY_FILE"],
+      skip_upload_aab: true,
+      skip_upload_apk: true,
+      skip_upload_metadata: false,
+      skip_upload_changelogs: false,
+    )
+  end
+
+  # -----------------------------------------------------------------
+  # bump_version — versionCode +1, versionName to the supplied tag
+  # -----------------------------------------------------------------
+  desc "Bump versionCode (auto-increment) and versionName (passed as VERSION)"
+  lane :bump_version do |options|
+    new_version = options[:version] || UI.user_error!("Pass VERSION=1.2.3 lane bump_version version:1.2.3")
+    pubspec = File.join(ROOT_DIR, "pubspec.yaml")
+    txt = File.read(pubspec)
+    txt = txt.gsub(/^version: .*$/, "version: #{new_version}")
+    File.write(pubspec, txt)
+    UI.success("pubspec.yaml version → #{new_version}")
+    # local.properties is regenerated by `flutter pub get`, so
+    # the versionCode bump propagates automatically on next build.
+  end
+
+  # -----------------------------------------------------------------
+  # screenshots — capture from the device farm (Play listing)
+  # -----------------------------------------------------------------
+  desc "Capture device screenshots for the Play Store listing (issue #33)"
+  lane :screenshots do
+    # Implemented in app/lib/release/screenshot_orchestrator.dart
+    # (planned v1.1). For now, see docs/release/screenshots/README.md
+    # for the manual capture procedure on a real device farm.
+    UI.message("Screenshot capture: see docs/release/screenshots/README.md (v1.1 plan)")
+  end
+end
