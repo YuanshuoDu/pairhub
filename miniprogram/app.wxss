@@ -5,7 +5,17 @@
  * - 颜色 / 间距 / 字号 / 圆角全部 CSS 变量化，方便换肤
  * - 不写具体业务的样式，全部走 components 或页面 .wxss
  * - 使用 rpx 适配（iPhone6 750 设计稿）
+ *
+ * tokens.wxss is the canonical source of the StudyBuddy design tokens
+ * (mirrors app/lib/core/theme/design_tokens.dart). It is imported first so
+ * its mesh / glass / admin tokens are available to every component; the
+ * `page { … }` block below defines the legacy / pre-design-system color,
+ * spacing, radius, font-size and shadow scales that override tokens.wxss
+ * for visual continuity with the v0.x miniprogram UI. To remove the
+ * override, delete the matching `--*` lines from the `page` block and the
+ * tokens.wxss values will take effect.
  */
+@import './styles/tokens.wxss';
 
 page {
   /* ========== 主题色 ========== */
@@ -16,23 +26,19 @@ page {
   --color-success: #18bc6c;
   --color-warning: #f5a623;
   --color-danger: #e94b4b;
-
   /* ========== 文字 ========== */
   --color-text-primary: #1a1a1a;
   --color-text-regular: #4a4a4a;
   --color-text-secondary: #8a8a8a;
   --color-text-placeholder: #c0c0c0;
   --color-text-inverse: #ffffff;
-
   /* ========== 背景 ========== */
   --color-bg: #f5f6fa;
   --color-bg-card: #ffffff;
   --color-bg-mask: rgba(0, 0, 0, 0.5);
-
   /* ========== 边框 ========== */
   --color-border: #ebedf0;
   --color-divider: #f0f0f0;
-
   /* ========== 间距 ========== */
   --space-xs: 8rpx;
   --space-sm: 16rpx;
@@ -40,13 +46,11 @@ page {
   --space-lg: 32rpx;
   --space-xl: 48rpx;
   --space-xxl: 64rpx;
-
   /* ========== 圆角 ========== */
   --radius-sm: 8rpx;
   --radius-md: 16rpx;
   --radius-lg: 24rpx;
   --radius-pill: 999rpx;
-
   /* ========== 字号 ========== */
   --font-xs: 22rpx;
   --font-sm: 26rpx;
@@ -54,14 +58,18 @@ page {
   --font-lg: 32rpx;
   --font-xl: 36rpx;
   --font-xxl: 44rpx;
-
   /* ========== 阴影 ========== */
   --shadow-sm: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
   --shadow-md: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 8rpx 24rpx rgba(0, 0, 0, 0.1);
+  /* ========== Reset ========== */
+  background: var(--color-bg);
+  color: var(--color-text-primary);
+  font-size: var(--font-md);
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif;
+  line-height: 1.5;
 }
-
-/* ========== Reset ========== */
+/* ========== Reset (child elements) ========== */
 page,
 page view,
 page text,
@@ -70,19 +78,10 @@ page button {
   box-sizing: border-box;
 }
 
-page {
-  background: var(--color-bg);
-  color: var(--color-text-primary);
-  font-size: var(--font-md);
-  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif;
-  line-height: 1.5;
-}
-
 view,
 text {
   -webkit-tap-highlight-color: transparent;
 }
-
 /* ========== 通用工具类 ========== */
 .flex {
   display: flex;
@@ -140,7 +139,6 @@ text {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-
 /* ========== Button 重置 ========== */
 button {
   margin: 0;
@@ -152,7 +150,6 @@ button {
 button::after {
   border: none;
 }
-
 /* ========== 主题色按钮 ========== */
 .btn-primary {
   display: inline-flex;

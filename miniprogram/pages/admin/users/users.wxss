@@ -11,7 +11,6 @@
   padding: 48rpx 32rpx 96rpx;
   overflow: hidden;
 }
-
 /* ---------- mesh ---------- */
 .mesh { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
 .mesh__blob {
@@ -34,7 +33,6 @@
   100% { transform: translate(0,0) scale(1); }
 }
 .reduce-motion .mesh__blob { animation: none; }
-
 /* ---------- content ---------- */
 .au__content {
   position: relative;
@@ -58,7 +56,6 @@
   margin-bottom: 8rpx;
 }
 .au__sub { font-size: 24rpx; color: var(--admin-text-secondary); }
-
 /* ---------- search field ---------- */
 .au__search {
   display: flex;
@@ -91,7 +88,6 @@
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
 }
-
 /* ---------- chips ---------- */
 .au__chips {
   white-space: nowrap;
@@ -119,7 +115,6 @@
   border-color: transparent;
   box-shadow: 0 4rpx 16rpx rgba(59, 130, 246, 0.4);
 }
-
 /* ---------- list / row ---------- */
 .au__list {
   display: flex;
@@ -167,7 +162,6 @@
 .row__sub-school { color: var(--admin-text-secondary); }
 .row__sub-time { color: var(--admin-text-tertiary); }
 .row__pills { flex-shrink: 0; }
-
 /* ---------- action sheet ---------- */
 .sheet { position: fixed; inset: 0; z-index: 50; display: flex; align-items: flex-end; justify-content: center; }
 .sheet__backdrop {
@@ -233,7 +227,6 @@
 @keyframes au-sheet-rise { 0% { transform: translateY(100%); } 100% { transform: translateY(0); } }
 .reduce-motion .sheet__backdrop,
 .reduce-motion .sheet__panel { animation: none; }
-
 /* ---------- page-enter ---------- */
 .page-enter { animation: au-page-enter 320ms ease-out both; }
 @keyframes au-page-enter {

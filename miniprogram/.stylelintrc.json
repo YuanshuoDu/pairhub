@@ -1,0 +1,12 @@
+{
+  "plugins": ["./scripts/stylelint-plugin-import-first.mjs"],
+  "rules": {
+    "no-duplicate-selectors": true,
+    "declaration-empty-line-before": "never",
+    "comment-empty-line-before": "never",
+    "studybuddy/no-rule-before-import": [true, { "severity": "warning" }]
+  },
+  "ignoreFiles": [
+    "miniprogram/styles/tokens.wxss"
+  ]
+}

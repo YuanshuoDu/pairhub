@@ -15,7 +15,6 @@
   padding: 64rpx 36rpx 96rpx;
   overflow: hidden;
 }
-
 /* ============================================================
  * Mesh 4-blob background
  * brief §2：4 个绝对定位 view + filter: blur + mix-blend-mode
@@ -69,7 +68,6 @@
 .reduce-motion .mesh__blob {
   animation: none;
 }
-
 /* ============================================================
  * Content 层
  * ============================================================ */
@@ -107,7 +105,6 @@
   color: var(--admin-text-secondary);
   line-height: 1.5;
 }
-
 /* ---------- row ---------- */
 .gate__row {
   display: flex;
@@ -149,7 +146,6 @@
   color: var(--admin-text-secondary);
   line-height: 1.5;
 }
-
 /* spinner */
 .gate__spinner {
   width: 64rpx;
@@ -168,7 +164,6 @@
   border-top-color: var(--color-primary);
   opacity: 0.85;
 }
-
 /* ---------- step ---------- */
 .gate__step {
   display: flex;
@@ -213,7 +208,6 @@
   background: rgba(59, 130, 246, 0.12);
   flex-shrink: 0;
 }
-
 /* ---------- SQL block ---------- */
 .gate__sql {
   margin: 24rpx 0 16rpx;
@@ -281,7 +275,6 @@
   color: var(--admin-text-tertiary);
   line-height: 1.5;
 }
-
 /* ---------- page-enter 动效（brief §7） ---------- */
 .page-enter {
   animation: page-enter 320ms ease-out both;

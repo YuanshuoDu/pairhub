@@ -13,7 +13,6 @@
   padding: 32rpx 32rpx 220rpx;  /* 给 action bar 留位置 */
   overflow: hidden;
 }
-
 /* ---------- mesh ---------- */
 .mesh { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
 .mesh__blob {
@@ -36,7 +35,6 @@
   100% { transform: translate(0,0) scale(1); }
 }
 .reduce-motion .mesh__blob { animation: none; }
-
 /* ---------- content ---------- */
 .ad__content {
   position: relative;
@@ -47,7 +45,6 @@
   max-width: 720rpx;
   margin: 0 auto;
 }
-
 /* ---------- cover ---------- */
 .ad__cover {
   width: 100%;
@@ -58,7 +55,6 @@
   background: var(--glass-bg);
 }
 .ad__cover image { width: 100%; height: 100%; }
-
 /* ---------- badges ---------- */
 .ad__badges { display: flex; align-items: center; gap: 16rpx; margin-bottom: 16rpx; }
 .ad__type {
@@ -96,7 +92,6 @@
 }
 .ad__note-label { font-size: 20rpx; color: var(--color-error); font-weight: 500; }
 .ad__note-text  { font-size: 24rpx; color: var(--admin-text-primary); line-height: 1.5; }
-
 /* ---------- rows ---------- */
 .ad__row {
   display: flex;
@@ -127,7 +122,6 @@
   border: 1rpx solid rgba(59, 130, 246, 0.20);
   border-radius: var(--glass-radius-pill);
 }
-
 /* ---------- organizer ---------- */
 .ad__organizer { display: flex; align-items: center; }
 .ad__organizer-avatar {
@@ -142,7 +136,6 @@
 .ad__organizer-info { margin-left: 20rpx; flex: 1; min-width: 0; }
 .ad__organizer-name { font-size: 28rpx; color: var(--admin-text-primary); font-weight: 500; }
 .ad__organizer-sub  { font-size: 22rpx; color: var(--admin-text-secondary); margin-top: 4rpx; font-family: monospace; }
-
 /* ---------- skel / empty ---------- */
 .ad__skel-line {
   height: 28rpx;
@@ -159,7 +152,6 @@
   100% { background-position: -200% 0; }
 }
 .reduce-motion .ad__skel-line { animation: none; }
-
 /* ---------- locked banner ---------- */
 .ad__locked {
   display: flex;
@@ -173,7 +165,6 @@
   color: var(--color-warning);
 }
 .ad__locked-icon { font-size: 28rpx; }
-
 /* ---------- action bar (sticky glass) ---------- */
 .ad__actionbar {
   position: fixed;
@@ -219,7 +210,6 @@
 .ad__action-btn--pressed,
 .ad__action-btn:active { transform: scale(0.98); }
 .ad__action-icon { font-size: 28rpx; }
-
 /* ---------- reject sheet (glass bottom sheet) ---------- */
 .sheet {
   position: fixed;
@@ -332,7 +322,6 @@
 }
 .reduce-motion .sheet__backdrop,
 .reduce-motion .sheet__panel { animation: none; }
-
 /* ---------- page-enter ---------- */
 .page-enter { animation: ad-page-enter 320ms ease-out both; }
 @keyframes ad-page-enter {

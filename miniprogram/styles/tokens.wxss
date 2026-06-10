@@ -20,7 +20,6 @@ page {
   --color-error: #EF4444;
   --color-error-bg: #FEE2E2;
   --color-info: #3B82F6;
-
   /* ----- Color: surface & text ----- */
   --color-bg: #F8FAFC;
   --color-surface: #FFFFFF;
@@ -35,14 +34,12 @@ page {
   --color-text-placeholder: #94A3B8;
   --color-text-inverse: #FFFFFF;
   --color-on-surface-variant: #475569;
-
   /* ----- Color: activity type tints ----- */
   --color-activity-study: #3B82F6;
   --color-activity-sport: #22C55E;
   --color-activity-boardgame: #A855F7;
   --color-activity-online-game: #EF4444;
   --color-activity-other: #64748B;
-
   /* ----- Typography: scale (rpx on iPhone6 750 design baseline) ----- */
   --font-display-m: 64rpx;
   --font-headline-l: 56rpx;
@@ -57,13 +54,11 @@ page {
   --font-label-l: 28rpx;
   --font-label-m: 24rpx;
   --font-label-s: 22rpx;
-
   /* ----- Typography: line-height (CJK-tuned) ----- */
   --line-snug: 1.30;
   --line-normal: 1.50;
   --line-cjk-body: 1.55;
   --line-cjk-relaxed: 1.65;
-
   /* ----- Spacing (4-pt base; rpx at 750 baseline) ----- */
   --space-2xs: 4rpx;
   --space-xs: 8rpx;
@@ -74,41 +69,33 @@ page {
   --space-2xl: 64rpx;
   --space-3xl: 96rpx;
   --space-huge: 128rpx;
-
   /* ----- Radius ----- */
   --radius-sm: 8rpx;
   --radius-md: 16rpx;
   --radius-lg: 24rpx;
   --radius-xl: 32rpx;
   --radius-pill: 999rpx;
-
   /* ----- Elevation (1rpx = 0.5px on iPhone6, render as 1-2px in mini) ----- */
   --elevation-soft: 0 1rpx 2rpx rgba(0, 0, 0, 0.04);
   --elevation-medium: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
   --elevation-raised: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);
-
   /* ----- Motion ----- */
   --motion-duration-fast: 120ms;
   --motion-duration-base: 200ms;
   --motion-duration-slow: 360ms;
-}
-
-/* ===========================================================================
- * M3 Admin — Liquid Glass tokens (issue #32 frontend)
- * ---------------------------------------------------------------------------
- * Locked design source of truth: docs/design/admin-glass.md.
- * Mirror of app/lib/core/theme/design_tokens.dart (Flutter side).
- * ONLY append below this line. Existing tokens above are untouched.
- * =========================================================================== */
-
-page {
+  /* ===========================================================================
+   * M3 Admin — Liquid Glass tokens (issue #32 frontend)
+   * ---------------------------------------------------------------------------
+   * Locked design source of truth: docs/design/admin-glass.md.
+   * Mirror of app/lib/core/theme/design_tokens.dart (Flutter side).
+   * ONLY append below this line. Existing tokens above are untouched.
+   * =========================================================================== */
   /* ----- Mesh background (4-blob composition behind every admin page) ----- */
   --mesh-1: #E0F2FE;            /* sky 100    */
   --mesh-2: #FCE7F3;            /* pink 100   */
   --mesh-3: #DCFCE7;            /* green 100  */
   --mesh-4: #FEF3C7;            /* amber 100  */
   --mesh-blur: 80rpx;           /* ~80px @ 750 baseline */
-
   /* ----- Glass surfaces ----- */
   --glass-bg: rgba(255, 255, 255, 0.55);
   --glass-bg-deep: rgba(255, 255, 255, 0.70);
@@ -124,7 +111,6 @@ page {
   --glass-radius: 40rpx;        /* 20px */
   --glass-radius-lg: 56rpx;     /* 28px */
   --glass-radius-pill: 999rpx;
-
   /* Inner highlight gradient (top sheen) — same in both modes for a
      consistent "glass" read; only the alpha shifts on dark. */
   --glass-highlight: linear-gradient(
@@ -137,20 +123,17 @@ page {
     rgba(255, 255, 255, 0.12) 0%,
     rgba(255, 255, 255, 0.00) 50%
   );
-
   /* ----- Admin semantic accent (reuses existing brand tokens) ----- */
   --admin-text-primary: #0F172A;
   --admin-text-secondary: #475569;
   --admin-text-tertiary: #94A3B8;
   --admin-text-inverse: #FFFFFF;
-
   /* ----- Admin page chrome ----- */
   --admin-page-bg: #F1F5F9;     /* light slate-100 fallback behind mesh */
   --admin-nav-bg: rgba(255, 255, 255, 0.55);
   --admin-nav-text: #0F172A;
   --admin-nav-border: 1rpx solid rgba(15, 23, 42, 0.06);
 }
-
 /* ---------------------------------------------------------------------------
  * Dark mode — default for admin. Triggered by `data-theme="dark"` on the
  * page root (set programmatically in page onLoad from app.globalData).
@@ -191,7 +174,6 @@ page[data-theme='dark'],
   --admin-nav-text: #F8FAFC;
   --admin-nav-border: 1rpx solid rgba(255, 255, 255, 0.10);
 }
-
 /* ---------------------------------------------------------------------------
  * Reduced-motion gate. WXSS doesn't expose prefers-reduced-motion on every
  * miniprogram platform reliably, so we ship a JS-toggled class
@@ -204,7 +186,6 @@ page[data-theme='dark'],
   animation: none !important;
   transition: none !important;
 }
-
 /* ---------------------------------------------------------------------------
  * Glass utility classes — apply directly to a <view> for ad-hoc glass
  * surfaces, OR use the <glass-card> component for cards that need

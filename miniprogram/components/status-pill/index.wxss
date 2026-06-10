@@ -39,7 +39,6 @@
   color: var(--admin-text-primary);
   font-weight: 500;
 }
-
 /* sizes */
 .pill--sm {
   padding: 4rpx 12rpx;
@@ -52,7 +51,6 @@
 .pill--md {
   /* default — 上面已定义 */
 }
-
 /* kind — 颜色直接走现有语义 token，禁止引入新色（brief §5） */
 .pill--pending   { color: var(--color-warning); }
 .pill--active    { color: var(--color-success); }

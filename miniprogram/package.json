@@ -1,0 +1,14 @@
+{
+  "name": "studybuddy-miniprogram",
+  "version": "1.0.0",
+  "private": true,
+  "description": "StudyBuddy WeChat miniprogram — tooling only (lint + source-map upload helper). No runtime deps; the miniprogram itself is shipped as raw WXML/WXSS/TS for the WeChat DevTools compiler.",
+  "scripts": {
+    "lint:wxss": "stylelint \"**/*.wxss\"",
+    "wx:upload-sourcemap": "node scripts/upload-sourcemap.mjs"
+  },
+  "devDependencies": {
+    "stylelint": "16.10.0",
+    "stylelint-config-standard": "36.0.1"
+  }
+}

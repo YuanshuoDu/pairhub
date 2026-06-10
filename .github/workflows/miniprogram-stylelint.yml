@@ -1,0 +1,78 @@
+name: miniprogram-stylelint
+
+# 微信小程序 WXSS 静态检查 — 仅报告，不自动修复。
+#
+# 与 miniprogram-ci.yml (scaffold 校验) 解耦：
+# - miniprogram-ci.yml       → 兜底 "JSON / TS 没坏"
+# - miniprogram-stylelint.yml → WXSS 风格 / 设计 token 约定
+#
+# 触发：push / PR 任何改到 miniprogram/**/*.wxss 的提交。
+# 失败行为：lint 报错即 fail；warning 默认不阻塞（与 studybuddy/no-rule-before-import
+#          severity: warning 保持一致）。
+#
+# 如需临时让 CI 通过，可在 PR 描述里说明并附上 lint 报告链接，禁止直接 --fix。
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - "miniprogram/**/*.wxss"
+      - "miniprogram/.stylelintrc.json"
+      - "miniprogram/package.json"
+      - "miniprogram/scripts/**"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/miniprogram-stylelint.yml"
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - "miniprogram/**/*.wxss"
+      - "miniprogram/.stylelintrc.json"
+      - "miniprogram/package.json"
+      - "miniprogram/scripts/**"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/miniprogram-stylelint.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: miniprogram-stylelint-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  stylelint:
+    name: stylelint miniprogram/**/*.wxss
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Enable corepack + pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@9.12.0 --activate
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install miniprogram devDeps (stylelint)
+        working-directory: miniprogram
+        run: pnpm install --frozen-lockfile --prefer-offline
+
+      - name: Run stylelint (report only — no --fix)
+        working-directory: miniprogram
+        run: pnpm run lint:wxss
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "### miniprogram-stylelint" >> "$GITHUB_STEP_SUMMARY"
+          echo "- result: ${{ job.status }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- config: miniprogram/.stylelintrc.json" >> "$GITHUB_STEP_SUMMARY"
+          echo "- plugin:  studybuddy/no-rule-before-import" >> "$GITHUB_STEP_SUMMARY"
+          echo "- rules:   no-duplicate-selectors, declaration-empty-line-before, comment-empty-line-before" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "See miniprogram/scripts/lint-wxss.sh for the local equivalent." >> "$GITHUB_STEP_SUMMARY"

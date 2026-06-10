@@ -13,7 +13,6 @@
   padding: 48rpx 32rpx 96rpx;
   overflow: hidden;
 }
-
 /* ---------- mesh ---------- */
 .mesh { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
 .mesh__blob {
@@ -36,7 +35,6 @@
   100% { transform: translate(0,0) scale(1); }
 }
 .reduce-motion .mesh__blob { animation: none; }
-
 /* ---------- content ---------- */
 .aa__content {
   position: relative;
@@ -69,7 +67,6 @@
   font-size: 26rpx;
   color: var(--admin-text-secondary);
 }
-
 /* ---------- chips ---------- */
 .aa__chips {
   white-space: nowrap;
@@ -98,7 +95,6 @@
   border-color: transparent;
   box-shadow: 0 4rpx 16rpx rgba(59, 130, 246, 0.4);
 }
-
 /* ---------- list ---------- */
 .aa__list {
   display: flex;
@@ -113,7 +109,6 @@
   color: var(--admin-text-tertiary);
   padding: 24rpx 0;
 }
-
 /* ---------- row card internals ---------- */
 .row__top {
   display: flex;
@@ -176,7 +171,6 @@
   color: var(--admin-text-primary);
   line-height: 1.5;
 }
-
 /* ---------- actions ---------- */
 .row__actions {
   display: flex;
@@ -215,7 +209,6 @@
   transform: scale(0.98);
 }
 .row__btn-icon { font-size: 24rpx; line-height: 1; }
-
 /* ---------- page-enter (brief §7) ---------- */
 .page-enter { animation: aa-page-enter 320ms ease-out both; }
 @keyframes aa-page-enter {

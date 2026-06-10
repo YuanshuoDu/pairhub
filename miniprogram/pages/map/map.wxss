@@ -59,7 +59,6 @@
   font-weight: 600;
   min-width: 80rpx; text-align: right;
 }
-
 /* 地图区域 */
 .map-canvas {
   width: 100%;
@@ -89,7 +88,6 @@
   font-size: 24rpx; color: var(--color-text-placeholder);
   max-width: 480rpx; line-height: 1.5;
 }
-
 /* 结果列表 */
 .results { padding: 32rpx; }
 .results-head {

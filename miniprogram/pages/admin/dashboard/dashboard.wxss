@@ -11,7 +11,6 @@
   padding: 48rpx 32rpx 96rpx;
   overflow: hidden;
 }
-
 /* ---------- mesh ---------- */
 .mesh { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
 .mesh__blob {
@@ -34,7 +33,6 @@
   100% { transform: translate(0,0) scale(1); }
 }
 .reduce-motion .mesh__blob { animation: none; }
-
 /* ---------- content ---------- */
 .dash__content {
   position: relative;
@@ -58,7 +56,6 @@
   margin-bottom: 8rpx;
 }
 .dash__sub { font-size: 24rpx; color: var(--admin-text-secondary); }
-
 /* ---------- SLA warning ---------- */
 .dash__sla { display: flex; align-items: center; gap: 16rpx; }
 .dash__sla-icon {
@@ -74,7 +71,6 @@
 .dash__sla-text { flex: 1; min-width: 0; }
 .dash__sla-title { font-size: 28rpx; font-weight: 600; color: var(--color-error); margin-bottom: 2rpx; }
 .dash__sla-sub   { font-size: 22rpx; color: var(--admin-text-secondary); line-height: 1.5; }
-
 /* ---------- metric grid ---------- */
 .dash__grid {
   display: grid;
@@ -121,7 +117,6 @@
 .metric__sub-num--warn    { color: var(--color-warning); }
 .metric__sub-num--danger  { color: var(--color-error); }
 .metric__sub-label { font-size: 20rpx; color: var(--admin-text-tertiary); }
-
 /* ---------- long cards ---------- */
 .dash__row-card {
   display: flex; align-items: center; gap: 20rpx;
@@ -143,7 +138,6 @@
   color: var(--admin-text-primary);
   letter-spacing: -0.02em;
 }
-
 /* ---------- quick entries ---------- */
 .dash__quick {
   display: grid;
@@ -163,12 +157,10 @@
 .dash__quick-text { flex: 1; min-width: 0; }
 .dash__quick-title { font-size: 26rpx; font-weight: 500; color: var(--admin-text-primary); margin-bottom: 2rpx; }
 .dash__quick-sub   { font-size: 20rpx; color: var(--admin-text-secondary); }
-
 /* 把 row layout 应用到所有 quick cards（glass-card 内部是 slot） */
 .dash__quick > view {
   display: flex; align-items: center; gap: 16rpx;
 }
-
 /* ---------- error ---------- */
 .dash__error {
   display: flex; align-items: center; gap: 16rpx;
@@ -195,7 +187,6 @@
   font-size: 22rpx;
   font-weight: 500;
 }
-
 /* ---------- page-enter ---------- */
 .page-enter { animation: dash-page-enter 320ms ease-out both; }
 @keyframes dash-page-enter {
