@@ -1,0 +1,111 @@
+name: docs-verification
+
+# Validates docs/verification/**/*.md reports so the audit trail is
+# enforced by CI, not by hand-eyeball. Without this, a sloppy future
+# report (missing the CI table, no verdict, no bug-scan section) would
+# land on main and pollute the v1.0 -> v2.0 history.
+#
+# Triggers on push / PR to main and develop when anything under
+# docs/verification/** changes (or when this workflow itself changes).
+# Docs-only by design — never blocks backend / app / minip CI.
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'docs/verification/**'
+      - '.github/workflows/docs-verification.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'docs/verification/**'
+      - '.github/workflows/docs-verification.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: docs-verification-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  validate-reports:
+    name: validate verification report structure
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Find all top-level verification reports
+        id: discover
+        run: |
+          # Top-level only: docs/verification/foo.md (no /). Sub-dirs
+          # like docs/verification/v1.0/ are skipped — those hold
+          # assets/screenshots/scripts, not reports to validate.
+          REPORTS=$(find docs/verification -maxdepth 1 -type f -name '*.md' | sort)
+          if [ -z "$REPORTS" ]; then
+            echo "::warning::no top-level verification reports found"
+            echo "reports=[]" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Emit a single-line JSON array (-c) so $GITHUB_OUTPUT
+          # gets one `reports=...` line. Multi-line output breaks
+          # GitHub's output parser (it treats each line as a separate
+          # command and errors on anything that isn't `key=value`).
+          JSON=$(printf '%s\n' "$REPORTS" | jq -R . | jq -sc .)
+          echo "reports=$JSON" >> "$GITHUB_OUTPUT"
+          echo "Found $(echo "$REPORTS" | wc -l) top-level verification reports:"
+          echo "$REPORTS"
+
+      - name: Validate each report's required structure
+        env:
+          REPORTS: ${{ steps.discover.outputs.reports }}
+          # Grandfathered reports that pre-date the v1.0.1 structure
+          # and are exempt from the required-section / verdict / CI
+          # workflow checks. New reports MUST follow the structure;
+          # add to this list only with explicit justification.
+          SKIP_REPORTS: '["docs/verification/mvp-validation.md"]'
+        run: |
+          set -uo pipefail
+          ERR=0
+          COUNT=$(echo "$REPORTS" | jq 'length')
+          echo "Validating $COUNT reports (skip list: $SKIP_REPORTS)..."
+          for i in $(seq 0 $((COUNT - 1))); do
+            R=$(echo "$REPORTS" | jq -r ".[$i]")
+            # Check skip list
+            if echo "$SKIP_REPORTS" | jq -e --arg r "$R" 'index($r) != null' >/dev/null; then
+              echo "--- skipping $R (grandfathered) ---"
+              continue
+            fi
+            echo "--- validating $R ---"
+            for SECTION in '## Executive summary' '## Layer 1' '## Layer 2' '## Layer 3'; do
+              if ! grep -qF "$SECTION" "$R"; then
+                echo "::error file=$R::missing required section: $SECTION"
+                ERR=1
+              fi
+            done
+            # Verdict must contain READY / NOT READY / PASS / FAIL.
+            if ! grep -qE '(READY|NOT READY|PASS|FAIL)' "$R"; then
+              echo "::error file=$R::missing explicit verdict keyword (READY / NOT READY / PASS / FAIL)"
+              ERR=1
+            fi
+            # CI table must reference at least one known workflow.
+            if ! grep -qE 'backend-ci|flutter-ci|miniprogram-ci|miniprogram-stylelint' "$R"; then
+              echo "::error file=$R::no CI workflow name found in report (expected one of: backend-ci, flutter-ci, miniprogram-ci, miniprogram-stylelint)"
+              ERR=1
+            fi
+          done
+          if [ "$ERR" -ne 0 ]; then
+            echo "::error::one or more reports failed validation"
+            exit 1
+          fi
+          echo "All non-grandfathered reports OK"
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "### docs-verification" >> "$GITHUB_STEP_SUMMARY"
+          echo "- result: ${{ job.status }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- reports validated:" >> "$GITHUB_STEP_SUMMARY"
+          echo '${{ steps.discover.outputs.reports }}' | jq -r '.[]' | sed 's/^/  - /' >> "$GITHUB_STEP_SUMMARY" || true
