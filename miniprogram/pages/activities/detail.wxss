@@ -62,14 +62,12 @@
   color: var(--color-on-primary);
   font-weight: 500;
 }
-
 /* Activity type tints — sourced from --color-activity-* tokens */
 .detail__type--STUDY       { background: var(--color-activity-study); }
 .detail__type--SPORTS      { background: var(--color-activity-sport); }
 .detail__type--BOARD_GAME  { background: var(--color-activity-boardgame); }
 .detail__type--ONLINE_GAME { background: var(--color-activity-online-game); }
 .detail__type--OTHER       { background: var(--color-activity-other); }
-
 /* Activity status — full-saturation hero variants.
  * Soft variants: use the shared .status-badge--<STATUS> utility class
  * from app.wxss. */

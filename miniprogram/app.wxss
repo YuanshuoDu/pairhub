@@ -13,7 +13,6 @@
  */
 
 @import './styles/tokens.wxss';
-
 /* ========== Reset ========== */
 page,
 page view,
@@ -35,7 +34,6 @@ view,
 text {
   -webkit-tap-highlight-color: transparent;
 }
-
 /* ========== 通用工具类 ========== */
 .flex {
   display: flex;
@@ -93,7 +91,6 @@ text {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-
 /* ========== Button 重置 ========== */
 button {
   margin: 0;
@@ -105,7 +102,6 @@ button {
 button::after {
   border: none;
 }
-
 /* ========== 主题色按钮 ========== */
 .btn-primary {
   display: inline-flex;
@@ -141,7 +137,6 @@ button::after {
   font-size: var(--font-body-m);
   font-weight: 500;
 }
-
 /* ========== Status badge utilities (shared across pages) ==========
  * Pages can apply these directly, e.g. <view class="status-badge status-badge--RECRUITING">招募中</view>
  * Mirrors `DesignColors` in Flutter.
