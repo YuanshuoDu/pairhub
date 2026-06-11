@@ -1,128 +1,163 @@
-# StudyBuddy 🎒
+# StudyBuddy 🎓
 
-> **让留学生 30 秒内找到一个能一起去图书馆 / 打球 / 开黑的搭子。**
+> **30 分钟内找到一起去图书馆 / 打球 / 桌游的搭子。**
+>
+> 微信小程序 · iOS · Android（Web 端 out of scope by design）
 
-微信小程序 · iOS · Android（Web 套壳）· 三端共用后端
+StudyBuddy is the **留学生搭子活动平台** — a 3-end MVP that lets overseas students find
+companions for studying, sports, board games, and online sessions without leaving the WeChat
+ecosystem. Server is open; mobile clients are first-party.
 
 ---
 
-## ⚡ 30 秒了解 StudyBuddy
+## ⚡ 30-second tour
 
 | | |
 |---|---|
-| **解决什么** | 留学生找搭子难：想自习找不到人、想打球凑不齐队、想开黑差一个辅助 |
-| **谁在用** | 海外留学的硕博新生（学业型 / 运动型 / 娱乐型 / 社交型） |
-| **怎么做** | 创建活动 → 浏览筛选 → 一键报名 → 私聊集合 |
-| **5 类活动** | 自习（图书馆 / 咖啡厅 / 讨论室）· 运动（羽毛球 / 网球 / 跑步 / 篮球 / 足球）· 桌游（三国杀 / 狼人杀 / UNO）· 开黑（王者 / 原神 / LOL）· 其他 |
-| **目标** | 12 周内交付**微信小程序 + iOS + Android** 三端 MVP |
+| **是什么** | 留学生搭子活动平台：找学习搭子、运动搭子、桌游搭子、线上搭子 |
+| **目标用户** | 留学硕士/博士生（学业 + 运动 + 桌游 + 社交 全覆盖） |
+| **核心流程** | 浏览活动 → 多维筛选 → 一键报名 → 私聊确认 |
+| **5 类活动** | 学习（图书馆/咖啡厅）· 运动（羽毛球/篮球/跑步）· 桌游（UNO/狼人杀）· 线上（开黑/原神）· 其他 |
+| **当前状态** | **v1.0.1 GA-ready** — server + iOS + Android + 微信小程序均已 CI-green on `main` |
 
 ---
 
-## 🧱 技术栈
+## 🏗 技术栈
 
-| 层 | 选型 | 关键库 / 版本 |
+| 层 | 选型 | 关键版本 / 备注 |
 |----|------|--------------|
-| **微信小程序** | 微信原生 + TypeScript + 自写 store | WXML / WXSS / TS / Vite |
+| **微信小程序** | 微信原生 + TypeScript + 纯手写 store | WXML / WXSS / TS / Vite-style imports |
 | **iOS / Android** | Flutter 3.24 + Dart 3.5 | Riverpod 2 · Dio 5 · GoRouter 14 · Material 3 |
-| **后端** | Node.js 20 + TypeScript 5 | Fastify 4 · Prisma 5 · zod · pino |
+| **服务端** | Node.js 20 + TypeScript 5 | Fastify 4 · Prisma 5 · Zod · Pino |
 | **数据库** | PostgreSQL 16 + Redis 7 | 16-alpine / 7-alpine |
-| **鉴权** | 三端 openid 合并 | 微信 openid + Apple ID + Google |
-| **地图** | Mapbox（Flutter + 小程序 webview 待 #35 决策）| WGS-84 国际标准 |
+| **鉴权** | 多端 openid 合并 | 微信 openid + Apple ID + Google |
+| **地图** | Mapbox（Flutter + 小程序 webview，#35 链路） | WGS-84 国际坐标标准 |
 | **推送** | 平台原生 | 微信订阅消息 + APNs + FCM |
 | **CI / CD** | GitHub Actions | ghcr.io 镜像 + staging auto-deploy |
 | **监控** | Sentry + Prometheus + Grafana Cloud | OpenTelemetry traces |
 
-> 详细技术选型与理由见 [docs/adr/](./docs/adr/)（5 篇 ADR）。
+详细选型记录见 [docs/adr/](./docs/adr/)（6 篇 ADR）。
 
 ---
 
-## 📂 目录结构
+## 📁 目录结构
 
 ```
 studybuddy/
 ├── docs/                          # 全员可见的文档
-│   ├── spec-v0.1.md               # 需求规格 v0.1
-│   ├── architecture-v1.0.md       # 架构设计 v1.0（系统图 / 模块 / 数据模型 / 关键流程）
-│   ├── adr/                       # 架构决策记录（5 篇）
+│   ├── spec-v0.2.md               # 需求规约 v0.2（CTO 拍板）
+│   ├── architecture-v1.0.md       # 架构总览 v1.0（系统图 / 模块 / 部署 / 关键流程）
+│   ├── adr/                       # 架构决策记录（6 篇）
 │   │   ├── 0001-flutter-for-mobile.md
 │   │   ├── 0002-miniprogram-native.md
 │   │   ├── 0003-auth-strategy.md
 │   │   ├── 0004-state-machine-for-activity.md
 │   │   ├── 0005-data-storage-region.md
+│   │   ├── 0006-mapbox-for-global.md
 │   │   └── README.md
-│   ├── api/
-│   │   ├── v1.md                  # API 规范 v1（18 endpoint + 错误码 + 分页）
+│   ├── api/                       # API 规范
+│   │   ├── v1.md                  # 18 endpoints + 数据模型 + 分页
 │   │   ├── conventions.md
 │   │   └── wechat.md
-│   ├── design/                    # 设计系统（v1 进行中）
+│   ├── design/                    # 设计系统 v1（已落 tokens + components）
+│   │   ├── system-v1.md           # tokens 规范
+│   │   ├── components.md          # 7 组件 spec
+│   │   ├── admin-glass.md         # 液态玻璃后台视觉
+│   │   ├── mockups/               # HTML 原型
+│   │   └── screenshots/           # 设计稿截图
 │   ├── devops/                    # CI / 部署 / 监控 / Runbook
+│   │   ├── mp-audit-config.md
+│   │   ├── seed-large-runbook.md
+│   │   ├── wechat-mp-source-map.md
+│   │   ├── monitoring/            # Sentry / Grafana / Alert rules
+│   │   ├── legal/                 # 隐私 / 服务条款
+│   │   └── mp-screenshots/
+│   ├── ops/                       # 运维 / 监控
 │   ├── server/                    # 后端开发文档
 │   │   ├── dev-setup.md
 │   │   └── api-style.md
-│   ├── test/
-│   │   ├── test-plan-v1.0.md      # 测试计划 v1.0
-│   │   ├── ci-matrix.md           # CI 矩阵
+│   ├── test/                      # 测试规范
+│   │   ├── test-plan-v1.0.md
+│   │   ├── ci-matrix.md
 │   │   ├── performance-baseline.md
 │   │   ├── security-checklist.md
-│   │   └── test-cases/            # 用例库种子
-│   └── delivery-standards.md      # 交付评审规范（证据要求）
+│   │   └── test-cases/            # 用例存档
+│   ├── release/                   # 上线 runbook
+│   │   ├── android-cn-apk.md
+│   │   ├── android-google-play.md
+│   │   ├── android-setup.md
+│   │   └── ios-metadata.md
+│   ├── admin/playbook.md          # 运营后台操作手册
+│   ├── marketing/                 # 营销物料（FAQ 中英 / Landing / 分享卡 / 海报）
+│   ├── verification/              # 上线验证报告
+│   │   ├── mvp-validation.md
+│   │   ├── v1.0.1-optimization-report.md
+│   │   └── v1.0/                  # v1.0 GA 验证快照（a11y / console / audit）
+│   ├── delivery-standards.md      # PR 交付规范
+│   └── github-interaction-rules.md  # 跟 Mavis Agent 协作的元规则
 │
 ├── miniprogram/                   # 微信小程序
 │   ├── app.{json,ts,wxss}
 │   ├── project.config.json
 │   ├── api/                       # request 封装 + auth/activity 模块
-│   ├── store/                     # 自写 observable store
+│   ├── store/                     # 手写 observable store
 │   ├── types/                     # TS 类型
-│   ├── utils/
-│   ├── components/                # activity-card / empty-state / loading-skeleton
-│   ├── custom-tabbar/             # 5-tab TabBar
+│   ├── utils/                     # 工具（含 monitoring.ts 错误边界）
+│   ├── components/                # activity-card / empty-state / loading-skeleton / status-pill / glass-card
 │   ├── pages/                     # login / index / activity / create / messages / profile
-│   └── images/
+│   ├── scripts/                   # stylelint plugin + source-map 上传脚本
+│   └── styles/                    # tokens.wxss（设计 tokens 源头）
 │
 ├── app/                           # Flutter App（iOS + Android）
-│   ├── pubspec.yaml               # riverpod, dio, go_router, sign_in_with_apple, google_sign_in, freezed
+│   ├── pubspec.yaml               # SDK floor: Dart >=3.4.0, Flutter >=3.24.0
 │   ├── lib/
 │   │   ├── main.dart
-│   │   ├── core/                  # router / network / storage / theme / auth
-│   │   ├── features/              # auth / activity / profile
-│   │   └── shared/                # models (freezed) + widgets + extensions
-│   ├── assets/
-│   ├── ios/  android/             # 平台原生配置
-│   └── analysis_options.yaml
+│   │   ├── core/                  # router / network / storage / theme / config
+│   │   ├── features/              # auth / activity / profile / map / admin
+│   │   ├── shared/                # models (freezed) + widgets + extensions
+│   │   └── design_tokens.dart     # Flutter 端 design tokens
+│   ├── test/                      # 4 个测试文件 (smoke / mapbox / design tokens / map view)
+│   ├── android/  ios/             # 平台原生目录（已 scaffold）
+│   └── assets/                    # 包含 .env 占位
 │
 ├── server/                        # 后端 API
 │   ├── src/
 │   │   ├── server.ts              # Fastify 入口 + 优雅关闭
-│   │   ├── lib/                   # prisma, redis, logger, env (zod), errors, app
+│   │   ├── lib/                   # prisma, redis, logger, env (zod, lazy-init), errors, app
 │   │   ├── plugins/               # auth, cors, error-handler, rate-limit
-│   │   ├── modules/
-│   │   │   └── health/            # /health, /ready（liveness + readiness）
-│   │   ├── modules/auth/          # （M2）微信 + Apple + Google 登录
-│   │   ├── modules/user/          # （M2）用户 CRUD
-│   │   ├── modules/activity/      # （M2）活动 CRUD + 状态机
-│   │   └── modules/signup/        # （M2）报名
-│   ├── prisma/
-│   │   ├── schema.prisma          # User / Activity / Signup / Review
-│   │   └── seed.ts
-│   ├── tests/                     # vitest
-│   ├── Dockerfile                 # 多阶段构建，< 300MB
+│   │   └── modules/               # 10 个业务模块
+│   │       ├── health/            # /health, /ready（liveness + readiness）
+│   │       ├── auth/              # 微信 + Apple + Google 登录 + JWT
+│   │       ├── user/              # 用户 CRUD
+│   │       ├── activity/          # 活动 CRUD + 5 态状态机 + 地理
+│   │       ├── signup/            # 报名（含事务 / 满员 / 取消）
+│   │       ├── review/            # 评价（仅参与可评）
+│   │       ├── push/              # 设备注册 / 列表 / 注销
+│   │       ├── admin/             # 6 端点 + RBAC + PENDING_REVIEW
+│   │       ├── monitoring/        # Prometheus + Sentry + alert
+│   │       └── analytics/         # funnel / retention / kpis
+│   ├── prisma/                    # schema + seed
+│   ├── tests/                     # vitest 单测（health.test.ts 需 Redis，CI excluded）
+│   ├── Dockerfile                 # 多阶段构建，镜像 < 300 MB
+│   ├── scripts/                   # refactor-env 等运维脚本
 │   └── package.json               # pnpm 9, Node 20+
 │
-├── infra/                         # 部署 & 本地脚本
+├── infra/                         # 编排 & 本地脚本
 │   ├── dev-up.sh / dev-down.sh
 │   ├── docker-compose.yml         # postgres + redis + app
-│   └── scripts/                   # 部署 / 备份 / 健康检查
+│   └── scripts/                   # 备份 / 巡检 / 运维任务
 │
 └── .github/
     ├── ISSUE_TEMPLATE/
     ├── PULL_REQUEST_TEMPLATE.md
     ├── CODEOWNERS
-    └── workflows/                 # 5 个 CI workflow
-        ├── ci.yml                 # 顶层编排
-        ├── backend-ci.yml         # 后端：lint + test + build + Docker size gate
-        ├── miniprogram-ci.yml     # 小程序：tsc + miniprogram-ci preview
-        ├── flutter-ci.yml         # Flutter：analyze + test + build apk
-        └── docs-ci.yml            # 文档：链接检查 + 拼写
+    └── workflows/                 # 5 个 CI workflow + 1 个 tag-only release
+        ├── backend-ci.yml         # 服务端：lint + typecheck + test + build + Docker size gate
+        ├── flutter-ci.yml         # Flutter：analyze + test + build apk + (iOS smoke)
+        ├── miniprogram-ci.yml     # 小程序：JSON / TS 结构校验
+        ├── miniprogram-stylelint.yml  # 小程序：WXSS lint
+        ├── docs-verification.yml  # 文档：报告结构 + verdict 关键词 + 已知 CI workflow 引用
+        └── android-release.yml    # tag 触发：AAB + APK 构建（手动 sign）
 ```
 
 ---
@@ -130,71 +165,87 @@ studybuddy/
 ## 🚀 快速开始
 
 ```bash
-# 1. 克隆 + 启动本地依赖
+# 1. 克隆 + 启动依赖服务
 git clone https://github.com/YuanshuoDu/studybuddy.git
 cd studybuddy
-./infra/dev-up.sh                 # 启 PostgreSQL + Redis
+./infra/dev-up.sh                 # 起 PostgreSQL + Redis
 
 # 2. 后端
-cd server && pnpm install
-cp .env.example .env              # 填 JWT_SECRET (≥32 chars)
+cd server
+pnpm install
+cp .env.example .env              # 填 JWT_SECRET (>=32 chars)
 pnpm prisma migrate dev
 pnpm dev
 # → http://localhost:3000/health
 
 # 3. 微信小程序
 #    用微信开发者工具打开 miniprogram/ 目录
-#    填入 miniprogram/project.private.config.json 的 appid
+#    在 miniprogram/project.private.config.json 配 appid
 
 # 4. Flutter App
-cd app && flutter pub get
+cd app
+flutter pub get
 dart run build_runner build --delete-conflicting-outputs
-flutter run -d <ios-simulator>    # 或 android-emulator
+flutter run -d <ios-simulator>     # 或 android-emulator
+
+# 5. 跑 CI 那一套（开发期本地）
+cd server && pnpm lint && pnpm test
+cd miniprogram && pnpm lint:wxss
+cd app && flutter analyze && flutter test
 ```
 
-详见 [docs/server/dev-setup.md](./docs/server/dev-setup.md) 与各端 README。
+完整 README：[docs/server/dev-setup.md](./docs/server/dev-setup.md)。
 
 ---
 
-## 🗓️ Roadmap（12 周三端 MVP）
+## 📊 当前状态
+
+- **版本**: v1.0.1（GA-ready）
+- **main HEAD**: 见仓库 commit 列表 — 最近一次 merge 是 PR #80 (design-system v1 follow-up)
+- **CI**: 5 个 workflow 全部 path-filtered，main 上全绿
+- **最近一次验证**: [docs/verification/v1.0.1-optimization-report.md](./docs/verification/v1.0.1-optimization-report.md) — 0 P0/P1，0 regressions vs v1.0
+- **下次发布**: 准备打 `v1.0.1` tag
+
+---
+
+## 📈 路线图
 
 | 阶段 | 周 | 关键交付 |
 |------|----|---------|
-| **M1 基础建设** | W1-W4 | ✅ 架构 v1.0 + 5 ADR + API 规范 v1 · ✅ 后端脚手架 · ✅ 小程序脚手架 · ✅ Flutter 脚手架 · ✅ 测试计划 v1.0 · ✅ CI 矩阵 · ✅ DevOps 基础 · ⏳ 设计系统 v1 |
-| **M2 核心闭环 + 内测** | W5-W8 | 业务 API（auth/user/activity/signup）+ 三端核心流程 + 性能优化 + 50 人种子内测 |
-| **M3 发布 + 运营** | W9-W12 | 微信审核 + iOS 审核 + Android 分发 + 运营后台 + 7×24 监控 + 数据复盘 |
-
-**当前进度**：M1-W1 收尾中（5 个 PR 待合并），W2 开始实现 M2 业务。
+| **M1 基础设施** | W1-W4 | ✅ 架构 v1.0 + 6 ADR + API 规范 + 后端脚手架 + 小程序/Flutter 脚手架 + 登录闭环 + 测试体系 + 设计系统 v1 + docs CI |
+| **M2 业务闭环** | W5-W8 | ✅ 10 业务模块（auth/user/activity/signup/review/push/admin/monitoring/analytics/content-safety）+ 50 用户内部测试 + v1.0 GA |
+| **M3 正式 + 运营** | W9-W12 | ✅ 微信审核 + iOS/Android release pipeline + 运营后台 + 7×24 监控 + v1.0.1 code-quality sweep |
+| **v1.1 计划中** | 之后 | 见 [docs/v1.1-roadmap.md](./docs/v1.1-roadmap.md) — 支付、群聊、活动模板 |
 
 ---
 
-## 📚 关键文档导航
+## 📚 关键文档速读
 
-### 入门必读（按顺序）
+### 必读（按顺序）
 
-1. [docs/spec-v0.1.md](./docs/spec-v0.1.md) — 需求规格（4 用户画像 + 5 活动类型 + 核心流程）
-2. [docs/architecture-v1.0.md](./docs/architecture-v1.0.md) — 架构（系统图 + 数据模型 + 跨端策略）
-3. [docs/adr/README.md](./docs/adr/) — 5 个关键决策（Flutter / 小程序原生 / 鉴权 / 状态机 / 存储）
+1. [docs/spec-v0.2.md](./docs/spec-v0.2.md) — 需求 v0.2（4 用户角色 + 5 活动类型 + 状态机 + DoD）
+2. [docs/architecture-v1.0.md](./docs/architecture-v1.0.md) — 架构：系统图 + 模块 + 后端分层
+3. [docs/adr/](./docs/adr/) — 6 篇关键决策（Flutter / 小程序原生 / 鉴权 / 状态机 / 存储 / Mapbox）
 
-### 开发必查
+### 按需查阅
 
-- 后端：[docs/server/dev-setup.md](./docs/server/dev-setup.md) + [docs/api/v1.md](./docs/api/v1.md)
-- 小程序：[miniprogram/](./miniprogram/) + [docs/api/wechat.md](./docs/api/wechat.md)
-- Flutter：[app/](./app/) + 即将补充的 [docs/flutter/](./docs/flutter/)
-- API 端点：[docs/api/v1.md](./docs/api/v1.md)（18 个 endpoint 完整规范）
-- 数据模型：[docs/architecture-v1.0.md#数据模型](./docs/architecture-v1.0.md) § 数据模型
+- **后端**: [docs/server/dev-setup.md](./docs/server/dev-setup.md) + [docs/api/v1.md](./docs/api/v1.md)
+- **小程序**: [miniprogram/](./miniprogram/) + [docs/api/wechat.md](./docs/api/wechat.md)
+- **Flutter**: [app/](./app/) + [docs/design/system-v1.md](./docs/design/system-v1.md)
+- **API 端点**: [docs/api/v1.md](./docs/api/v1.md)（18 个 endpoint 的数据契约）
+- **数据模型**: [docs/architecture-v1.0.md §3](./docs/architecture-v1.0.md)
 
 ### 流程规范
 
-- [docs/delivery-standards.md](./docs/delivery-standards.md) — **每个 PR 必须附证据**（截图 + 日志 + 链接）
-- [docs/test/test-plan-v1.0.md](./docs/test/test-plan-v1.0.md) — 测试策略
+- [docs/delivery-standards.md](./docs/delivery-standards.md) — 每个 PR 必须附的证据（截图 / 日志 / 链接）
+- [docs/test/test-plan-v1.0.md](./docs/test/test-plan-v1.0.md) — 测试计划
 - [docs/devops/](./docs/devops/) — CI / 部署 / 监控 / Runbook
 
 ---
 
 ## 🤝 贡献
 
-仓库是**唯一**代码源，所有改动必须走 **PR + Review + 证据**流程。
+仓库**唯一**的代码改动路径是 **PR + Review + 证据** 流程。
 
 ```bash
 # 1. Fork + 克隆
@@ -205,64 +256,44 @@ cd studybuddy
 git checkout -b feat/<your-feature>
 
 # 3. 写代码 + 本地验证（lint / test / build）
-# 各端验证命令见 docs/devops/ci-matrix.md
+#    验证项见 docs/devops/ci-matrix.md
 
-# 4. 提交 + 推送到你的 fork
+# 4. 提交 + 推送到 fork
 git commit -m "feat(<scope>): <what you did>"
 git push origin feat/<your-feature>
 
 # 5. 开 PR
 gh pr create --base main --head feat/<your-feature>
 
-# 6. PR 描述必须包含（按 docs/delivery-standards.md §2）：
+# 6. PR 描述需包含 3 件事（见 docs/delivery-standards.md §2）：
 #    - 改了什么
 #    - 怎么验证的（截图 / 日志 / 链接）
 #    - 关联的 issue
 ```
 
-**PR 标题规范**：`[<scope>] <description>`，例：
-- `[server] Activity CRUD API`
-- `[flutter] Login page UI`
-- `[miniprogram] Signup flow`
-- `[docs] Update architecture`
-- `[devops] Add Sentry`
-- `[design] Component library`
+**PR 标题规范**：`[<scope>] <description>`，scope 例：
+- `[server]` `[flutter]` `[miniprogram]` `[docs]` `[devops]` `[design]`
 
 ---
 
-## 🔒 安全 & 合规
+## 🛡 安全 & 合规
 
-- 所有 PR 走 `CODEOWNERS` 强制 review
-- 鉴权：JWT + 刷新 token + 撤销
-- 限流：基于 Redis（global 100/min, login 10/min）
-- 内容安全：UGC 接入微信内容安全 API
-- 数据加密：传输 HTTPS，敏感字段加密
-- 第三方依赖：CI 自动 `pnpm audit`
+- 所有 PR 通过 `CODEOWNERS` 强制 review
+- 鉴权：JWT (HS256, 7d) + refresh token
+- 速率限制：Redis global 100/min, login 10/min
+- 数据安全：UGC 内容走微信内容安全 API
+- 数据加密：传输 HTTPS
+- 依赖审计：CI 自动 `pnpm audit`
 - GDPR / 数据合规：用户数据导出 + 删除 API（v1.1）
 
 详见 [docs/test/security-checklist.md](./docs/test/security-checklist.md)。
 
 ---
 
-## 📊 当前 PR 状态
-
-打开的 PR（待 review + 合并）：
-
-| # | 范围 | 状态 |
-|---|------|------|
-| #10 | 测试计划 v1.0 | 验证中 |
-| #12 | 架构 v1.0 + 5 ADR + API 规范 | 待 review |
-| #13 | 后端脚手架 | 待 review |
-| #14 | Flutter 脚手架 | 待 review |
-| #15 | 微信小程序脚手架 | 待 review |
-| #16 | README 清理（本 PR） | 待 review |
-
----
-
-## 📄 License
+## 📜 License
 
 Private / All Rights Reserved.
 
 ---
 
-> 最后更新：2026-06-05 · 由 [Oracle Hermes](https://github.com/oracle) 维护
+> 最后更新：2026-06-11 · 维护者 [@YuanshuoDu](https://github.com/YuanshuoDu)
