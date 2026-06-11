@@ -1,79 +1,94 @@
+/* Activity list page — issue #22
+ *
+ * All colors / spacing / radius / shadow resolved via the design-system
+ * tokens imported through app.wxss → styles/tokens.wxss.
+ * See: docs/design/system-v1.md
+ */
+
 .alist {
   min-height: 100vh;
-  padding: 16rpx 32rpx 32rpx;
+  padding: var(--space-sm) var(--space-lg) var(--space-lg);
   background: var(--color-bg);
 }
 
 .alist__chips {
   white-space: nowrap;
-  padding: 8rpx 0 4rpx;
+  padding: var(--space-xs) 0 var(--space-2xs);
 }
 
 .alist__chips--sub {
-  padding: 0 0 16rpx;
+  padding: 0 0 var(--space-sm);
   border-bottom: 1rpx solid var(--color-divider);
-  margin-bottom: 16rpx;
+  margin-bottom: var(--space-sm);
 }
 
 .alist__sub-row {
-  display: flex; align-items: center; gap: 16rpx;
-  margin-bottom: 16rpx;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+  padding: 0 var(--space-lg);
 }
-.alist__sub-row .alist__chips--sub {
-  flex: 1; padding: 0; border-bottom: none; margin-bottom: 0;
-}
-.alist__map-btn {
-  display: flex; align-items: center; gap: 6rpx;
-  padding: 8rpx 20rpx;
-  background: var(--color-primary-container);
-  color: var(--color-primary);
-  border-radius: 999rpx;
-  font-size: 24rpx; font-weight: 500;
-  flex-shrink: 0;
-  white-space: nowrap;
-  line-height: 1.2;
-}
-.alist__map-btn:active {
-  background: #BFDBFE;
-}
-.map-emoji { font-size: 28rpx; }
-.map-label { font-size: 24rpx; }
 
 .alist__chip {
   display: inline-block;
-  padding: 12rpx 28rpx;
-  margin-right: 16rpx;
-  font-size: 26rpx;
+  padding: var(--space-xs) var(--space-md);
+  margin-right: var(--space-sm);
+  font-size: var(--font-label-m);
   color: var(--color-text-secondary);
   background: var(--color-bg-card);
-  border-radius: 999rpx;
+  border-radius: var(--radius-pill);
   border: 1rpx solid var(--color-border);
   line-height: 1.2;
+  transition:
+    background var(--motion-duration-fast) cubic-bezier(0.2, 0, 0, 1),
+    color var(--motion-duration-fast) cubic-bezier(0.2, 0, 0, 1);
 }
 
 .alist__chip--sub {
-  padding: 8rpx 22rpx;
-  font-size: 24rpx;
+  padding: var(--space-2xs) var(--space-sm);
+  font-size: var(--font-body-s);
 }
 
 .alist__chip.is-active {
-  color: #fff;
+  color: var(--color-on-primary);
   background: var(--color-primary);
   border-color: var(--color-primary);
   font-weight: 500;
 }
 
+.alist__chip.is-active.alist__chip--study {
+  background: var(--color-activity-study);
+  border-color: var(--color-activity-study);
+}
+.alist__chip.is-active.alist__chip--sport {
+  background: var(--color-activity-sport);
+  border-color: var(--color-activity-sport);
+}
+.alist__chip.is-active.alist__chip--boardgame {
+  background: var(--color-activity-boardgame);
+  border-color: var(--color-activity-boardgame);
+}
+.alist__chip.is-active.alist__chip--online-game {
+  background: var(--color-activity-online-game);
+  border-color: var(--color-activity-online-game);
+}
+.alist__chip.is-active.alist__chip--other {
+  background: var(--color-activity-other);
+  border-color: var(--color-activity-other);
+}
+
 .alist__list {
-  padding-bottom: 32rpx;
+  padding: 0 var(--space-lg) var(--space-lg);
 }
 
 .alist__empty {
-  padding: 96rpx 0;
+  padding: var(--space-3xl) 0;
 }
 
 .alist__footer {
   text-align: center;
-  font-size: 24rpx;
+  font-size: var(--font-body-s);
   color: var(--color-text-placeholder);
-  padding: 32rpx 0;
+  padding: var(--space-lg) 0;
 }
