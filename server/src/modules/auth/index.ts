@@ -92,7 +92,7 @@ export interface AuthSuccessDTO {
 interface AccessTokenPayload {
   sub: string;
   role: 'USER' | 'ADMIN';
-  status: 'ACTIVE' | 'BANNED';
+  status: 'ACTIVE' | 'BANNED' | 'DELETED';
   iat: number;
   exp: number;
   type: 'access';
@@ -109,7 +109,7 @@ interface RefreshTokenPayload {
 function signAccessToken(
   userId: string,
   role: 'USER' | 'ADMIN',
-  status: 'ACTIVE' | 'BANNED',
+  status: 'ACTIVE' | 'BANNED' | 'DELETED',
 ): string {
   const now = Math.floor(Date.now() / 1000);
   const payload: AccessTokenPayload = {
