@@ -87,9 +87,15 @@ export interface AuthSuccessDTO {
 
 // ---------------------------------------------------------------------------
 // JWT helpers
+//
+// All three are exported so the auth.routes.test.ts suite can construct
+// tokens with the same shape + algorithm the routes would issue. They
+// are pure HS256 + the shared JWT_SECRET — no Fastify binding, no
+// async — so they're safe to call from any context (including the test
+// beforeEach / afterEach where we set NODE_ENV=test).
 // ---------------------------------------------------------------------------
 
-interface AccessTokenPayload {
+export interface AccessTokenPayload {
   sub: string;
   role: 'USER' | 'ADMIN';
   status: 'ACTIVE' | 'BANNED' | 'DELETED';
@@ -98,7 +104,7 @@ interface AccessTokenPayload {
   type: 'access';
 }
 
-interface RefreshTokenPayload {
+export interface RefreshTokenPayload {
   sub: string;
   jti: string;
   iat: number;
@@ -106,7 +112,7 @@ interface RefreshTokenPayload {
   type: 'refresh';
 }
 
-function signAccessToken(
+export function signAccessToken(
   userId: string,
   role: 'USER' | 'ADMIN',
   status: 'ACTIVE' | 'BANNED' | 'DELETED',
@@ -125,7 +131,7 @@ function signAccessToken(
   return jwtSignHs256(payload, getEnv().JWT_SECRET);
 }
 
-function signRefreshToken(userId: string, jti: string): string {
+export function signRefreshToken(userId: string, jti: string): string {
   const now = Math.floor(Date.now() / 1000);
   const payload: RefreshTokenPayload = {
     sub: userId,
@@ -137,7 +143,7 @@ function signRefreshToken(userId: string, jti: string): string {
   return jwtSignHs256(payload, getEnv().JWT_SECRET);
 }
 
-function verifyRefreshToken(token: string): RefreshTokenPayload {
+export function verifyRefreshToken(token: string): RefreshTokenPayload {
   const decoded = jwtVerifyHs256<RefreshTokenPayload>(token, getEnv().JWT_SECRET);
   if (decoded.type !== 'refresh') {
     throw new UnauthorizedError('Token 不是 refresh_token');
@@ -171,16 +177,25 @@ function jwtVerifyHs256<T>(token: string, secret: string): T {
     .update(`${header}.${payload}`)
     .digest('base64url');
   if (sig !== expected) throw new UnauthorizedError('Token 签名不合法');
-  let decoded: { payload: T; exp: number };
+  // The signer (jwtSignHs256) emits the FLAT claims as the payload segment
+  // — there is no `payload` wrapper. The earlier shape annotation was a
+  // holdover from a previous design; it caused every refresh to silently
+  // return `undefined` (which then crashed `verifyRefreshToken` on
+  // `decoded.type`). The fix is to decode and return the flat object.
+  let decoded: T;
   try {
-    decoded = JSON.parse(Buffer.from(payload, 'base64url' as BufferEncoding).toString('utf8'));
+    decoded = JSON.parse(Buffer.from(payload, 'base64url' as BufferEncoding).toString('utf8')) as T;
   } catch {
     throw new UnauthorizedError('Token 负载无法解析');
   }
-  if (decoded.exp && decoded.exp < Math.floor(Date.now() / 1000)) {
+  // Expiry is part of the flat claims for our tokens (signAccessToken
+  // writes `exp` at the top level), so check it inline. Defensive cast:
+  // T doesn't necessarily have an `exp`, but our two call sites do.
+  const exp = (decoded as unknown as { exp?: number }).exp;
+  if (exp && exp < Math.floor(Date.now() / 1000)) {
     throw new UnauthorizedError('Token 已过期');
   }
-  return decoded.payload as T;
+  return decoded;
 }
 
 // ---------------------------------------------------------------------------
