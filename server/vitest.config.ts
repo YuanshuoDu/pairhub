@@ -32,7 +32,11 @@ export default defineConfig({
         'src/lib/redis.ts',
       ],
     },
-    testTimeout: 10_000,
-    hookTimeout: 10_000,
+    testTimeout: 15_000,
+    // The openapi plugin (registered in lib/app.ts) loads @fastify/swagger
+    // and @fastify/swagger-ui at build time. The first buildApp in a
+    // fresh process takes ~5s while swagger-ui hashes its static assets;
+    // the 10s default is too tight when the suite runs back-to-back.
+    hookTimeout: 30_000,
   },
 });
