@@ -5,9 +5,11 @@
   "description": "StudyBuddy WeChat miniprogram — tooling only (lint + source-map upload helper). No runtime deps; the miniprogram itself is shipped as raw WXML/WXSS/TS for the WeChat DevTools compiler.",
   "scripts": {
     "lint:wxss": "stylelint \"**/*.wxss\"",
-    "wx:upload-sourcemap": "node scripts/upload-sourcemap.mjs"
+    "wx:upload-sourcemap": "node scripts/upload-sourcemap.mjs",
+    "openapi:codegen": "openapi-typescript ../docs/api/openapi.json --output types/openapi.ts --enum --immutable"
   },
   "devDependencies": {
+    "openapi-typescript": "^7.13.0",
     "stylelint": "16.10.0",
     "stylelint-config-standard": "36.0.1"
   }
