@@ -36,6 +36,7 @@ import corsPlugin from '@/plugins/cors.js';
 import errorHandlerPlugin from '@/plugins/error-handler.js';
 import rateLimitPlugin from '@/plugins/rate-limit.js';
 import metricsPlugin from '@/plugins/metrics.js';
+import { openApiPlugin } from '@/lib/openapi.js';
 
 import { registerHealthModule } from '@/modules/health/index.js';
 import { registerAuthModule } from '@/modules/auth/index.js';
@@ -83,6 +84,10 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
   await app.register(corsPlugin);
   await app.register(cookie);
   await app.register(sensible);
+
+  // OpenAPI / Swagger UI — registered before routes so the spec is
+  // available at /api/v1/docs from the first request.
+  await app.register(openApiPlugin);
 
   // Cross-cutting
   await app.register(authPlugin);
