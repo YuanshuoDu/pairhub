@@ -35,8 +35,11 @@ export default defineConfig({
     testTimeout: 15_000,
     // The openapi plugin (registered in lib/app.ts) loads @fastify/swagger
     // and @fastify/swagger-ui at build time. The first buildApp in a
-    // fresh process takes ~5s while swagger-ui hashes its static assets;
-    // the 10s default is too tight when the suite runs back-to-back.
-    hookTimeout: 30_000,
+    // fresh process takes ~5s while swagger-ui hashes its static
+    // assets + computes the static CSP. When the suite runs back-to-back
+    // on a busy machine the cold build can spike to ~30s+ for the
+    // first integration test in a file. Bumping to 60s leaves headroom
+    // without affecting per-test timeouts (still 15s).
+    hookTimeout: 60_000,
   },
 });
