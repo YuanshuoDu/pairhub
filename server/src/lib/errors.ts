@@ -56,6 +56,22 @@ export class ConflictError extends AppError {
   }
 }
 
+/**
+ * 410 Gone — used when the resource was once available but has been
+ * permanently removed. In Pairhub we use this for the social-login
+ * case where a user soft-deleted their account and then tries to log
+ * back in: "this account existed but is gone now, talk to support".
+ *
+ * Distinct from `NotFoundError` (404) on purpose — the client UI needs
+ * to surface a different message ("账号已注销" vs "账号不存在") so
+ * the user understands the path forward.
+ */
+export class GoneError extends AppError {
+  constructor(code: string, message: string) {
+    super(410, code, message);
+  }
+}
+
 export class BusinessRuleError extends AppError {
   constructor(code: string, message: string, details?: Record<string, unknown>) {
     super(422, code, message, details);

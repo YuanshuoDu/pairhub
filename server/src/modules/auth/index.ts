@@ -29,7 +29,7 @@ import { z } from 'zod';
 import crypto from 'node:crypto';
 
 import { getEnv } from '@/lib/env.js';
-import { UnauthorizedError, ValidationError } from '@/lib/errors.js';
+import { GoneError, UnauthorizedError, ValidationError } from '@/lib/errors.js';
 
 // ---------------------------------------------------------------------------
 // Schemas
@@ -260,6 +260,17 @@ export async function registerAuthModule(app: FastifyInstance): Promise<void> {
       ? await prisma.user.findUnique({ where: { phone } })
       : await prisma.user.findUnique({ where: { openid: compositeOpenid } });
 
+    // Soft-deleted users can never log back in via the same social
+    // identity. Returning 410 (not 401) so the client can surface a
+    // distinct "your account was deleted, contact support" message
+    // instead of the generic "wrong credentials" one.
+    if (user && user.status === 'DELETED') {
+      throw new GoneError(
+        'ACCOUNT_DELETED',
+        '账号已注销，无法登录。如需恢复请联系客服。',
+      );
+    }
+
     if (!user) {
       user = await prisma.user.create({
         data: {
@@ -345,6 +356,16 @@ export async function registerAuthModule(app: FastifyInstance): Promise<void> {
     });
     if (!refreshed) {
       throw new UnauthorizedError('用户不存在');
+    }
+    // Same soft-delete guard as social-login: a token issued BEFORE the
+    // user called DELETE /api/v1/users/me must not be renewable. Revoke
+    // the consumed jti (already done by `consumeRefreshToken` above) and
+    // refuse to mint a new access token.
+    if (refreshed.status === 'DELETED') {
+      throw new GoneError(
+        'ACCOUNT_DELETED',
+        '账号已注销，无法登录。如需恢复请联系客服。',
+      );
     }
     const newAccess = signAccessToken(refreshed.id, refreshed.role, refreshed.status);
     const newRefresh = signRefreshToken(refreshed.id, newJti);

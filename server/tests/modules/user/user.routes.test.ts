@@ -393,6 +393,10 @@ describe('user module — HTTP integration', () => {
     });
 
     it('returns the paginated list of created activities', async () => {
+      // listMyActivities now does an early findUnique on the requesting
+      // user to enforce soft-delete (status === 'DELETED' → 404) before
+      // hitting the activities tables. Mock that lookup first.
+      mockPrismaState.user.findUnique.mockResolvedValueOnce(makeUserRow());
       mockPrismaState.activity.findMany.mockResolvedValue([makeActivityRow()]);
       mockPrismaState.activity.count.mockResolvedValue(1);
 
@@ -459,6 +463,101 @@ describe('user module — HTTP integration', () => {
       expect(dto.school).toBe('Stanford');
       // bio is private and must NOT leak via the public endpoint
       expect(dto.bio).toBeUndefined();
+    });
+  });
+
+  // =====================================================================
+  // DELETE /api/v1/users/me  (spec endpoint #10 — soft delete)
+  // =====================================================================
+
+  describe('DELETE /api/v1/users/me', () => {
+    it('returns 401 with no token', async () => {
+      const res = await app.inject({ method: 'DELETE', url: '/api/v1/users/me' });
+      expect(res.statusCode).toBe(401);
+    });
+
+    it('soft-deletes the requesting user and returns the recorded timestamp', async () => {
+      mockPrismaState.user.findUnique.mockResolvedValueOnce(
+        makeUserRow({ id: 'usr_alice', status: 'ACTIVE', deletedAt: null }),
+      );
+      mockPrismaState.user.update.mockResolvedValueOnce(
+        makeUserRow({ id: 'usr_alice', status: 'DELETED', deletedAt: new Date() }),
+      );
+
+      const res = await app.inject({
+        method: 'DELETE',
+        url: '/api/v1/users/me',
+        headers: { authorization: `Bearer ${aliceToken}` },
+      });
+
+      expect(res.statusCode).toBe(200);
+      const body = res.json();
+      // The route returns the SERVER's `now`, not whatever Prisma stored
+      // (which we don't read back). That's deliberate so the client sees
+      // exactly what the server thinks it recorded.
+      expect(body.data.deletedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+      // The same `now` must have been passed into the update call.
+      const updateArgs = mockPrismaState.user.update.mock.calls[0]?.[0] as {
+        where: { id: string };
+        data: { status: string; deletedAt: Date };
+      };
+      expect(updateArgs.where.id).toBe('usr_alice');
+      expect(updateArgs.data.status).toBe('DELETED');
+      expect(updateArgs.data.deletedAt).toBeInstanceOf(Date);
+      // Response timestamp and update payload must match exactly.
+      expect(body.data.deletedAt).toBe(updateArgs.data.deletedAt.toISOString());
+    });
+
+    it('is idempotent: a second DELETE on an already-deleted user does not bump deletedAt', async () => {
+      const originalDeletedAt = new Date('2026-06-01T10:00:00.000Z');
+      mockPrismaState.user.findUnique.mockResolvedValueOnce(
+        makeUserRow({ id: 'usr_alice', status: 'DELETED', deletedAt: originalDeletedAt }),
+      );
+
+      const res = await app.inject({
+        method: 'DELETE',
+        url: '/api/v1/users/me',
+        headers: { authorization: `Bearer ${aliceToken}` },
+      });
+
+      expect(res.statusCode).toBe(200);
+      const body = res.json();
+      // Must return the ORIGINAL timestamp, not now().
+      expect(body.data.deletedAt).toBe('2026-06-01T10:00:00.000Z');
+      // Critically, the update must NOT have been called — we don't want
+      // an idempotent click to bump the audit timestamp.
+      expect(mockPrismaState.user.update).not.toHaveBeenCalled();
+    });
+
+    it('returns 404 when the user no longer exists', async () => {
+      mockPrismaState.user.findUnique.mockResolvedValueOnce(null);
+
+      const res = await app.inject({
+        method: 'DELETE',
+        url: '/api/v1/users/me',
+        headers: { authorization: `Bearer ${aliceToken}` },
+      });
+
+      expect(res.statusCode).toBe(404);
+      const body = res.json();
+      expect(body.code).toBe('USER_NOT_FOUND');
+    });
+
+    it('GET /me returns 404 right after delete (defense-in-depth)', async () => {
+      // After soft-delete, the very next /me call should fail with 404.
+      mockPrismaState.user.findUnique.mockResolvedValueOnce(
+        makeUserRow({ status: 'DELETED' }),
+      );
+
+      const res = await app.inject({
+        method: 'GET',
+        url: '/api/v1/users/me',
+        headers: { authorization: `Bearer ${aliceToken}` },
+      });
+
+      expect(res.statusCode).toBe(404);
+      // We deliberately surface USER_NOT_FOUND (not USER_DELETED) so
+      // probing the endpoint doesn't reveal "you used to exist".
     });
   });
 });

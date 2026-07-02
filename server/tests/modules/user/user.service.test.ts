@@ -13,6 +13,7 @@ import {
   getMe,
   getUserById,
   listMyActivities,
+  softDeleteMe,
   updateMe,
 } from '@/modules/user/user.service.js';
 import type { UpdateMeBody } from '@/modules/user/user.schema.js';
@@ -28,7 +29,8 @@ function makeUserRow(overrides: Partial<{
   school: string | null;
   major: string | null;
   bio: string | null;
-  status: 'ACTIVE' | 'BANNED';
+  status: 'ACTIVE' | 'BANNED' | 'DELETED';
+  deletedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }> = {}) {
@@ -46,6 +48,7 @@ function makeUserRow(overrides: Partial<{
     phone: null,
     bio: overrides.bio ?? null,
     status: overrides.status ?? 'ACTIVE',
+    deletedAt: overrides.deletedAt ?? null,
     createdAt: overrides.createdAt ?? now,
     updatedAt: overrides.updatedAt ?? now,
   };
@@ -135,6 +138,14 @@ describe('getMe', () => {
     prisma.user.findUnique.mockResolvedValue(makeUserRow({ status: 'BANNED' }));
 
     await expect(getMe(prisma as never, 'usr_banned')).rejects.toBeInstanceOf(ForbiddenError);
+  });
+
+  it('throws NotFoundError when the user is soft-deleted (defense-in-depth)', async () => {
+    // We deliberately collapse "deleted" and "never existed" into the
+    // same 404 USER_NOT_FOUND surface — see route test for the contract.
+    prisma.user.findUnique.mockResolvedValue(makeUserRow({ status: 'DELETED' }));
+
+    await expect(getMe(prisma as never, 'usr_alice')).rejects.toBeInstanceOf(NotFoundError);
   });
 });
 
@@ -248,6 +259,68 @@ describe('getUserById', () => {
     const dto = await getUserById(prisma as never, 'usr_alice', 'usr_alice');
     expect((dto as { bio: string | null }).bio).toBeNull();
   });
+
+  it('throws NotFoundError when the target user is soft-deleted, even to themselves', async () => {
+    // Soft-delete is "you no longer exist" — even the owner can't see
+    // their own row after deletion. Restore requires manual ops.
+    prisma.user.findUnique.mockResolvedValue(makeUserRow({ status: 'DELETED' }));
+
+    await expect(
+      getUserById(prisma as never, 'usr_alice', 'usr_alice'),
+    ).rejects.toBeInstanceOf(NotFoundError);
+  });
+});
+
+// =====================================================================
+// softDeleteMe
+// =====================================================================
+
+describe('softDeleteMe', () => {
+  let prisma: FakePrisma;
+
+  beforeEach(() => {
+    prisma = makePrisma();
+  });
+
+  it('sets status=DELETED and deletedAt on a fresh ACTIVE user', async () => {
+    prisma.user.findUnique.mockResolvedValueOnce(
+      makeUserRow({ status: 'ACTIVE', deletedAt: null }),
+    );
+    prisma.user.update.mockResolvedValueOnce(
+      makeUserRow({ status: 'DELETED', deletedAt: new Date() }),
+    );
+
+    const result = await softDeleteMe(prisma as never, 'usr_alice');
+
+    expect(result.deletedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    const updateArgs = prisma.user.update.mock.calls[0]?.[0] as {
+      where: { id: string };
+      data: { status: string; deletedAt: Date };
+    };
+    expect(updateArgs.where.id).toBe('usr_alice');
+    expect(updateArgs.data.status).toBe('DELETED');
+    expect(updateArgs.data.deletedAt).toBeInstanceOf(Date);
+  });
+
+  it('is idempotent: second call returns original deletedAt and does not update', async () => {
+    const original = new Date('2026-06-01T10:00:00.000Z');
+    prisma.user.findUnique.mockResolvedValueOnce(
+      makeUserRow({ status: 'DELETED', deletedAt: original }),
+    );
+
+    const result = await softDeleteMe(prisma as never, 'usr_alice');
+
+    expect(result.deletedAt).toBe(original.toISOString());
+    expect(prisma.user.update).not.toHaveBeenCalled();
+  });
+
+  it('throws NotFoundError when the user does not exist', async () => {
+    prisma.user.findUnique.mockResolvedValueOnce(null);
+
+    await expect(softDeleteMe(prisma as never, 'usr_ghost')).rejects.toBeInstanceOf(
+      NotFoundError,
+    );
+  });
 });
 
 // =====================================================================
@@ -259,6 +332,10 @@ describe('listMyActivities', () => {
 
   beforeEach(() => {
     prisma = makePrisma();
+    // listMyActivities now does an early findUnique on the requesting
+    // user (soft-delete defense-in-depth). Default every test to "user
+    // is ACTIVE"; individual tests can override with mockResolvedValueOnce.
+    prisma.user.findUnique.mockResolvedValue({ id: 'usr_alice', status: 'ACTIVE' });
   });
 
   it('returns created activities when type=created', async () => {
@@ -331,5 +408,19 @@ describe('listMyActivities', () => {
     expect(r.data[0]?.id).toBe('act_1');
     expect(r.page).toBe(2);
     expect(r.pageSize).toBe(2);
+  });
+
+  it('throws NotFoundError when the requesting user is soft-deleted', async () => {
+    // Defense-in-depth: even if a stale JWT still claims ACTIVE, the
+    // service re-fetches the user and rejects DELETED.
+    prisma.user.findUnique.mockResolvedValueOnce({ id: 'usr_alice', status: 'DELETED' });
+
+    await expect(
+      listMyActivities(prisma as never, 'usr_alice', { page: 1, pageSize: 20 }),
+    ).rejects.toBeInstanceOf(NotFoundError);
+    // The activity tables must not be queried at all once the user is
+    // rejected — that's the whole point of the early check.
+    expect(prisma.activity.findMany).not.toHaveBeenCalled();
+    expect(prisma.activity.count).not.toHaveBeenCalled();
   });
 });

@@ -4,6 +4,7 @@
  * Endpoints (all under /api/v1):
  *   - GET    /users/me                — current user (auth required)
  *   - PATCH  /users/me                — update profile (auth required)
+ *   - DELETE /users/me                — soft-delete account (auth required)
  *   - GET    /users/:id               — public profile (auth optional)
  *   - GET    /users/me/activities     — my activities (auth required)
  *
@@ -31,6 +32,7 @@ import {
   getMe,
   getUserById,
   listMyActivities,
+  softDeleteMe,
   updateMe,
 } from './user.service.js';
 
@@ -118,6 +120,22 @@ export async function registerUserModule(app: FastifyInstance): Promise<void> {
 
       const data = await getUserById(app.prisma, viewerId, targetId);
       return reply.send({ data });
+    },
+  );
+
+  // -----------------------------------------------------------------
+  // DELETE /api/v1/users/me  (spec endpoint #10)
+  // -----------------------------------------------------------------
+  app.delete(
+    '/api/v1/users/me',
+    { preHandler: [app.authenticate] },
+    async (req, reply) => {
+      const userId = req.userId;
+      if (!userId) throw new UnauthorizedError();
+      const result = await softDeleteMe(app.prisma, userId);
+      // 200 (not 204) so we can return the recorded deletion timestamp —
+      // useful for the client to confirm "yes, you deleted at HH:MM:SS".
+      return reply.code(200).send({ data: result });
     },
   );
 

@@ -54,10 +54,20 @@ async function authPlugin(app: FastifyInstance): Promise<void> {
       throw new UnauthorizedError('Token 无效或已过期');
     }
     const payload = req.user as
-      | { sub?: string; role?: 'USER' | 'ADMIN'; status?: 'ACTIVE' | 'BANNED' }
+      | { sub?: string; role?: 'USER' | 'ADMIN'; status?: 'ACTIVE' | 'BANNED' | 'DELETED' }
       | undefined;
     if (!payload?.sub) {
       throw new UnauthorizedError('Token 缺少 sub 字段');
+    }
+    // Defense-in-depth: a stale access token (issued before the user
+    // called DELETE /api/v1/users/me) may still claim `status: 'ACTIVE'`
+    // because access tokens are 15-minute TTL and don't refetch from DB.
+    // The social-login and refresh endpoints also guard the DELETED case
+    // (returning 410 ACCOUNT_DELETED), but for any OTHER authenticated
+    // endpoint we surface a 401 USER_DELETED so the client can drop the
+    // session and prompt re-login.
+    if (payload.status === 'DELETED') {
+      throw new UnauthorizedError('账号已注销');
     }
     req.userId = payload.sub;
     req.userRole = payload.role ?? 'USER';
