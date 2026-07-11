@@ -4,9 +4,10 @@
 >
 > 微信小程序 · iOS · Android（Web 端 out of scope by design）
 
-Pairhub is the **留学生搭子活动平台** — a 3-end MVP that lets overseas students find
-companions for studying, sports, board games, and online sessions without leaving the WeChat
-ecosystem. Server is open; mobile clients are first-party.
+Pairhub is the **留学生搭子活动平台** — a GA-ready product (formerly StudyBuddy, renamed 2026-07-11)
+that lets overseas students find companions for studying, sports, board games, and online
+sessions without leaving the WeChat ecosystem. Server is open; mobile clients are first-party.
+**10 业务模块、5 类活动、5 态状态机、Admin 后台、设计系统 v1 全部就位。**
 
 ---
 
@@ -18,7 +19,7 @@ ecosystem. Server is open; mobile clients are first-party.
 | **目标用户** | 留学硕士/博士生（学业 + 运动 + 桌游 + 社交 全覆盖） |
 | **核心流程** | 浏览活动 → 多维筛选 → 一键报名 → 私聊确认 |
 | **5 类活动** | 学习（图书馆/咖啡厅）· 运动（羽毛球/篮球/跑步）· 桌游（UNO/狼人杀）· 线上（开黑/原神）· 其他 |
-| **当前状态** | **v1.0.1 GA-ready** — server + iOS + Android + 微信小程序均已 CI-green on `main` |
+| **当前状态** | **v1.0.1 (Pairhub rebrand 完成, v1.1 启动中)** — server + iOS + Android + 微信小程序 GA-ready |
 
 ---
 
@@ -151,7 +152,7 @@ Pairhub/
     ├── ISSUE_TEMPLATE/
     ├── PULL_REQUEST_TEMPLATE.md
     ├── CODEOWNERS
-    └── workflows/                 # 5 个 CI workflow + 1 个 tag-only release
+    └── workflows/                 # 6 个 CI workflow（其中 1 个 tag-only release）
         ├── backend-ci.yml         # 服务端：lint + typecheck + test + build + Docker size gate
         ├── flutter-ci.yml         # Flutter：analyze + test + build apk + (iOS smoke)
         ├── miniprogram-ci.yml     # 小程序：JSON / TS 结构校验
@@ -200,11 +201,12 @@ cd app && flutter analyze && flutter test
 
 ## 📊 当前状态
 
-- **版本**: v1.0.1（GA-ready）
-- **main HEAD**: 见仓库 commit 列表 — 最近一次 merge 是 PR #80 (design-system v1 follow-up)
-- **CI**: 5 个 workflow 全部 path-filtered，main 上全绿
-- **最近一次验证**: [docs/verification/v1.0.1-optimization-report.md](./docs/verification/v1.0.1-optimization-report.md) — 0 P0/P1，0 regressions vs v1.0
-- **下次发布**: 准备打 `v1.0.1` tag
+- **版本**: v1.0.1 (Pairhub rebrand 完成于 2026-07-11)
+- **main HEAD**: `fa04366 chore(rebrand): product rename (full-history rewrite via git-filter-repo)` — 131 个历史 commit 全部重写,所有 SHA 变了,force-push 推送。**80+ 历史 PR 引用全部失效**,团队需要重新 clone + rebase
+- **CI**: 6 个 workflow 全部 path-filtered。**Rebrand 后尚未重新跑 CI 验证**,在 v1.1 启动前需要先跑一遍确认 rebrand 没破坏构建
+- **最近一次验证**: [docs/verification/v1.0.1-optimization-report.md](./docs/verification/v1.0.1-optimization-report.md) — 0 P0/P1, 0 regressions vs v1.0(验证基于 rebrand 前的代码;rebrand 改动纯改名,预期不引入新问题)
+- **下次发布**: v1.1 — 见下方路线图
+- **已知问题**: 4 个 hotfix 待处理(详见 [docs/verification/mvp-validation.md](./docs/verification/mvp-validation.md))
 
 ---
 
@@ -215,7 +217,7 @@ cd app && flutter analyze && flutter test
 | **M1 基础设施** | W1-W4 | ✅ 架构 v1.0 + 6 ADR + API 规范 + 后端脚手架 + 小程序/Flutter 脚手架 + 登录闭环 + 测试体系 + 设计系统 v1 + docs CI |
 | **M2 业务闭环** | W5-W8 | ✅ 10 业务模块（auth/user/activity/signup/review/push/admin/monitoring/analytics/content-safety）+ 50 用户内部测试 + v1.0 GA |
 | **M3 正式 + 运营** | W9-W12 | ✅ 微信审核 + iOS/Android release pipeline + 运营后台 + 7×24 监控 + v1.0.1 code-quality sweep |
-| **v1.1 计划中** | 之后 | 见 [docs/v1.1-roadmap.md](./docs/v1.1-roadmap.md) — 支付、群聊、活动模板 |
+| **v1.1 计划中** | 之后 | 见 [docs/v1.1-roadmap.md](./docs/v1.1-roadmap.md) — 6 个候选 feature(推荐 feed / 同校 boost / 拼车 / i18n / 支付 / 破冰游戏),按 W2 用户访谈结果重排优先级 |
 
 ---
 
@@ -296,4 +298,4 @@ Private / All Rights Reserved.
 
 ---
 
-> 最后更新：2026-06-11 · 维护者 [@YuanshuoDu](https://github.com/YuanshuoDu)
+> 最后更新：2026-07-11 (Pairhub rebrand + 文档同步) · 维护者 [@YuanshuoDu](https://github.com/YuanshuoDu)
