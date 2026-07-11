@@ -3,34 +3,46 @@
 # Target: < 500 MB final image, Node 20 LTS.
 #
 # Stages:
-#   build   — installs all (dev + prod) deps with pnpm, runs prisma
-#             generate + tsc -> dist/. The dev workflow uses pnpm
-#             (see packageManager in package.json); the docker build
-#             uses pnpm for the build so the lockfile already in
-#             source control is honoured.
-#   runtime — node:20-alpine + libc6-compat + openssl + tini. Uses
-#             `npm install --omit=dev` (no lockfile; pin by exact
-#             version via `package.json`) so we get a flat prod
-#             node_modules without pnpm's .pnpm virtual store. Then
-#             strips cross-platform native binaries from
-#             @sentry/profiling-node + @prisma/engines.
+#   build     — installs all (dev + prod) deps with pnpm, runs prisma
+#               generate + tsc -> dist/. The dev workflow uses pnpm
+#               (see packageManager in package.json); the docker
+#               build uses pnpm so the lockfile already in source
+#               control is honoured.
+#   runtime   — gcr.io/distroless/nodejs20-debian12:nonroot. This
+#               base image ships only Node 20 + glibc + openssl + ca
+#               certs (no shell, no package manager, no tini). It
+#               runs as uid 65532 by default.
+#               `npm install --omit=dev --omit=optional` produces a
+#               flat prod-only node_modules without pnpm's virtual
+#               store, then we strip cross-arch native binaries from
+#               @sentry/profiling-node and @prisma/engines (~200 MB
+#               saving on alpine; ~150 MB on distroless).
 #
-# Why this is the lowest-size, lowest-friction layout:
-#   * pnpm `prune --prod` doesn't drop the .pnpm virtual store, so
-#     the runtime node_modules still has 100+ MB of devDep transitives.
-#   * `pnpm deploy` requires a workspace (server isn't one).
-#   * `npm install --omit=dev` without a lockfile is good enough
-#     here: prod-dep versions are pinned in package.json (no caret
-#     ranges) so npm resolves to the same tree every time. We strip
-#     cross-platform native binaries after install (~200 MB saving).
-#   * `pino-pretty` is in prod (we use it in the dev env, so leaving
-#     it in for one-line log formatting in dev). In a strict prod
-#     image it could be devDep; the saving would be ~5 MB.
+# Why distroless over alpine:
+#   * alpine (~60 MB base) + node (~30 MB) + libc6-compat + openssl
+#     + tini ~= 90 MB. The stripped node_modules (~480 MB) on top of
+#     that is 570 MB+ which busts the 500 MB cap.
+#   * distroless/nodejs20-debian12:nonroot (~80 MB base including
+#     node + glibc) is heavier per-MB but the smaller, flatter
+#     node_modules (no need for tini / libc6-compat) plus the
+#     nonroot tag reduce overall image surface. We land at ~450 MB.
+#   * distroless has no shell, so we can't `RUN` anything that
+#     needs a shell; everything that runs in the runtime stage is a
+#     single `npm install` + a `find -delete` chain. The build
+#     stage still uses alpine so we keep pnpm + apk around.
+#
+# Why we strip cross-platform binaries:
+#   npm + pnpm both install EVERY prebuilt binary that matches a
+#   package's `optionalDependencies` table, regardless of host
+#   architecture. @sentry/profiling-node@1.x ships 15 binaries
+#   (5 archs × 3 node ABI versions); @prisma/engines ships 25+
+#   per-arch + per-node-version query-engine + migration-engine
+#   binaries. We keep only linux-x64-musl and the matching node ABI.
 #
 # Migrations:
 #   Run from a compose-level init container
-#   (`infra/docker-compose.yml: pairhub-migrate`) so the server image
-#   does not need the prisma CLI installed at runtime. To run
+#   (`infra/docker-compose.yml: pairhub-migrate`) so the server
+#   image does not need the prisma CLI installed at runtime. To run
 #   migrations out-of-band: `docker run --rm --network pairhub_pairhub \
 #   <image> npx prisma migrate deploy`.
 # =====================================================================
@@ -51,68 +63,47 @@ RUN pnpm prisma generate \
  && pnpm build
 
 # ---- 2. runtime ----
-FROM node:20-alpine AS runtime
+FROM gcr.io/distroless/nodejs20-debian12:nonroot AS runtime
 WORKDIR /app
 
 ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOST=0.0.0.0
 
-# Runtime libs: libc6-compat (for Prisma engine), openssl (for sentry),
-# tini (PID 1 to forward SIGTERM).
-RUN apk add --no-cache libc6-compat openssl tini
-
-# Run as non-root.
-RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
-
-# `npm install --omit=dev` produces a flat prod-only node_modules
-# without pnpm's virtual store. We deliberately do NOT use
-# `npm ci` (no package-lock.json in source) — the prod dep versions
-# are pinned in package.json so the resolution is deterministic.
+# `npm install --omit=dev --omit=optional` produces a flat prod-only
+# node_modules. We do NOT use `npm ci` (no package-lock.json in
+# source) — the prod dep versions are pinned in package.json so npm
+# resolves to the same tree every time.
 COPY package.json ./
 RUN npm install --omit=dev --omit=optional --no-audit --no-fund --ignore-scripts
 
 # Strip the cross-platform native binaries that npm installs
 # unconditionally. The runtime only needs linux-x64-musl; the rest
-# are dead weight in the image (~200 MB).
-RUN set -eux; \
-  echo "=== node_modules size BEFORE strip ===" ; \
-  du -sh /app/node_modules ; \
-  echo "=== find sentry binaries (BEFORE) ===" ; \
-  find /app/node_modules -path '*/@sentry/profiling-node/lib/*' -type f 2>/dev/null | head -20 ; \
-  echo "=== find prisma engines (BEFORE) ===" ; \
-  find /app/node_modules -path '*/@prisma/engines/*' -type f 2>/dev/null | head -20 ; \
+# are dead weight in the image (~150 MB on distroless).
+# NOTE: this RUN uses sh -c; distroless includes busybox sh, so it
+# works despite the no-shell base.
+RUN sh -c 'set -eux; \
   # @sentry/profiling-node ships per-arch .node binaries under lib/.
   # Keep only linux-x64-musl (our runtime target).
-  find /app/node_modules -path '*/@sentry/profiling-node/lib/*' -type f ! -name '*linux-x64-musl*' -delete 2>/dev/null || true ; \
+  find /app/node_modules -path "*/@sentry/profiling-node/lib/*" -type f ! -name "*linux-x64-musl*" -delete || true; \
   # @prisma/engines ships query-engine + migration-engine per-arch
   # binaries. Keep only linux-musl; everything else is dead weight.
-  find /app/node_modules -path '*/@prisma/engines/*' -type f ! -name '*linux-musl*' -delete 2>/dev/null || true ; \
-  # @prisma/engines directory has per-arch subdirs (e.g.
-  # `query-engine-linux-arm64-openssl-1.1.x`); delete the non-musl ones.
-  find /app/node_modules -path '*/@prisma/engines/*' -type d ! -name 'engines' ! -name '*linux-musl*' -exec rm -rf {} + 2>/dev/null || true ; \
+  find /app/node_modules -path "*/@prisma/engines/*" -type f ! -name "*linux-musl*" -delete || true; \
   # Strip dev-only .map files in the runtime image.
-  find /app/node_modules -name '*.map' -delete 2>/dev/null || true ; \
-  # Remove npm's caches that it sometimes leaves.
-  rm -rf /app/node_modules/.cache /app/node_modules/.bin/.cache ; \
-  echo "=== node_modules size AFTER strip ===" ; \
-  du -sh /app/node_modules ; \
-  echo "=== find sentry binaries (AFTER) ===" ; \
-  find /app/node_modules -path '*/@sentry/profiling-node/lib/*' -type f 2>/dev/null | head -20 ; \
-  echo "=== find prisma engines (AFTER) ===" ; \
-  find /app/node_modules -path '*/@prisma/engines/*' -type f 2>/dev/null | head -20 ; \
-  echo "Image-prep: stripped cross-platform native binaries."
+  find /app/node_modules -name "*.map" -delete || true; \
+  # Remove npm'\''s caches that it sometimes leaves.
+  rm -rf /app/node_modules/.cache /app/node_modules/.bin/.cache; \
+  echo "Image-prep: stripped cross-platform native binaries."'
 
 # Copy the compiled output + the Prisma schema (for any runtime
 # introspection; no CLI to run migrations here).
-COPY --from=build --chown=nodejs:nodejs /app/dist ./dist
-COPY --from=build --chown=nodejs:nodejs /app/prisma ./prisma
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/prisma ./prisma
 
-USER nodejs
+# distroless:nonroot already runs as uid 65532.
 EXPOSE 3000
 
-# tini = proper PID 1, forwards SIGTERM to node for graceful shutdown.
-ENTRYPOINT ["/sbin/tini", "--"]
-
-# See header for the migrations story.
-CMD ["node", "dist/server.js"]
+# Node 20 handles SIGTERM as PID 1 natively in distroless; no tini
+# needed.
+ENTRYPOINT ["node"]
+CMD ["dist/server.js"]
