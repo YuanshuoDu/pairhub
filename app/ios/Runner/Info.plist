@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <!--
   Runner/Info.plist is the Pairhub iOS app metadata.
@@ -62,10 +62,10 @@
 
 	<!--
 	  CFBundleName = the .app file name. Should match the package name in
-	  pubspec.yaml (currently "Pairhub_app").
+	  pubspec.yaml (currently "pairhub_app").
 	-->
 	<key>CFBundleName</key>
-	<string>Pairhub_app</string>
+	<string>pairhub_app</string>
 
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>

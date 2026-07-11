@@ -1,4 +1,4 @@
-﻿// Design tokens — the authoritative source for Pairhub's visual system.
+// Design tokens — the authoritative source for Pairhub's visual system.
 // Spec: docs/design/system-v1.md. All miniprogram + Flutter code MUST import
 // from this file; do not introduce new color hex / spacing values inline.
 //

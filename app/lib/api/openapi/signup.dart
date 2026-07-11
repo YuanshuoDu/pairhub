@@ -30,12 +30,12 @@ extension SignupStatusWire on SignupStatus {
 
 class Signup {
   const Signup({
-    required id,
-    required activityId,
-    required user,
-    required status,
+    required this.id,
+    required this.activityId,
+    required this.user,
+    required this.status,
     this.message = null,
-    required signedAt,
+    required this.signedAt,
   });
 
   final String id;

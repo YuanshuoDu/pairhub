@@ -50,16 +50,16 @@ extension UserStatusWire on UserStatus {
 
 class User {
   const User({
-    required id,
-    required nickname,
+    required this.id,
+    required this.nickname,
     this.avatar = null,
     this.school = null,
     this.major = null,
     this.grade = null,
     this.bio = null,
-    required role,
-    required status,
-    required createdAt,
+    required this.role,
+    required this.status,
+    required this.createdAt,
     this.deletedAt = null,
   });
 

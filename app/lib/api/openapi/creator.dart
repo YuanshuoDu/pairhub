@@ -3,8 +3,8 @@
 
 class Creator {
   const Creator({
-    required id,
-    required nickname,
+    required this.id,
+    required this.nickname,
     this.avatar = null,
   });
 

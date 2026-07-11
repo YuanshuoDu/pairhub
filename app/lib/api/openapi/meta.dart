@@ -3,8 +3,8 @@
 
 class Meta {
   const Meta({
-    required requestId,
-    required timestamp,
+    required this.requestId,
+    required this.timestamp,
   });
 
   final String requestId;

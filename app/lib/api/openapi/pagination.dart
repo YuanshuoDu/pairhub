@@ -3,9 +3,9 @@
 
 class Pagination {
   const Pagination({
-    required total,
-    required page,
-    required pageSize,
+    required this.total,
+    required this.page,
+    required this.pageSize,
     this.hasMore = false,
   });
 

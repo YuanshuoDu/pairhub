@@ -67,22 +67,22 @@ extension ActivityStatusWire on ActivityStatus {
 
 class Activity {
   const Activity({
-    required id,
-    required creator,
-    required type,
-    required title,
+    required this.id,
+    required this.creator,
+    required this.type,
+    required this.title,
     this.description = '',
     this.locationName = '',
     this.locationAddr = '',
     this.locationLat = 0,
     this.locationLng = 0,
-    required startTime,
-    required endTime,
-    required maxParticipants,
-    required currentCount,
-    required status,
+    required this.startTime,
+    required this.endTime,
+    required this.maxParticipants,
+    required this.currentCount,
+    required this.status,
     this.tags = const [],
-    required createdAt,
+    required this.createdAt,
   });
 
   final String id;

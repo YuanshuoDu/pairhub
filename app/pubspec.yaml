@@ -1,4 +1,4 @@
-﻿name: Pairhub_app
+name: pairhub_app
 description: Flutter App for Pairhub — iOS + Android client for the Pairhub 留学生搭子活动 platform.
 publish_to: 'none'
 version: 0.1.0+1
@@ -70,3 +70,10 @@ flutter:
     - assets/.env
   # Generate localized messages, if added later.
   # generate: true
+
+# Patch mapbox_gl_platform_interface 0.16.0 (last published ~4 years ago)
+# to use Object.hash() instead of the removed hashValues (Dart 3+).
+# Tracked until upstream mapbox_gl migrates to Dart 3 SDK.
+dependency_overrides:
+  mapbox_gl_platform_interface:
+    path: tool/mapbox_gl_platform_interface

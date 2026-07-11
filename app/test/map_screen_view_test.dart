@@ -1,4 +1,4 @@
-﻿// Widget tests for the sealed `MapView` body hierarchy in
+// Widget tests for the sealed `MapView` body hierarchy in
 // `features/map/presentation/map_screen.dart`.
 //
 // The real `MapboxMapView` can't be rendered in a unit-test VM
@@ -15,7 +15,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:Pairhub_app/features/map/presentation/map_screen.dart';
+import 'package:pairhub_app/features/map/presentation/map_screen.dart';
 
 void main() {
   group('MapView sealed hierarchy', () {

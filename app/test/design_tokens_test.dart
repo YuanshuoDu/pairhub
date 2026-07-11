@@ -1,4 +1,4 @@
-﻿// Tests for the DesignTokens design system — proves the AppColors
+// Tests for the DesignTokens design system — proves the AppColors
 // → DesignColors migration is byte-for-byte complete:
 //
 //   - every AppColors getter has a DesignColors equivalent
@@ -10,7 +10,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:Pairhub_app/core/theme/design_tokens.dart';
+import 'package:pairhub_app/core/theme/design_tokens.dart';
 
 void main() {
   group('DesignColors — AppColors migration completeness', () {

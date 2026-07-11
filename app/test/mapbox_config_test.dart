@@ -1,4 +1,4 @@
-﻿// Smoke tests for the Mapbox bootstrap (issue #35).
+// Smoke tests for the Mapbox bootstrap (issue #35).
 //
 // We don't render the real MapWidget in a test (it requires the native
 // plugin to be present, which isn't available in a unit-test VM). We
@@ -11,7 +11,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-import 'package:Pairhub_app/core/config/mapbox_config.dart';
+import 'package:pairhub_app/core/config/mapbox_config.dart';
 
 void main() {
   setUpAll(() {
