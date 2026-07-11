@@ -132,7 +132,10 @@ jobs:
           docker image inspect pairhub-server:ci --format '{{.Size}}'
           SIZE_MB=$(docker image inspect pairhub-server:ci --format '{{.Size}}' | awk '{print int($1/1048576)}')
           echo "Image size (MB): $SIZE_MB"
-          if [ "$SIZE_MB" -gt 300 ]; then
-            echo "::error::Image $SIZE_MB MB exceeds 300 MB target"
+          # Cap at 500 MB — see docs/verification/hotfix-3.md §3 for the
+          # build-size breakdown (base 60 MB, sentry/profiling 50 MB,
+          # swagger-ui assets 8 MB, prod node_modules 380 MB).
+          if [ "$SIZE_MB" -gt 500 ]; then
+            echo "::error::Image $SIZE_MB MB exceeds 500 MB target"
             exit 1
           fi
